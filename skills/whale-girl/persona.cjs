@@ -1,7 +1,7 @@
 const { readFileSync, statSync } = require('node:fs')
 const { join } = require('node:path')
 
-// Keep the role and CDN fallback usable even if the optional local catalog is damaged.
+// Keep the base role usable even if the optional local catalog is damaged.
 module.exports = function buildWhalePersona(root) {
   const directory = join(root, 'skills', 'whale-girl')
   const skill = readFileSync(join(directory, 'SKILL.md'), 'utf8').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')

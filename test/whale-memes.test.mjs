@@ -57,16 +57,13 @@ test('catalog covers every bundled English-named WebP with bounded proportional 
   }
 })
 
-test('persona exposes every bundled meme for automatic selection and preserves CDN fallback', () => {
+test('persona exposes every bundled meme for automatic selection', () => {
   const persona = buildPersona(root)
   assert.ok(persona.startsWith(skill))
   for (const entry of catalog.memes) {
     const path = join(root, 'skills', 'whale-girl', 'meme', entry.file).replace(/\\/g, '/')
     assert.equal(persona.includes(`](<${path}>)`), true, entry.file)
   }
-  const base = 'https://bjumymxtfpfswthiusfr.storage.supabase.co/storage/v1/object/public/ai-meme/'
-  assert.ok(persona.includes(`${base}0_preview/meme/NNN.webp`))
-  for (const id of ['123', '007', '037', '052', '087', '097']) assert.ok(persona.includes(`\`${id}\``))
 })
 
 test('installation paths with spaces work and damaged optional resources keep the base persona', async () => {

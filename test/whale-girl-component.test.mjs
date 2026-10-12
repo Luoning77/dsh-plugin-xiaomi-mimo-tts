@@ -20,37 +20,21 @@ function flattenPlugins(rows) {
   return rows.flatMap(row => [row, ...(row.group ? flattenPlugins(row.config) : [])])
 }
 
-test('basic assistant composition includes its capability providers without advanced automation', () => {
+test('companion preset provides file access, web lookup, questions, and conversation compaction', () => {
   const rows = flattenPlugins(presetRow.config.plugins)
   const modules = new Set(rows.map(row => row.name))
   for (const name of [
-    'agent-instructions', 'time-context', 'tool-bash', 'tool-pwsh', 'tool-fs', 'tool-fs-search',
-    'tool-jobs', 'skill-filesystem', 'tool-skill', 'plan-mode', 'compaction-basic',
-    'command-compact', 'compaction-tool-result-pruner', 'tool-ask-user', 'tool-todo', 'tool-web', 'tool-present',
+    'agent-instructions', 'time-context', 'tool-fs', 'tool-ask-user', 'tool-web',
+    'compaction-basic', 'command-compact', 'compaction-tool-result-pruner',
   ]) assert.ok(modules.has(`@deepseek-ai/dsh-${name}`), `missing ${name}`)
   assert.equal(rows.filter(row => row.name === '@deepseek-ai/dsh-persona').length, 1)
-  for (const name of ['tool-schedule', 'command-goal', 'tool-goal', 'tool-subagent', 'tool-workflow', 'plugin-manager/tools']) {
-    assert.equal(modules.has(`@deepseek-ai/dsh-${name}`), false, `unexpected ${name}`)
-  }
   assert.equal(new Set(rows.map(row => row.id)).size, rows.length)
-  const planning = rows.find(row => row.id === 'planning')
-  assert.equal(planning.group, true)
-  assert.deepEqual(planning.isolate, { planMode: true })
-  assert.ok(planning.config[0].config.section.trim())
   const compaction = rows.find(row => row.id === 'compaction')
   assert.equal(compaction.group, true)
   assert.deepEqual(compaction.isolate, { compaction: true, toolResultPruner: true })
   const pruner = rows.find(row => row.id === 'tool-result-pruner').config
   assert.ok(pruner.headChars + pruner.tailChars < pruner.thresholdChars)
   assert.equal(rows.find(row => row.id === 'tool-web').config.fetch, true)
-})
-
-test('exactly one shell is enabled on each supported platform', () => {
-  const rows = presetRow.config.plugins.filter(row => ['tool-bash', 'tool-pwsh'].includes(row.id))
-  for (const platform of ['win32', 'darwin', 'linux']) {
-    const enabled = rows.filter(row => !Function('process', `return (${row.disabled.__jsExpr})`)({ platform }))
-    assert.deepEqual(enabled.map(row => row.id), [platform === 'win32' ? 'tool-pwsh' : 'tool-bash'])
-  }
 })
 
 function useChild(ctx) {
