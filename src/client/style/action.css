@@ -26,12 +26,17 @@
   opacity: 0.45;
 }
 
-.xmimo-tts-spin {
-  animation: xmimo-spin 1s linear infinite;
+.xmimo-tts-pulse {
+  animation: xmimo-pulse 1.2s ease-in-out infinite;
 }
 
-@keyframes xmimo-spin {
-  to {
-    transform: rotate(360deg);
+@keyframes xmimo-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
   }
 }

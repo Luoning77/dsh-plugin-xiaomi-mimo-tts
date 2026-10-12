@@ -2,12 +2,10 @@ import type { ReactElement } from 'react'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import {
   Button,
-  IconLoadingOutlineMedium,
-  IconPauseOutlineMedium,
-  IconPlayOutlineMedium,
   Tooltip,
   extractMarkdownPlainText,
 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { RiVoiceAiFill } from 'react-icons/ri'
 import { applyTtsLivePlaybackScope, applyTtsPlaybackScope, prepareTtsText, resolveTtsSettings, splitTtsSegments, TtsFirstSegmentLimiter, TTS_API_KEY_STATUS_ROUTE } from '../../shared.js'
 import type { TtsReadScope } from '../../shared.js'
 import type { TtsSettings } from '../../shared.js'
@@ -18,6 +16,7 @@ import type { Translate } from '../localization.js'
 import { LiveSpeechController, LocalSpeechController, PlaybackController } from '../playback/index.js'
 import type { LiveMessageIdentity } from '../playback/index.js'
 import { useSettingsSnapshot } from '../settings/scope.js'
+import { AnimatedAudioLines } from './animated-audio-lines.js'
 
 type ChatLegacy = ChatSnapshot['legacy']
 
@@ -404,11 +403,9 @@ export function ReadAloudAction({ sessionId, messageId, useSession, useChat, pla
             playCompletedReply(false)
           }}
         >
-          {status === 'loading'
-            ? <IconLoadingOutlineMedium className="xmimo-tts-spin" size={16} />
-            : status === 'playing'
-              ? <IconPauseOutlineMedium size={16} />
-              : <IconPlayOutlineMedium size={16} />}
+          {status === 'playing'
+            ? <AnimatedAudioLines size={16} />
+            : <RiVoiceAiFill className={status === 'loading' ? 'xmimo-tts-pulse' : undefined} size={16} />}
         </Button>
       </Tooltip>
       {source === 'system' && (status === 'loading' || status === 'playing' || status === 'paused') ? <span className="xmimo-tts-local-fallback-status" role="status">{t('action.localFallback')}</span> : null}

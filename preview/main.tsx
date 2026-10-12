@@ -16,6 +16,7 @@ import enPluginLocale from '../locale/en.json'
 import zhPluginLocale from '../locale/zh.json'
 import './preview.css'
 import { AudioHistory } from '../src/client/history/audio-history.js'
+import { ConversationPreview } from './conversation-preview.js'
 
 type PreviewLocale = 'zh' | 'en'
 type PreviewTheme = 'light' | 'dark'
@@ -320,7 +321,7 @@ function PreviewApp() {
     </header>
     <main className={`preview-stage${activeView === 'filter' ? ' preview-stage-filter' : ''}`}>
       {activeView === 'filter' ? <FilterLab locale={locale} /> :
-      <div className="preview-workspace">
+      <div className={`preview-workspace${isManualOpen ? '' : ' preview-workspace-manual-closed'}`}>
         <UserManual
           locale={locale}
           isOpen={isManualOpen}
@@ -328,6 +329,7 @@ function PreviewApp() {
           onFocusToggle={() => { manualToggleRef.current?.focus() }}
         />
         <section className="preview-settings-pane" aria-label={locale === 'zh' ? '设置页预览' : 'Settings preview'}>
+          <ConversationPreview scope={scope} />
           <header className="preview-plugin-header">
             <img className="preview-plugin-icon" src={pluginIcon} alt="" aria-hidden="true" />
             <div className="preview-plugin-copy">

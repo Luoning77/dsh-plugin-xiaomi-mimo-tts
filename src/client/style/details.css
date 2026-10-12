@@ -40,11 +40,17 @@
 
 .xmimo-tts-details-body {
   min-height: 0;
-  overflow: hidden
+  overflow: hidden;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px
 }
 
 .xmimo-tts-details-body>* {
   border-top: 0
+}
+
+.xmimo-tts-details-body > :nth-child(n + 3) {
+  grid-column: 1 / -1
 }
 
 .xmimo-tts-settings-segmented-wrap {
@@ -55,4 +61,14 @@
   display: grid;
   width: 100%;
   min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .xmimo-tts-details-body {
+    grid-template-columns: minmax(0, 1fr)
+  }
+
+  .xmimo-tts-details-body > :nth-child(n + 3) {
+    grid-column: auto
+  }
 }

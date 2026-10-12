@@ -218,5 +218,9 @@
     "prepack": "pnpm run build && node scripts/pack-package.mjs",
     "postpack": "node scripts/restore-package-scripts.mjs",
     "pack:check": "node scripts/pack-check.mjs"
+  },
+  "dependencies": {
+    "motion": "^14.1.0",
+    "react-icons": "^5.7.0"
   }
 }

@@ -285,6 +285,8 @@ const TTS_PUNCTUATION: Record<string, string> = {
 
 /** Decorative punctuation can make TTS emit non-speech artifacts, so omit it entirely. */
 const TTS_NON_SPEECH_PUNCTUATION = /[()\[\]【】［］〔〕〖〗{}｛｝「」『』《》〈〉“”‘’"'`<>…—–－～]/gu
+/** Ellipses and wave dashes carry a sentence-level pause, so keep that cue as a period. */
+const TTS_SENTENCE_PAUSE_PUNCTUATION = /[…⋯〜～]+/gu
 const TTS_PAUSE_MARKER = '\uE000'
 
 const TTS_URL_PATTERN = /\b(?:https?|ftp):\/\/[^\s<>()]+|\bwww\.[^\s<>()]+|\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:com|cn|net|org|io|ai|dev|me|co|edu|gov|xyz|tech|info|app|site|link)(?:[/:?#][^\s<>()]*)?/giu
@@ -339,6 +341,7 @@ function removeTtsSymbols(value: string): string {
 /** Combined punctuation normalization: collapse adjacent punctuation, remove non-speech characters, and normalize Chinese punctuation. */
 function normalizeTtsPunctuation(value: string): string {
   return value
+    .replace(TTS_SENTENCE_PAUSE_PUNCTUATION, '.')
     // A dash in prose signals a pause; preserve that cue as a single comma.
     // Keep it marked until standalone punctuation has been removed.
     .replace(/[—–－]+/gu, TTS_PAUSE_MARKER)

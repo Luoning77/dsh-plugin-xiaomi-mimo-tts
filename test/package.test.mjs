@@ -361,6 +361,11 @@ test('preserves pauses signaled by em and en dashes', () => {
   assert.equal(prepareTtsText('前一句–后一句－再一句'), '前一句,后一句,再一句')
 })
 
+test('turns sentence-level wave dashes and ellipses into periods', () => {
+  assert.equal(prepareTtsText('前一句～后一句'), '前一句.后一句')
+  assert.equal(prepareTtsText('前一句……后一句⋯再一句'), '前一句.后一句.再一句')
+})
+
 test('turns physical line breaks into sentence-ending periods', () => {
   assert.equal(prepareTtsText('第一行\n第二行'), '第一行.第二行')
 })
