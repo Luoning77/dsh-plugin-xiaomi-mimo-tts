@@ -116,6 +116,7 @@ export function AudioHistoryPage({ history, t, volume, voiceRate, minimalMode, b
                   <button type="button" className={`xmimo-tts-history-text${expanded === entry.id ? ' xmimo-tts-history-text-expanded' : ''}`} aria-expanded={expanded === entry.id} aria-label={`${t('history.expand')}: ${title(entry).slice(0, 60)}`} onClick={() => { setExpanded(expanded === entry.id ? null : entry.id) }}>{title(entry)}</button>
                   <div className="xmimo-tts-history-meta">
                     <span>{t(`history.${entry.source}`)}</span>
+                    <span>{Array.from(title(entry)).length} {t('history.characters')}</span>
                     <time dateTime={new Date(entry.createdAt).toISOString()}>{new Date(entry.createdAt).toLocaleString()}</time>
                     <span>{entry.format.toUpperCase()} · {historyFileSize(entry.blob.size)}</span>
                   </div>
