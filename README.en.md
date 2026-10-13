@@ -103,11 +103,11 @@ Browser voices come from the Web Speech API. Offline availability, language cove
 
 ### Read-aloud range
 
-- **Smart mode**: automatic playback prefers the opening semantic segment and may add a short closing cue when substantial text remains. Manual playback reads the full reply.
+- **Smart mode**: automatic playback prefers the opening two semantic segments and may add a short closing cue when substantial text remains. Manual playback reads the full reply.
 - **Full mode**: automatic and manual playback both read the full reply.
 - **First-segment mode**: automatic and manual playback both read only the opening segment.
 
-Opening segments and synthesis chunks split between complete sentences; an individual long sentence may exceed the recommended chunk size. Streaming playback waits for a sentence boundary before locking the opening segment, so reaching the character threshold does not cut a sentence short.
+Opening segments and synthesis chunks split between complete sentences; an individual long sentence may exceed the recommended chunk size. PCM streaming can begin after a short unfinished prefix arrives and continues without repeating already queued text.
 
 The settings panel supports keyboard navigation: use `Tab` to move focus, arrow keys to adjust sliders and options, and `Space` to activate buttons and switches.
 

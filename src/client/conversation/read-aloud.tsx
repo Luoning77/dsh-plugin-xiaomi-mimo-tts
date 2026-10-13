@@ -216,7 +216,11 @@ export function SessionPlaybackObserver({ sessionId, useSession, useChat, playba
         }
       }
       if (active.current === null || active.current.turn !== partial.turn || active.current.step !== partial.step) {
-        active.current = { turn: partial.turn, step: partial.step, limiter: new TtsFirstSegmentLimiter() }
+        active.current = {
+          turn: partial.turn,
+          step: partial.step,
+          limiter: new TtsFirstSegmentLimiter(resolvedSettings.readScope === 'smart' ? 2 : 1),
+        }
       }
       const observedText = scopedLiveText(partialText, resolvedSettings.readScope, active.current.limiter)
       if (resumeCheckpoint.current !== null) {

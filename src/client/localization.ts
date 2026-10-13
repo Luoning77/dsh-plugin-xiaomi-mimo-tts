@@ -105,7 +105,7 @@ export const zh = {
   "settings.readScopeFull": "全文模式",
   "settings.readScopeFirstSegment": "首段模式",
   "settings.readScopeSmartHint":
-    "自动播报短回复全文；长回复截取首段，未读内容较多时随机补一句收尾语。手动朗读全文。",
+    "自动播报短回复全文；长回复朗读开头两段，未读内容较多时随机补一句收尾语。手动朗读全文。",
   "settings.readScopeFullHint": "自动播报和手动朗读都播放全文。",
   "settings.readScopeFirstSegmentHint": "保守朗读，自动播报和手动朗读都只播放首段。",
   "settings.summaryPresetModel": "预置音色",
@@ -354,7 +354,7 @@ export const en: Record<keyof typeof zh, string> = {
   "settings.readScopeSmart": "Smart mode",
   "settings.readScopeFull": "Full mode",
   "settings.readScopeFirstSegment": "First-segment mode",
-  "settings.readScopeSmartHint": "Automatic playback reads short replies in full. For long replies, it reads the opening segment and may add a brief closing cue when substantial content remains. Manual playback reads the full reply.",
+  "settings.readScopeSmartHint": "Automatic playback reads short replies in full. For long replies, it reads the opening two segments and may add a brief closing cue when substantial content remains. Manual playback reads the full reply.",
   "settings.readScopeFullHint": "Both automatic and manual playback read the full reply.",
   "settings.readScopeFirstSegmentHint": "Both automatic and manual playback read only the opening segment.",
   "settings.summaryPresetModel": "Preset model",

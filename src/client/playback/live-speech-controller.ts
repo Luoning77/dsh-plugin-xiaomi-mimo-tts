@@ -3,6 +3,8 @@ import {
   AbortableSentenceQueue,
   batchTtsStreamText,
   classifyLiveSpeechTransition,
+  countTtsSpeechCharacters,
+  DEFAULT_TTS_SEGMENT_CHARACTERS,
   normalizeVoiceRate,
   prepareTtsText,
   splitCompletedTtsSentences,
@@ -243,6 +245,21 @@ export class LiveSpeechController {
     // Never read an unclosed code block aloud, even on flush.
     const ready = flush && !inCode && remainder.trim().length > 0 ? [...sentences, remainder] : sentences
     this.consumed += consumed
+    // A model may take a long time to emit the first sentence-ending mark.
+    // Once the uncommitted prose is large enough, send it immediately so the
+    // first PCM request starts while the assistant is still generating. Mark
+    // the emitted prefix consumed to keep subsequent partial updates from
+    // synthesizing the same prefix again.
+    if (!flush && !inCode && remainder.trim().length > 0) {
+      const preparedRemainder = extractMarkdownPlainText(prepareTtsText(remainder)).trim()
+      if (countTtsSpeechCharacters(preparedRemainder) >= DEFAULT_TTS_SEGMENT_CHARACTERS) {
+        const provisional = takeStreamChunk(remainder, DEFAULT_TTS_SEGMENT_CHARACTERS)
+        if (provisional.length > 0) {
+          ready.push(provisional)
+          this.consumed += provisional.length
+        }
+      }
+    }
     if (flush) this.consumed = this.observed.length
     for (const sentence of ready) this.stageSentence(sentence, false)
     if (flush) this.stageSentence('', true)
@@ -250,6 +267,7 @@ export class LiveSpeechController {
 
   private stageSentence(sentence: string, flush: boolean): void {
     const text = extractMarkdownPlainText(prepareTtsText(sentence)).trim()
+    if (!flush && countTtsSpeechCharacters(text) === 0) return
     const batch = batchTtsStreamText(this.pendingText, text, flush)
     this.pendingText = batch.pending
     if (batch.request !== null) this.queue.enqueue(batch.request)
@@ -346,4 +364,31 @@ export class LiveSpeechController {
   private reportStatus(): void {
     if (this.sessionId !== null && this.messageId !== null) this.onStateChange?.(this.sessionId, this.messageId, this.status)
   }
+}
+
+/** Wait for a complete word or number before ending a provisional chunk. */
+function takeStreamChunk(value: string, target: number): string {
+  let speechCharacters = 0
+  let end = 0
+  let previous = ''
+  for (const character of value) {
+    end += character.length
+    if (/^[\p{L}\p{N}]$/u.test(character)) speechCharacters += 1
+    const nextPoint = value.codePointAt(end)
+    const next = nextPoint === undefined ? '' : String.fromCodePoint(nextPoint)
+    if (speechCharacters >= target && !/\p{M}/u.test(next)) {
+      const inWord = isStreamWordCharacter(character)
+        && (next.length === 0 || isStreamWordCharacter(next))
+      const beforeDecimal = /\p{N}/u.test(character) && /[.,]/u.test(next)
+      const inDecimal = /[.,]/u.test(character) && /\p{N}/u.test(previous)
+        && (next.length === 0 || /\p{N}/u.test(next))
+      if (!inWord && !beforeDecimal && !inDecimal) return value.slice(0, end)
+    }
+    previous = character
+  }
+  return ''
+}
+
+function isStreamWordCharacter(value: string): boolean {
+  return /[\p{L}\p{N}\p{M}_'’\-]/u.test(value) && !/\p{Script=Han}/u.test(value)
 }

@@ -475,6 +475,17 @@ export function splitTtsSegments(value: string, target = DEFAULT_TTS_SEGMENT_CHA
   const preferred = Math.max(MIN_TTS_SEGMENT_CHARACTERS, Math.min(target, maximum))
   const { sentences, remainder } = splitPreparedTtsSentences(text)
   const pieces = remainder.length > 0 ? [...sentences, remainder] : sentences
+  const { segments, pending } = groupTtsSentences(pieces, preferred, maximum)
+  if (pending.length > 0) {
+    const last = segments.at(-1)
+    if (last !== undefined && countTtsSpeechCharacters(pending) < MIN_TTS_SEGMENT_CHARACTERS && countTtsSpeechCharacters(`${last}${pending}`) <= maximum) segments[segments.length - 1] = `${last}${pending}`
+    else segments.push(pending)
+  }
+  return segments
+}
+
+/** Keep completed groups separate from a tail whose boundary may still change. */
+function groupTtsSentences(pieces: readonly string[], preferred: number, maximum: number): { segments: string[]; pending: string } {
   const segments: string[] = []
   let pending = ''
   const append = (piece: string): void => {
@@ -500,17 +511,18 @@ export function splitTtsSegments(value: string, target = DEFAULT_TTS_SEGMENT_CHA
     }
   }
   for (const piece of pieces) append(piece)
-  if (pending.length > 0) {
-    const last = segments.at(-1)
-    if (last !== undefined && countTtsSpeechCharacters(pending) < MIN_TTS_SEGMENT_CHARACTERS && countTtsSpeechCharacters(`${last}${pending}`) <= maximum) segments[segments.length - 1] = `${last}${pending}`
-    else segments.push(pending)
-  }
-  return segments
+  return { segments, pending }
 }
 
 /** Return only the first semantic segment for low-latency VoiceDesign playback. */
 export function firstTtsSegment(value: string): string {
   return splitTtsSegments(value)[0] ?? ''
+}
+
+/** Return the opening semantic segments used by a bounded playback scope. */
+export function firstTtsSegments(value: string, count = 1): string {
+  if (count <= 0) return ''
+  return splitTtsSegments(value).slice(0, count).join('')
 }
 
 /** Resolve Smart into a concrete range for this playback invocation. */
@@ -549,7 +561,9 @@ export function appendTtsSmartTruncationOutro(fullText: string, spokenText: stri
 
 /** Apply the configured playback range and Smart automatic closing cue to a completed reply. */
 export function applyTtsPlaybackScope(value: string, scope: TtsReadScope, automatic: boolean, random: () => number = Math.random): string {
-  const scoped = applyTtsReadScope(value, resolveTtsReadScope(scope, automatic))
+  const scoped = scope === 'smart' && automatic
+    ? firstTtsSegments(value, 2)
+    : applyTtsReadScope(value, resolveTtsReadScope(scope, automatic))
   return scope === 'smart' && automatic
     ? appendTtsSmartTruncationOutro(value, scoped, random)
     : scoped
@@ -559,15 +573,32 @@ export function applyTtsPlaybackScope(value: string, scope: TtsReadScope, automa
 export class TtsFirstSegmentLimiter {
   private locked: string | null = null
 
+  constructor(private readonly segmentCount = 1) {}
+
   limit(value: string, final = false): string {
     if (this.locked !== null) return this.locked
     const text = prepareTtsText(value)
-    // Only a completed reply may contribute an unterminated last sentence.
-    const completed = final ? text : splitPreparedTtsSentences(text, false).sentences.join('')
-    const candidate = firstTtsSegment(completed)
-    if (candidate.length === 0) return ''
-    if (final || countTtsSpeechCharacters(candidate) >= DEFAULT_TTS_SEGMENT_CHARACTERS) this.locked = candidate
-    return candidate
+    if (final) {
+      this.locked = firstTtsSegments(text, this.segmentCount)
+      return this.locked
+    }
+    // Prefer completed sentence boundaries, but expose a sufficiently long
+    // unfinished prefix so live PCM playback can begin during generation.
+    const { sentences, remainder } = splitPreparedTtsSentences(text, false)
+    const { segments, pending } = groupTtsSentences(sentences, DEFAULT_TTS_SEGMENT_CHARACTERS, MAX_TTS_SEGMENT_CHARACTERS)
+    if (segments.length >= this.segmentCount) {
+      this.locked = segments.slice(0, this.segmentCount).join('')
+      return this.locked
+    }
+    const completed = `${segments.join('')}${pending}`
+    // A short pending tail still occupies a segment: an unfinished sentence
+    // may grow past the maximum and force that tail into a separate group.
+    const occupiedSegments = segments.length + (pending.length > 0 ? 1 : 0)
+    return occupiedSegments < this.segmentCount && countTtsSpeechCharacters(remainder) >= DEFAULT_TTS_SEGMENT_CHARACTERS
+      // Keep a trailing period for decimal numbers; commas and other pause
+      // marks can be normalized differently when the next token arrives.
+      ? `${completed}${remainder}`.replace(/[^\p{L}\p{N}.]+$/u, '')
+      : completed
   }
 }
 
