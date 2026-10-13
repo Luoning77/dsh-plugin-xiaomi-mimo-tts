@@ -1,3 +1,5 @@
+import { findFencedCodeRegions, removeFencedCode } from './text/fenced-code.js'
+
 /** Settings namespace used by the Host and Web client. */
 export const TTS_SETTINGS_NAMESPACE = 'xiaomi-mimo-tts'
 
@@ -257,7 +259,7 @@ export const DEFAULT_TTS_SEGMENT_CHARACTERS = 160
 export const MAX_TTS_SEGMENT_CHARACTERS = 240
 export const MIN_TTS_SEGMENT_CHARACTERS = 50
 
-/** Minimum spoken characters to accumulate before starting one PCM stream request. */
+/** Minimum spoken characters to accumulate for low-latency browser speech during generation. */
 export const MIN_TTS_STREAM_CHARACTERS = 20
 
 /** Maximum decoded complete MP3 payload accepted from Xiaomi MiMo. */
@@ -316,7 +318,7 @@ function removeTtsPaths(value: string): string {
 }
 
 function removeTtsMarkup(value: string): string {
-  let text = value
+  let text = removeFencedCode(value)
     .replace(MARKDOWN_CODE_BLOCK_RE, ' ')
     .replace(MARKDOWN_INDENTED_CODE_RE, '$1')
     .replace(MARKDOWN_IMAGE_RE, ' ')
@@ -378,26 +380,6 @@ export function prepareTtsText(value: string): string {
   return text.replace(/\s+/g, ' ').trim()
 }
 
-/** Locate fenced code blocks in raw streaming text so their content is never read aloud. */
-function findFencedCodeRegions(value: string): { regions: Array<[number, number]>; pendingStart: number | null } {
-  const regions: Array<[number, number]> = []
-  let pendingStart: number | null = null
-  const fence = /(^|\n)[ \t]{0,3}(`{3,}|~{3,})[^\r\n]*/g
-  let open: { start: number; char: string } | null = null
-  for (const match of value.matchAll(fence)) {
-    const lineStart = match.index + (match[1] === '\n' ? 1 : 0)
-    const char = match[2][0]
-    if (open === null) {
-      open = { start: lineStart, char }
-    } else if (open.char === char) {
-      regions.push([open.start, match.index + match[0].length])
-      open = null
-    }
-  }
-  if (open !== null) pendingStart = open.start
-  return { regions, pendingStart }
-}
-
 export interface TtsSentenceSplit {
   sentences: string[]
   remainder: string
@@ -411,7 +393,7 @@ export interface TtsSentenceSplit {
 export function splitCompletedTtsSentences(value: string): TtsSentenceSplit {
   const { regions, pendingStart } = findFencedCodeRegions(value)
   const limit = pendingStart ?? value.length
-  const boundary = /[。！？!?；;\n]+(?:[”’）】》〕\]}'"]*\s*)/gu
+  const boundary = /[。！？!?；;.\n]+(?:[”’）】》〕\]}'"]*\s*)/gu
   const sentences: string[] = []
   let sentenceStart = 0
   let consumed = 0
@@ -422,6 +404,9 @@ export function splitCompletedTtsSentences(value: string): TtsSentenceSplit {
     while ((match = boundary.exec(value)) !== null) {
       const end = match.index + match[0].length
       if (end > to) break
+      // A trailing digit and period may still grow into a decimal in the next update.
+      if (match[0] === '.' && /\d/u.test(value[match.index - 1] ?? '')
+        && (/\d/u.test(value[end] ?? '') || end === value.length)) continue
       // A boundary match that is only whitespace (e.g. a lone newline after a code
       // fence) must not become a sentence of its own, or TTS would read a stray dot.
       const sentence = value.slice(sentenceStart, end)
@@ -626,13 +611,20 @@ export function strictBase64DecodedLength(value: string): number | null {
   return (value.length / 4) * 3 - padding
 }
 
-/** Accumulate short sentences so a PCM stream has enough text to sound natural. */
+/** Accumulate short sentences for low-latency browser speech. */
 export function batchTtsStreamText(pending: string, next: string, flush: boolean): { pending: string; request: string | null } {
   const combined = `${pending}${next}`
   if (countTtsSpeechCharacters(combined) >= MIN_TTS_STREAM_CHARACTERS || (flush && combined.trim().length > 0)) {
     return { pending: '', request: combined }
   }
   return { pending: combined, request: null }
+}
+
+/** Accumulate prepared sentences into PCM requests using the semantic segment sizes. */
+export function batchTtsStreamSegments(pending: string, sentences: readonly string[], flush: boolean): { pending: string; requests: string[] } {
+  const batch = groupTtsSentences([pending, ...sentences], DEFAULT_TTS_SEGMENT_CHARACTERS, MAX_TTS_SEGMENT_CHARACTERS)
+  if (flush && batch.pending.length > 0) batch.segments.push(batch.pending)
+  return { pending: flush ? '' : batch.pending, requests: batch.segments }
 }
 
 /** Parse complete SSE records while retaining the final partial record for the next network chunk. */

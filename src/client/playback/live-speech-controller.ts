@@ -1,13 +1,13 @@
-import { extractMarkdownPlainText } from '@deepseek-ai/dsh-client-ui-primitives'
+import { prepareSpeechText } from './speech-text.js'
 import {
   AbortableSentenceQueue,
-  batchTtsStreamText,
+  batchTtsStreamSegments,
   classifyLiveSpeechTransition,
   countTtsSpeechCharacters,
   DEFAULT_TTS_SEGMENT_CHARACTERS,
   normalizeVoiceRate,
-  prepareTtsText,
   splitCompletedTtsSentences,
+  splitTtsSegments,
 } from '../../shared.js'
 import type { LiveSpeechCursor } from '../../shared.js'
 import { streamPcmAudio } from '../../pcm-stream.js'
@@ -70,18 +70,27 @@ export class LiveSpeechController {
 
   async pause(sessionId: string): Promise<boolean> {
     if (this.sessionId !== sessionId || this.status !== 'playing') return false
-    await this.audio.pause()
+    const generation = this.streamGeneration
     this.setStatus('paused')
-    return true
+    try {
+      await this.audio.pause()
+      return this.sessionId === sessionId && generation === this.streamGeneration
+    } catch {
+      if (this.sessionId === sessionId && generation === this.streamGeneration) this.setStatus('playing')
+      return false
+    }
   }
 
   async resume(sessionId: string): Promise<boolean> {
     if (this.sessionId !== sessionId || this.status !== 'paused') return false
+    const generation = this.streamGeneration
     try {
       await this.audio.resume()
+      if (this.sessionId !== sessionId || generation !== this.streamGeneration) return false
       this.setStatus('playing')
       return true
     } catch {
+      if (this.sessionId !== sessionId || generation !== this.streamGeneration) return false
       this.setStatus('error')
       this.replaceQueue()
       this.audio.stop()
@@ -128,7 +137,7 @@ export class LiveSpeechController {
     this.checkpointed = true
   }
 
-  /** Stream one already-completed preset-model reply as PCM, falling back only before playback starts. */
+  /** Stream semantic segments of a completed preset-model reply, falling back only before playback starts. */
   playCompleted(sessionId: string, messageId: string, text: string, fallback: () => void): void {
     if (this.sessionId !== sessionId || text.length === 0) return
     this.beforePlayback?.()
@@ -138,12 +147,15 @@ export class LiveSpeechController {
     this.audioStarted = false
     this.messageId = messageId
     this.setStatus('loading')
-    this.queue.enqueue(text)
+    for (const segment of splitTtsSegments(text)) this.queue.enqueue(segment)
   }
 
   finish(sessionId: string, final: LiveMessageIdentity): void {
+    if (this.sessionId !== sessionId) return
     const key = `${sessionId}:${final.turn}:${final.step}`
     if (this.blockedTurn === `${sessionId}:${final.turn}` || this.manuallyStoppedTurns.has(`${sessionId}:${final.turn}`)) {
+      this.messageId = final.messageId
+      this.reportStatus()
       this.handled.add(key)
       return
     }
@@ -160,7 +172,7 @@ export class LiveSpeechController {
   }
 
   stop(sessionId: string): boolean {
-    if (this.sessionId !== sessionId || (this.status !== 'loading' && this.status !== 'playing')) return false
+    if (this.sessionId !== sessionId || (this.status !== 'loading' && this.status !== 'playing' && this.status !== 'paused')) return false
     if (this.active !== null) this.manuallyStoppedTurns.add(`${sessionId}:${this.active.turn}`)
     this.resetState()
     return true
@@ -245,32 +257,32 @@ export class LiveSpeechController {
     // Never read an unclosed code block aloud, even on flush.
     const ready = flush && !inCode && remainder.trim().length > 0 ? [...sentences, remainder] : sentences
     this.consumed += consumed
+    this.stageSentences(ready, false)
     // A model may take a long time to emit the first sentence-ending mark.
     // Once the uncommitted prose is large enough, send it immediately so the
     // first PCM request starts while the assistant is still generating. Mark
     // the emitted prefix consumed to keep subsequent partial updates from
     // synthesizing the same prefix again.
     if (!flush && !inCode && remainder.trim().length > 0) {
-      const preparedRemainder = extractMarkdownPlainText(prepareTtsText(remainder)).trim()
-      if (countTtsSpeechCharacters(preparedRemainder) >= DEFAULT_TTS_SEGMENT_CHARACTERS) {
-        const provisional = takeStreamChunk(remainder, DEFAULT_TTS_SEGMENT_CHARACTERS)
+      const preparedRemainder = prepareSpeechText(remainder)
+      const needed = DEFAULT_TTS_SEGMENT_CHARACTERS - countTtsSpeechCharacters(this.pendingText)
+      if (countTtsSpeechCharacters(preparedRemainder) >= needed) {
+        const provisional = takeStreamChunk(remainder, needed)
         if (provisional.length > 0) {
-          ready.push(provisional)
+          this.stageSentences([provisional], false)
           this.consumed += provisional.length
         }
       }
     }
     if (flush) this.consumed = this.observed.length
-    for (const sentence of ready) this.stageSentence(sentence, false)
-    if (flush) this.stageSentence('', true)
+    if (flush) this.stageSentences([], true)
   }
 
-  private stageSentence(sentence: string, flush: boolean): void {
-    const text = extractMarkdownPlainText(prepareTtsText(sentence)).trim()
-    if (!flush && countTtsSpeechCharacters(text) === 0) return
-    const batch = batchTtsStreamText(this.pendingText, text, flush)
+  private stageSentences(sentences: readonly string[], flush: boolean): void {
+    const prepared = sentences.map(prepareSpeechText).filter(text => countTtsSpeechCharacters(text) > 0)
+    const batch = batchTtsStreamSegments(this.pendingText, prepared, flush)
     this.pendingText = batch.pending
-    if (batch.request !== null) this.queue.enqueue(batch.request)
+    for (const request of batch.requests) this.queue.enqueue(request)
   }
 
   private createQueue(): AbortableSentenceQueue {

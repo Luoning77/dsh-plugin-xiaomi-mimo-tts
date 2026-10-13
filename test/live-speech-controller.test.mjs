@@ -1,70 +1,124 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
 import test from 'node:test'
-import ts from 'typescript'
+import { loadClientModule, settle } from './helpers/client-modules.mjs'
+import { pcmEvent, withBrowserPlayback } from './helpers/browser-playback.mjs'
 
-import { DEFAULT_TTS_SEGMENT_CHARACTERS, prepareTtsText, TtsFirstSegmentLimiter } from '../lib/shared.js'
+import { countTtsSpeechCharacters, DEFAULT_TTS_SEGMENT_CHARACTERS, MAX_TTS_SEGMENT_CHARACTERS, prepareTtsText, splitTtsSegments, TtsFirstSegmentLimiter } from '../lib/shared.js'
 
-async function clientModuleUrl(path, replacements = {}) {
-  let code = ts.transpile(await readFile(new URL(path, import.meta.url), 'utf8'), { module: ts.ModuleKind.ESNext })
-  for (const [specifier, url] of Object.entries(replacements)) code = code.replace(specifier, url)
-  return `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`
+const { LiveSpeechController } = await loadClientModule('src/client/playback/live-speech-controller.ts')
+
+async function withPlayback(run, options = {}, history) {
+  await withBrowserPlayback(async state => {
+    const live = new LiveSpeechController(history)
+    live.activateSession('session')
+    try { await run(live, state.requests) } finally { await live.dispose() }
+  }, { endPcm: true, ...options })
 }
 
-const sharedUrl = new URL('../lib/shared.js', import.meta.url).href
-const audioUrl = await clientModuleUrl('../src/client/playback/pcm-audio-queue.ts', {
-  '../../debug-console.js': new URL('../src/debug-console.ts', import.meta.url).href,
-  '../../shared.js': sharedUrl,
-  './voice-rate.js': await clientModuleUrl('../src/client/playback/voice-rate.ts'),
+test('short sentences accumulate into semantic PCM slices and one recording per slice', async () => {
+  const saved = []
+  await withPlayback(async (live, requests) => {
+    const sentence = '甲'.repeat(30) + '。'
+    let text = ''
+    for (let index = 0; index < 12; index += 1) {
+      text += sentence
+      live.observe('session', 1, 0, text)
+      await settle()
+      if (countTtsSpeechCharacters(text) < DEFAULT_TTS_SEGMENT_CHARACTERS) assert.equal(requests.length, 0)
+    }
+    live.finish('session', { turn: 1, step: 0, messageId: 'message', text })
+    await settle()
+    const segments = splitTtsSegments(text)
+    assert.equal(segments.length, 2)
+    assert.deepEqual(requests.map(request => request.text), segments)
+    assert.deepEqual(saved.map(entry => entry.text), segments)
+    for (const entry of saved) {
+      const bytes = new DataView(await entry.blob.arrayBuffer())
+      assert.equal(entry.format, 'wav')
+      assert.equal(bytes.getUint32(40, true), 4)
+    }
+  }, { fetch: () => new Response(new ReadableStream({ start(controller) {
+    controller.enqueue(pcmEvent())
+    controller.enqueue(pcmEvent())
+    controller.close()
+  } })) }, { add: entry => { saved.push(entry) } })
 })
-const { LiveSpeechController } = await import(await clientModuleUrl('../src/client/playback/live-speech-controller.ts', {
-  '@deepseek-ai/dsh-client-ui-primitives': new URL('./fixtures/plain-text.ts', import.meta.url).href,
-  '../../shared.js': sharedUrl,
-  '../../pcm-stream.js': new URL('../lib/pcm-stream.js', import.meta.url).href,
-  './pcm-audio-queue.js': audioUrl,
-  '../history/pcm-recording.js': new URL('../src/client/history/pcm-recording.ts', import.meta.url).href,
-}))
 
-const settle = () => new Promise((resolve) => setImmediate(resolve))
+test('a short live reply flushes once when generation finishes', async () => {
+  await withPlayback(async (live, requests) => {
+    const text = '这是一段很短的回复。后面还有一句话。'
+    live.observe('session', 1, 0, text)
+    await settle()
+    assert.equal(requests.length, 0)
+    live.finish('session', { turn: 1, step: 0, messageId: 'message', text })
+    await settle()
+    assert.deepEqual(requests.map(request => request.text), [prepareTtsText(text)])
+  })
+})
 
-// Exercise the real request and playback queues with browser audio and HTTP boundaries replaced.
-async function withPlayback(run) {
-  const originalFetch = globalThis.fetch
-  const originalAudioContext = globalThis.AudioContext
-  const requests = []
-  globalThis.fetch = async (url, init) => {
-    requests.push({ ...JSON.parse(init.body), signal: init.signal })
-    return new Response(`data: ${JSON.stringify({ choices: [{ delta: { audio: { data: 'AAA=' } } }] })}\n\n`)
-  }
-  globalThis.AudioContext = class {
-    state = 'running'
-    currentTime = 0
-    destination = {}
-    createGain() { return { gain: { value: 1 }, connect() {}, disconnect() {} } }
-    createBuffer(channels, length, sampleRate) {
-      return { duration: length / sampleRate, getChannelData: () => new Float32Array(length) }
-    }
-    createBufferSource() {
-      const source = new EventTarget()
-      source.playbackRate = { value: 1 }
-      source.connect = () => {}
-      source.start = () => { queueMicrotask(() => source.dispatchEvent(new Event('ended'))) }
-      source.stop = () => { source.dispatchEvent(new Event('ended')) }
-      return source
-    }
-    async close() { this.state = 'closed' }
-  }
-  const live = new LiveSpeechController()
-  live.activateSession('session')
-  try {
-    await run(live, requests)
-  } finally {
-    await live.dispose()
-    globalThis.fetch = originalFetch
-    if (originalAudioContext === undefined) delete globalThis.AudioContext
-    else globalThis.AudioContext = originalAudioContext
-  }
-}
+test('pending sentences count toward the unfinished PCM slice without repeating text', async () => {
+  await withPlayback(async (live, requests) => {
+    const first = '甲'.repeat(40) + '。'
+    const prefix = '乙'.repeat(DEFAULT_TTS_SEGMENT_CHARACTERS - 40)
+    live.observe('session', 1, 0, first)
+    await settle()
+    assert.equal(requests.length, 0)
+    live.observe('session', 1, 0, first + prefix)
+    await settle()
+    assert.deepEqual(requests.map(request => request.text), [prepareTtsText(first + prefix)])
+    const text = first + prefix + '这是后续正文。'
+    live.observe('session', 1, 0, text)
+    live.finish('session', { turn: 1, step: 0, messageId: 'message', text })
+    await settle()
+    assert.equal(requests.map(request => request.text).join(''), prepareTtsText(text))
+  })
+})
+
+test('PCM sentence grouping respects the preferred maximum and keeps long sentences whole', async () => {
+  await withPlayback(async (live, requests) => {
+    const text = ['甲'.repeat(100), '乙'.repeat(200), '丙'.repeat(MAX_TTS_SEGMENT_CHARACTERS + 60)].map(sentence => sentence + '。').join('')
+    live.observe('session', 1, 0, text)
+    live.finish('session', { turn: 1, step: 0, messageId: 'message', text })
+    await settle()
+    assert.deepEqual(requests.map(request => request.text), splitTtsSegments(text))
+  })
+})
+
+test('completed PCM replies use semantic slices too', async () => {
+  await withPlayback(async (live, requests) => {
+    const text = ('甲'.repeat(30) + '。').repeat(12)
+    live.playCompleted('session', 'message', text, () => assert.fail('unexpected fallback'))
+    await settle()
+    assert.deepEqual(requests.map(request => request.text), splitTtsSegments(text))
+  })
+})
+
+test('cancelling a completed PCM reply discards queued slices and late recordings', async () => {
+  let respond
+  const saved = []
+  await withPlayback(async (live, requests) => {
+    const text = ('甲'.repeat(30) + '。').repeat(12)
+    live.playCompleted('session', 'message', text, () => assert.fail('unexpected fallback'))
+    const signal = requests[0].signal
+    live.cancel()
+    respond(new Response(pcmEvent()))
+    await settle()
+    assert.equal(signal.aborted, true)
+    assert.equal(requests.length, 1)
+    assert.equal(saved.length, 0)
+  }, { fetch: () => new Promise(resolve => { respond = resolve }) }, { add: entry => { saved.push(entry) } })
+})
+
+test('failure before the first completed PCM slice falls back once and skips remaining slices', async () => {
+  await withPlayback(async (live, requests) => {
+    let fallbacks = 0
+    const text = ('甲'.repeat(30) + '。').repeat(12)
+    live.playCompleted('session', 'message', text, () => { fallbacks += 1 })
+    await settle()
+    assert.equal(fallbacks, 1)
+    assert.equal(requests.length, 1)
+  }, { fetch: () => new Response('failed', { status: 503 }) })
+})
 
 test('provisional PCM requests keep decimals and words intact across partial updates', async () => {
   for (const token of ['3.14', 'temperature']) {

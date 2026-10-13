@@ -107,7 +107,7 @@ Browser voices come from the Web Speech API. Offline availability, language cove
 - **Full mode**: automatic and manual playback both read the full reply.
 - **First-segment mode**: automatic and manual playback both read only the opening segment.
 
-Opening segments and synthesis chunks split between complete sentences; an individual long sentence may exceed the recommended chunk size. PCM streaming can begin after a short unfinished prefix arrives and continues without repeating already queued text.
+PCM requests and semantic segments accumulate complete sentences toward 160 spoken characters, with a preferred maximum of 240. An individual long sentence may exceed that maximum, and the final shorter tail is also played. PCM streaming can begin when unfinished prose reaches the target size, without repeating already queued text. History saves one WAV per synthesis slice, combining all PCM data chunks received by that request.
 
 The settings panel supports keyboard navigation: use `Tab` to move focus, arrow keys to adjust sliders and options, and `Space` to activate buttons and switches.
 

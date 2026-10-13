@@ -1,259 +1,33 @@
 import type { ReactElement } from 'react'
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import {
   Button,
   Tooltip,
-  extractMarkdownPlainText,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { RiVoiceAiFill } from 'react-icons/ri'
-import { applyTtsLivePlaybackScope, applyTtsPlaybackScope, prepareTtsText, resolveTtsSettings, splitTtsSegments, TtsFirstSegmentLimiter, TTS_API_KEY_STATUS_ROUTE } from '../../shared.js'
-import type { TtsReadScope } from '../../shared.js'
+import { resolveTtsSettings } from '../../shared.js'
 import type { TtsSettings } from '../../shared.js'
-import type { ChatSnapshot, AssistantBlock } from '@deepseek-ai/dsh-client-ui-chat/client'
+import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type { SessionSnapshot } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { Translate } from '../localization.js'
-import { LiveSpeechController, LocalSpeechController, PlaybackController } from '../playback/index.js'
-import type { LiveMessageIdentity } from '../playback/index.js'
+import type { LiveSpeechController, LocalSpeechController, PlaybackController } from '../playback/index.js'
 import { useSettingsSnapshot } from '../settings/scope.js'
 import { AnimatedAudioLines } from './animated-audio-lines.js'
+import { messageText, messageTime, latestAssistantMessageId, messageLiveIdentity } from './message-text.js'
+import { useApiKeySupported } from './api-key-status.js'
+import { handleReadAloudClick, playCompletedReply } from '../playback/read-aloud-playback.js'
 
-type ChatLegacy = ChatSnapshot['legacy']
-
-function messageText(legacy: ChatLegacy, messageId: string): string {
-  for (const node of legacy.nodes) {
-    if (node.kind !== 'assistant' || node.messageId !== messageId) continue
-    const blocks = node.blocks as readonly AssistantBlock[]
-    const markdown = blocks
-      .filter((block): block is Extract<AssistantBlock, { kind: 'text' }> => block.kind === 'text')
-      .map((block) => block.text)
-      .join('\n\n')
-    return extractMarkdownPlainText(prepareTtsText(markdown)).trim()
-  }
-  return ''
-}
-
-function messageTime(legacy: ChatLegacy, messageId: string): number | null {
-  for (const node of legacy.nodes) {
-    if (node.kind === 'assistant' && node.messageId === messageId) return node.time
-  }
-  return null
-}
-
-function latestAssistantMessageId(legacy: ChatLegacy): string | null {
-  for (let index = legacy.nodes.length - 1; index >= 0; index -= 1) {
-    const node = legacy.nodes[index]
-    if (node?.kind === 'assistant' && node.messageId !== undefined) return node.messageId
-  }
-  return null
-}
-
-function assistantText(blocks: readonly AssistantBlock[]): string {
-  return blocks
-    .filter((block): block is { kind: 'text'; text: string } => block.kind === 'text' && typeof block.text === 'string')
-    .map((block) => block.text)
-    .join('\n\n')
-}
-
-
-function finalLiveMessage(legacy: ChatLegacy, turn: number, step: number): LiveMessageIdentity | null {
-  for (let index = legacy.nodes.length - 1; index >= 0; index -= 1) {
-    const node = legacy.nodes[index]
-    if (node?.kind === 'assistant' && node.messageId !== undefined && node.turn === turn && node.step === step) {
-      return {
-        messageId: node.messageId,
-        turn: node.turn,
-        step: node.step,
-        text: assistantText(node.blocks),
-        interrupted: node.interrupted === true,
-      }
-    }
-  }
-  return null
-}
-
-function messageLiveIdentity(legacy: ChatLegacy, messageId: string): Pick<LiveMessageIdentity, 'turn' | 'step'> | null {
-  for (const node of legacy.nodes) {
-    if (node.kind === 'assistant' && node.messageId === messageId) return { turn: node.turn, step: node.step }
-  }
-  return null
-}
-
-let apiKeyStatusPromise: Promise<boolean> | null = null
-let apiKeyStatusExpires = 0
-
-function useApiKeySupported(active: boolean): boolean | null {
-  const [supported, setSupported] = useState<boolean | null>(null)
-  useEffect(() => {
-    if (!active) { setSupported(null); return }
-    if (apiKeyStatusPromise === null || apiKeyStatusExpires <= Date.now()) {
-      apiKeyStatusExpires = Date.now() + 2000
-      apiKeyStatusPromise = fetch(TTS_API_KEY_STATUS_ROUTE, { headers: { accept: 'application/json' } })
-        .then(async (response) => {
-          if (!response.ok) throw new Error('api-key-status-failed')
-          const result = await response.json() as { supported?: unknown }
-          return result.supported === true
-        })
-        .catch(() => false)
-    }
-    let mounted = true
-    void apiKeyStatusPromise.then((value) => { if (mounted) setSupported(value) })
-    return () => { mounted = false }
-  }, [active])
-  return supported
-}
-
-interface SessionPlaybackObserverProps {
-  sessionId: string
-  messageId?: string
-  useSession: <T>(selector: (snapshot: SessionSnapshot) => T) => T
-  useChat: <T>(selector: (snapshot: ChatSnapshot) => T) => T
-  playback: PlaybackController
-  live: LiveSpeechController
-  local: LocalSpeechController
-  settings: ConfigForm<TtsSettings>
-}
-
-function scopedLiveText(value: string, scope: TtsReadScope, limiter: TtsFirstSegmentLimiter, final = false): string {
-  const plain = extractMarkdownPlainText(prepareTtsText(value)).trim()
-  return applyTtsLivePlaybackScope(plain, scope, limiter, final)
-}
-
-/** Own the active-session boundary and feed its partial assistant output into realtime speech. */
-export function SessionPlaybackObserver({ sessionId, useSession, useChat, playback, live, local, settings }: SessionPlaybackObserverProps): null {
-  const settingsSnapshot = useSettingsSnapshot(settings)
-  const resolvedSettings = resolveTtsSettings(settingsSnapshot.value)
-  const apiKeySupported = useApiKeySupported(resolvedSettings.localSpeechMode !== 'disabled')
-  live.setMaxPausedPcmBytes(resolvedSettings.maxPausedPcmBytes)
-  local.setVoiceURI(resolvedSettings.localVoiceURI)
-  local.setTimeoutMs(resolvedSettings.requestTimeoutMs)
-
-  const sessionSnapshot = useSession(snapshot => snapshot)
-  const legacy = useChat(chat => chat.legacy)
-  const runningSnapshot = sessionSnapshot.running
-
-  const active = useRef<{ turn: number; step: number; limiter: TtsFirstSegmentLimiter } | null>(null)
-  const wasRunning = useRef(runningSnapshot)
-  const runArmed = useRef(true)
-  const latestMessageId = latestAssistantMessageId(legacy)
-  const partial = legacy.partial
-  const partialText = partial === null ? '' : assistantText(partial.blocks)
-  const attachedMidRun = useRef(runningSnapshot)
-  const resumeCheckpoint = useRef(runningSnapshot ? partial : null)
-  const awaitingOpen = useRef(runningSnapshot && sessionSnapshot.openState !== 'open')
-
-  useEffect(() => {
-    const localModel = resolvedSettings.model === 'mimo-v2.5-tts'
-    const localFirst = localModel && resolvedSettings.localSpeechMode === 'local-first'
-    const autoWithLocalFallback = localModel && resolvedSettings.localSpeechMode === 'auto'
-    live.setFallbackHandler(autoWithLocalFallback ? (cursor, text) => local.observe(sessionId, cursor.turn, cursor.step, text) : null)
-    local.setFallbackHandler(localFirst ? (cursor, text) => live.observe(sessionId, cursor.turn, cursor.step, text) : null)
-    return () => {
-      live.setFallbackHandler(null)
-      local.setFallbackHandler(null)
-    }
-  }, [live, local, resolvedSettings.localSpeechMode, resolvedSettings.model, sessionId])
-
-  useEffect(() => {
-    active.current = null
-    wasRunning.current = runningSnapshot
-    runArmed.current = true
-    attachedMidRun.current = runningSnapshot
-    resumeCheckpoint.current = runningSnapshot ? partial : null
-    awaitingOpen.current = runningSnapshot && sessionSnapshot.openState !== 'open'
-    playback.activateSession(sessionId)
-    live.activateSession(sessionId)
-    local.activateSession(sessionId)
-    return () => {
-      active.current = null
-      live.deactivateSession(sessionId)
-      local.deactivateSession(sessionId)
-      playback.deactivateSession(sessionId)
-    }
-  }, [live, local, playback, sessionId])
-
-  useEffect(() => {
-    const beganRun = runningSnapshot && !wasRunning.current
-    wasRunning.current = runningSnapshot
-    if (!runningSnapshot) runArmed.current = true
-    else if (beganRun) {
-      runArmed.current = true
-      attachedMidRun.current = false
-      resumeCheckpoint.current = null
-      awaitingOpen.current = false
-      live.cancelSession(sessionId)
-      local.cancelSession(sessionId)
-      playback.cancelPlayback(sessionId)
-      active.current = null
-    }
-
-    const localModel = resolvedSettings.model === 'mimo-v2.5-tts'
-    const realtimeSpeechEnabled = localModel
-    playback.observeSession(sessionId, runningSnapshot && runArmed.current, latestMessageId, attachedMidRun.current && realtimeSpeechEnabled)
-    if (!resolvedSettings.enabled || !resolvedSettings.autoPlay || !realtimeSpeechEnabled) {
-      live.cancelSession(sessionId)
-      local.cancel()
-      active.current = null
-      if (runningSnapshot) runArmed.current = false
-      return
-    }
-    if (!runArmed.current) return
-    if (awaitingOpen.current) {
-      if (sessionSnapshot.openState !== 'open') return
-      resumeCheckpoint.current = partial
-      awaitingOpen.current = false
-    }
-    if (partial !== null) {
-      if (active.current !== null && (active.current.turn !== partial.turn || active.current.step !== partial.step)) {
-        const previous = finalLiveMessage(legacy, active.current.turn, active.current.step)
-        if (previous !== null) {
-          const previousText = scopedLiveText(previous.text, resolvedSettings.readScope, active.current.limiter, true)
-          const previousFinal = { ...previous, text: previousText }
-          const useLocal = localModel && resolvedSettings.localSpeechMode !== 'disabled'
-            && (resolvedSettings.localSpeechMode === 'local-first' || (resolvedSettings.localSpeechMode === 'auto' && apiKeySupported === false))
-          if (useLocal) local.finish(sessionId, previousFinal)
-          else live.finish(sessionId, previousFinal)
-        }
-      }
-      if (active.current === null || active.current.turn !== partial.turn || active.current.step !== partial.step) {
-        active.current = {
-          turn: partial.turn,
-          step: partial.step,
-          limiter: new TtsFirstSegmentLimiter(resolvedSettings.readScope === 'smart' ? 2 : 1),
-        }
-      }
-      const observedText = scopedLiveText(partialText, resolvedSettings.readScope, active.current.limiter)
-      if (resumeCheckpoint.current !== null) {
-        if (resumeCheckpoint.current.turn === partial.turn && resumeCheckpoint.current.step === partial.step) {
-          live.prime(sessionId, partial.turn, partial.step, observedText)
-          local.prime(sessionId, partial.turn, partial.step, observedText)
-        }
-        resumeCheckpoint.current = null
-      }
-      const useLocal = localModel && resolvedSettings.localSpeechMode !== 'disabled'
-        && (resolvedSettings.localSpeechMode === 'local-first' || (resolvedSettings.localSpeechMode === 'auto' && apiKeySupported === false))
-      if (useLocal) local.observe(sessionId, partial.turn, partial.step, observedText)
-      else live.observe(sessionId, partial.turn, partial.step, observedText)
-      return
-    }
-    if (active.current !== null) {
-      const final = finalLiveMessage(legacy, active.current.turn, active.current.step)
-      if (final !== null) {
-        const finalText = scopedLiveText(final.text, resolvedSettings.readScope, active.current.limiter, true)
-        const finalMessage = { ...final, text: finalText }
-        const useLocal = localModel && resolvedSettings.localSpeechMode !== 'disabled'
-          && (resolvedSettings.localSpeechMode === 'local-first' || (resolvedSettings.localSpeechMode === 'auto' && apiKeySupported === false))
-        if (useLocal) local.finish(sessionId, finalMessage)
-        else live.finish(sessionId, finalMessage)
-      } else if (!runningSnapshot) {
-        live.cancelSession(sessionId)
-        local.cancelSession(sessionId)
-      }
-      active.current = null
-    }
-  }, [apiKeySupported, legacy, latestMessageId, live, local, partial, partialText, playback, resolvedSettings.autoPlay, resolvedSettings.enabled, resolvedSettings.localSpeechMode, resolvedSettings.model, resolvedSettings.readScope, runningSnapshot, sessionId, sessionSnapshot.openState])
-
-  return null
+const PLAYBACK_ERROR_KEYS: Record<string, Parameters<Translate>[0]> = {
+  'no-text': 'error.noText',
+  'local-speech-not-allowed': 'error.localNotAllowed',
+  'local-voice-unavailable': 'error.localVoiceUnavailable',
+  'local-speech-timeout': 'error.localTimeout',
+  'local-speech-audio-device': 'error.localAudioDevice',
+  'local-speech-failed': 'error.localSynthesis',
+  'local-speech-unavailable': 'error.localSynthesis',
+  'autoplay-blocked': 'error.play',
+  'play-failed': 'error.play',
 }
 
 interface ReadAloudActionProps {
@@ -281,56 +55,21 @@ export function ReadAloudAction({ sessionId, messageId, useSession, useChat, pla
   const text = message.text
   const settingsSnapshot = useSettingsSnapshot(settings)
   const resolvedSettings = resolveTtsSettings(settingsSnapshot.value)
-  const playbackText = (automatic: boolean): string => applyTtsPlaybackScope(text, resolvedSettings.readScope, automatic)
   const apiKeySupported = useApiKeySupported(resolvedSettings.localSpeechMode !== 'disabled')
   local.setVoiceURI(resolvedSettings.localVoiceURI)
   local.setTimeoutMs(resolvedSettings.requestTimeoutMs)
   const view = useSyncExternalStore(playback.subscribe, playback.getSnapshot, playback.getSnapshot)
 
-  const playMimoCompletedReply = (automatic: boolean, scopedText: string): void => {
-    if (resolvedSettings.model === 'mimo-v2.5-tts-voicedesign' && scopedText.length > 0) {
-      live.cancelSession(sessionId)
-      const segments = scopedText
-      if (splitTtsSegments(segments).length > 1) {
-        void playback.segmented(sessionId, messageId, segments, automatic, resolvedSettings.localSpeechMode === 'auto'
-          ? () => local.playCompleted(sessionId, messageId, segments)
-          : undefined)
-      } else {
-        void playback.toggle(sessionId, messageId, segments, automatic, resolvedSettings.localSpeechMode === 'auto'
-          ? () => local.playCompleted(sessionId, messageId, segments)
-          : undefined, 'mp3')
-      }
-      return
-    }
-    if (resolvedSettings.model === 'mimo-v2.5-tts') {
-      playback.cancelPlayback(sessionId)
-      live.playCompleted(sessionId, messageId, scopedText, () => {
-        if (resolvedSettings.localSpeechMode === 'auto') local.playCompleted(sessionId, messageId, scopedText)
-        else void playback.toggle(sessionId, messageId, scopedText, automatic, undefined, 'mp3')
-      })
-      return
-    }
-    live.cancelSession(sessionId)
-    void playback.toggle(sessionId, messageId, scopedText, automatic, resolvedSettings.localSpeechMode === 'auto'
-      ? () => local.playCompleted(sessionId, messageId, scopedText)
-      : undefined)
-  }
-
-  const playCompletedReply = (automatic: boolean): void => {
-    const scopedText = playbackText(automatic)
-    if (resolvedSettings.localSpeechMode === 'local-first' || (resolvedSettings.localSpeechMode === 'auto' && apiKeySupported === false)) {
-      live.cancelSession(sessionId)
-      playback.cancelPlayback(sessionId)
-      local.playCompleted(sessionId, messageId, scopedText, resolvedSettings.localSpeechMode === 'local-first' ? () => playMimoCompletedReply(automatic, scopedText) : undefined)
-      return
-    }
-    playMimoCompletedReply(automatic, scopedText)
+  const request = {
+    sessionId, messageId, text, playback, live, local,
+    turn: legacy.partial?.turn ?? message.identity?.turn,
+    settings: resolvedSettings, apiKeySupported,
   }
 
   useEffect(() => {
-    if (text.length === 0 || settingsSnapshot.value?.enabled !== true || settingsSnapshot.value?.autoPlay !== true || (live.hasHandled(sessionId, message.identity) && local.hasHandled(sessionId, message.identity)) || running || message.latestMessageId !== messageId || message.time === null || message.time < playback.autoPlayArmedAt) return
+    if (text.length === 0 || settingsSnapshot.value?.enabled !== true || settingsSnapshot.value?.autoPlay !== true || (live.hasHandled(sessionId, message.identity) || local.hasHandled(sessionId, message.identity)) || running || message.latestMessageId !== messageId || message.time === null || message.time < playback.autoPlayArmedAt) return
     const cancel = window.setTimeout(() => {
-      if (!live.hasHandled(sessionId, message.identity) && !local.hasHandled(sessionId, message.identity) && playback.claimAutomaticPlayback(sessionId, messageId)) playCompletedReply(true)
+      if (!live.hasHandled(sessionId, message.identity) && !local.hasHandled(sessionId, message.identity) && playback.claimAutomaticPlayback(sessionId, messageId)) playCompletedReply(request, true)
     }, 0)
     return () => window.clearTimeout(cancel)
   }, [apiKeySupported, live, local, message.identity, message.latestMessageId, message.time, messageId, playback, resolvedSettings.localSpeechMode, resolvedSettings.model, resolvedSettings.readScope, running, sessionId, settingsSnapshot.value?.autoPlay, settingsSnapshot.value?.enabled, text])
@@ -342,32 +81,16 @@ export function ReadAloudAction({ sessionId, messageId, useSession, useChat, pla
   const source = mine ? view.source : null
   const liveActive = (source === 'live' || source === 'system') && (status === 'loading' || status === 'playing')
   const label = status === 'loading'
-    ? liveActive ? t('action.cancel') : t('action.loading')
+    ? source === 'complete' ? t('action.loading') : t('action.cancel')
     : status === 'playing'
-      ? liveActive ? t('action.stop') : t('action.pause')
+      ? t('action.pause')
       : status === 'paused'
         ? t('action.resume')
         : status === 'error'
           ? t('action.retry')
           : t('action.play')
   const error = mine ? view.error : null
-  const errorText = error === null
-    ? null
-    : error === 'no-text'
-      ? t('error.noText')
-      : error === 'local-speech-not-allowed'
-        ? t('error.localNotAllowed')
-        : error === 'local-voice-unavailable'
-          ? t('error.localVoiceUnavailable')
-          : error === 'local-speech-timeout'
-            ? t('error.localTimeout')
-            : error === 'local-speech-audio-device'
-            ? t('error.localAudioDevice')
-            : error === 'local-speech-failed' || error === 'local-speech-unavailable'
-              ? t('error.localSynthesis')
-      : error === 'autoplay-blocked' || error === 'play-failed'
-        ? t('error.play')
-        : t('error.request')
+  const errorText = error === null ? null : t(PLAYBACK_ERROR_KEYS[error] ?? 'error.request')
 
   return (
     <>
@@ -379,33 +102,8 @@ export function ReadAloudAction({ sessionId, messageId, useSession, useChat, pla
           className="xmimo-tts-action"
           aria-label={label}
           aria-pressed={status === 'playing' || liveActive}
-          disabled={status === 'loading' && !liveActive}
-          onClick={() => {
-            if (mine && (source === 'live' || source === 'system') && (status === 'loading' || status === 'playing' || status === 'paused')) {
-              if (status === 'loading') {
-                const stopped = source === 'system' ? local.stop(sessionId) : live.stop(sessionId)
-                const turn = legacy.partial?.turn ?? message.identity?.turn
-                if (stopped && turn !== undefined) {
-                  live.blockTurn(sessionId, turn)
-                  local.blockTurn(sessionId, turn)
-                }
-                playback.cancelPlayback(sessionId)
-              }
-              else if (status === 'playing') void (source === 'system' ? local.pause(sessionId) : live.pause(sessionId))
-              else if (status === 'paused') void (source === 'system' ? local.resume(sessionId) : live.resume(sessionId))
-              return
-            }
-            if (mine && source === 'complete') {
-              void playback.toggle(sessionId, messageId, text, false)
-              return
-            }
-            if (mine && source === 'segmented') {
-              if (status === 'playing' || status === 'loading') playback.pauseSegmented(sessionId, messageId)
-              else if (status === 'paused') void playback.segmented(sessionId, messageId, playbackText(false), false, resolvedSettings.localSpeechMode === 'auto' ? () => local.playCompleted(sessionId, messageId, playbackText(false)) : undefined)
-              return
-            }
-            playCompletedReply(false)
-          }}
+          disabled={status === 'loading' && source === 'complete'}
+          onClick={() => handleReadAloudClick(request, view)}
         >
           {status === 'playing'
             ? <AnimatedAudioLines size={16} />

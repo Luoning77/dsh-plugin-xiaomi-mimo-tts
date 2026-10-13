@@ -1,0 +1,78 @@
+import { applyTtsPlaybackScope, splitTtsSegments } from '../../shared.js'
+import type { ResolvedTtsSettings } from '../../shared.js'
+import type { LiveSpeechController } from './live-speech-controller.js'
+import type { LocalSpeechController } from './local-speech-controller.js'
+import type { PlaybackController } from './playback-controller.js'
+import type { PlaybackView } from './types.js'
+
+export interface ReadAloudRequest {
+  sessionId: string
+  messageId: string
+  text: string
+  turn: number | undefined
+  settings: ResolvedTtsSettings
+  apiKeySupported: boolean | null
+  playback: PlaybackController
+  live: LiveSpeechController
+  local: LocalSpeechController
+}
+
+/** Start a completed reply with one directed fallback, using the selected playback range. */
+export function playCompletedReply(request: ReadAloudRequest, automatic: boolean): void {
+  const { sessionId, messageId, text, settings, apiKeySupported, playback, live, local } = request
+  const scopedText = applyTtsPlaybackScope(text, settings.readScope, automatic)
+  const localFallback = settings.localSpeechMode === 'auto' ? () => local.playCompleted(sessionId, messageId, scopedText) : undefined
+  const playRemote = (): void => {
+    local.cancelSession(sessionId)
+    if (settings.model === 'mimo-v2.5-tts-voicedesign') {
+      live.cancelSession(sessionId)
+      if (splitTtsSegments(scopedText).length > 1) void playback.segmented(sessionId, messageId, scopedText, automatic, localFallback)
+      else void playback.toggle(sessionId, messageId, scopedText, automatic, localFallback, 'mp3')
+    } else {
+      playback.cancelPlayback(sessionId)
+      live.playCompleted(sessionId, messageId, scopedText, () => {
+        if (localFallback !== undefined) localFallback()
+        else void playback.toggle(sessionId, messageId, scopedText, automatic, undefined, 'mp3')
+      })
+    }
+  }
+  if (settings.localSpeechMode === 'local-first' || (settings.localSpeechMode === 'auto' && apiKeySupported === false)) {
+    live.cancelSession(sessionId)
+    playback.cancelPlayback(sessionId)
+    local.playCompleted(sessionId, messageId, scopedText, settings.localSpeechMode === 'local-first' ? playRemote : undefined)
+  } else playRemote()
+}
+
+/** Keep button state transitions independent from React rendering. */
+export function handleReadAloudClick(request: ReadAloudRequest, view: PlaybackView): void {
+  const { sessionId, messageId, text, turn, settings, playback, live, local } = request
+  const mine = view.sessionId === sessionId && view.messageId === messageId
+  if (mine && (view.source === 'live' || view.source === 'system')) {
+    const controller = view.source === 'system' ? local : live
+    if (view.status === 'loading') {
+      if (controller.stop(sessionId) && turn !== undefined) {
+        live.blockTurn(sessionId, turn)
+        local.blockTurn(sessionId, turn)
+      }
+      playback.cancelPlayback(sessionId)
+      return
+    }
+    if (view.status === 'playing') { void controller.pause(sessionId); return }
+    if (view.status === 'paused') { void controller.resume(sessionId); return }
+  }
+  if (mine && view.source === 'complete') {
+    void playback.toggle(sessionId, messageId, text, false)
+    return
+  }
+  if (mine && view.source === 'segmented') {
+    if (view.status === 'playing' || view.status === 'loading') playback.pauseSegmented(sessionId, messageId)
+    else {
+      const scopedText = applyTtsPlaybackScope(text, settings.readScope, false)
+      void playback.segmented(sessionId, messageId, scopedText, false, settings.localSpeechMode === 'auto'
+        ? () => local.playCompleted(sessionId, messageId, scopedText)
+        : undefined)
+    }
+    return
+  }
+  playCompletedReply(request, false)
+}

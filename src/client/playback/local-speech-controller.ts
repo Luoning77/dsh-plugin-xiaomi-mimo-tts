@@ -1,5 +1,5 @@
-import { extractMarkdownPlainText } from '@deepseek-ai/dsh-client-ui-primitives'
-import { AbortableSentenceQueue, batchTtsStreamText, classifyLiveSpeechTransition, normalizeVoiceRate, prepareTtsText, splitCompletedTtsSentences, splitTtsSegments } from '../../shared.js'
+import { prepareSpeechText } from './speech-text.js'
+import { AbortableSentenceQueue, batchTtsStreamText, classifyLiveSpeechTransition, normalizeVoiceRate, splitCompletedTtsSentences, splitTtsSegments } from '../../shared.js'
 import type { LiveSpeechCursor } from '../../shared.js'
 import type { LiveMessageIdentity, PlaybackStatus } from './types.js'
 import { applySpeechVoiceRate } from './voice-rate.js'
@@ -103,12 +103,19 @@ export class LocalSpeechController {
   }
 
   finish(sessionId: string, final: LiveMessageIdentity): void {
+    if (this.sessionId !== sessionId) return
     const key = `${sessionId}:${final.turn}:${final.step}`
-    if (this.blockedTurn === `${sessionId}:${final.turn}` || this.manuallyStoppedTurns.has(`${sessionId}:${final.turn}`)) { this.handled.add(key); return }
+    if (this.blockedTurn === `${sessionId}:${final.turn}` || this.manuallyStoppedTurns.has(`${sessionId}:${final.turn}`)) {
+      this.messageId = final.messageId
+      this.reportStatus()
+      this.handled.add(key)
+      return
+    }
     if (this.sessionId !== sessionId || this.active === null || `${this.active.sessionId}:${this.active.turn}:${this.active.step}` !== key) return
     if (final.interrupted) { this.cancel(); return }
     if (final.text.startsWith(this.observed)) this.observed = final.text
     this.messageId = final.messageId
+    this.reportStatus()
     this.drain(true)
     this.handled.add(key)
   }
@@ -209,10 +216,10 @@ export class LocalSpeechController {
     this.observed = ''
     this.consumed = 0
     this.pendingText = ''
-    this.messageId = null
     this.completedFallback = null
     this.audioStarted = false
     this.setStatus('idle')
+    this.messageId = null
   }
 
   private drain(flush: boolean): void {
@@ -221,13 +228,13 @@ export class LocalSpeechController {
     this.consumed += consumed
     if (flush) this.consumed = this.observed.length
     for (const sentence of ready) {
-      const text = extractMarkdownPlainText(prepareTtsText(sentence)).trim()
+      const text = prepareSpeechText(sentence)
       const batch = batchTtsStreamText(this.pendingText, text, false)
       this.pendingText = batch.pending
       if (batch.request !== null) this.queue.enqueue(batch.request)
     }
     if (flush) {
-      const text = extractMarkdownPlainText(prepareTtsText(this.pendingText)).trim()
+      const text = prepareSpeechText(this.pendingText)
       this.pendingText = ''
       if (text.length > 0) this.queue.enqueue(text)
     }
@@ -250,7 +257,7 @@ export class LocalSpeechController {
         onError: (error) => {
           if (generation !== this.generation) return
           const code = error instanceof Error ? error.message : 'local-speech-failed'
-          const canFallback = !this.audioStarted || code === 'local-speech-timeout'
+          const canFallback = !this.audioStarted
           if (canFallback && this.completedFallback !== null) {
             const fallback = this.completedFallback
             this.resetState()
@@ -265,6 +272,7 @@ export class LocalSpeechController {
             fallback(cursor, text)
             return
           }
+          if (this.active !== null) this.blockedTurn = `${this.active.sessionId}:${this.active.turn}`
           this.setStatus('error', code)
         },
       },
@@ -329,6 +337,10 @@ export class LocalSpeechController {
     if (this.status === status && this.error === error) return
     this.status = status
     this.error = status === 'error' ? error : null
-    if (this.sessionId !== null && this.messageId !== null) this.onStateChange?.(this.sessionId, this.messageId, status, this.error)
+    this.reportStatus()
+  }
+
+  private reportStatus(): void {
+    if (this.sessionId !== null && this.messageId !== null) this.onStateChange?.(this.sessionId, this.messageId, this.status, this.error)
   }
 }

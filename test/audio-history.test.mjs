@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { readFile } from 'node:fs/promises'
-import ts from 'typescript'
+import { loadClientModule } from './helpers/client-modules.mjs'
 import { AudioHistory, AUDIO_HISTORY_MAX_BYTES, AUDIO_HISTORY_MAX_ENTRIES, retainAudioHistory } from '../src/client/history/audio-history.ts'
 import { PcmRecording } from '../src/client/history/pcm-recording.ts'
 
@@ -95,13 +94,7 @@ test('PCM recording preserves split sample bytes in a standard 24 kHz mono WAV',
   assert.equal(odd.toWav(), null)
 })
 
-// Compile client TS in memory; network and browser media are the only mocked boundaries.
-const rateCode = ts.transpile(await readFile(new URL('../src/client/playback/voice-rate.ts', import.meta.url), 'utf8'), { module: ts.ModuleKind.ESNext })
-const rateUrl = `data:text/javascript;base64,${Buffer.from(rateCode).toString('base64')}`
-const playbackCode = ts.transpile(await readFile(new URL('../src/client/playback/playback-controller.ts', import.meta.url), 'utf8'), { module: ts.ModuleKind.ESNext })
-  .replace('../../shared.js', new URL('../lib/shared.js', import.meta.url).href)
-  .replace('./voice-rate.js', rateUrl)
-const { PlaybackController } = await import(`data:text/javascript;base64,${Buffer.from(playbackCode).toString('base64')}`)
+const { PlaybackController } = await loadClientModule('src/client/playback/playback-controller.ts')
 
 test('completed and autoplay-blocked audio stay in history; cancelled late responses do not', async () => {
   const originalAudio = globalThis.Audio

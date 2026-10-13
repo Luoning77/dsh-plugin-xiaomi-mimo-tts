@@ -41,13 +41,20 @@ export class PcmAudioQueue {
   setPlaybackRate(value: number): void { this.playbackRate = normalizeVoiceRate(value) }
 
   async pause(): Promise<void> {
+    const revision = this.revision
+    const context = this.context
     this.userPaused = true
-    if (this.context !== null && this.context.state === 'running') await this.context.suspend()
+    if (context !== null && context.state === 'running') await context.suspend()
+    if (revision !== this.revision && context === this.context && context !== null
+      && !this.userPaused && this.sources.size > 0 && context.state !== 'running') await context.resume()
   }
 
   async resume(): Promise<void> {
-    if (this.context !== null && this.context.state !== 'running') await this.context.resume()
-    this.userPaused = false
+    const revision = this.revision
+    const context = this.context
+    if (context !== null && context.state !== 'running') await context.resume()
+    if (revision === this.revision) this.userPaused = false
+    else if (context === this.context && context !== null && this.userPaused && context.state === 'running') await context.suspend()
   }
 
   enqueue(base64: string): Promise<void> {
@@ -140,7 +147,7 @@ export class PcmAudioQueue {
       throw error
     }
     this.setBusy(true)
-    this.callbacks.onPlaybackStart()
+    if (!this.userPaused && context.state === 'running') this.callbacks.onPlaybackStart()
   }
 
   private setBusy(busy: boolean): void {
