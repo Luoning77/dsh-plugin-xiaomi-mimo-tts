@@ -5,6 +5,7 @@ coverage/
 .preview-dist/
 .playwright-cli/
 .vscode/
+.claude/
 output/
 lib/
 .agents/*
