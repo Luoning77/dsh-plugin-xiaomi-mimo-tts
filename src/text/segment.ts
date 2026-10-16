@@ -3,7 +3,11 @@ import {
   DEFAULT_TTS_SEGMENT_CHARACTERS,
   MAX_TTS_SEGMENT_CHARACTERS,
   MIN_TTS_SEGMENT_CHARACTERS,
+  MIN_TTS_STREAM_CHARACTERS,
 } from '../constants.js'
+
+// Re-export for tests
+export { MIN_TTS_STREAM_CHARACTERS }
 
 /** Count text-bearing characters only, excluding punctuation and whitespace. */
 export function countTtsSpeechCharacters(value: string): number {
