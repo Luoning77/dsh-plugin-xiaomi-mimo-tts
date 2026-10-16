@@ -42,6 +42,7 @@
 }
 
 .xmimo-tts-sound-whale-button {
+  box-sizing: border-box;
   position: absolute;
   z-index: 3;
   top: 3px;
@@ -80,32 +81,20 @@
   opacity: .5
 }
 
-.xmimo-tts-sound-whale {
+/* Crop one sheet cell in SVG coordinates, independently of host background styles. */
+.xmimo-tts-sound-whale-button > .xmimo-tts-sound-whale {
+  box-sizing: border-box;
   display: block;
-  width: 56px;
-  height: 56px;
+  width: var(--xmimo-ui-mascot-size, 56px);
+  height: var(--xmimo-ui-mascot-size, 56px);
+  max-width: none;
+  max-height: none;
+  flex: none;
+  overflow: hidden;
   pointer-events: none;
-  background-repeat: no-repeat;
-  background-size: 200% 200%;
   filter: drop-shadow(0 3px 5px rgba(15, 23, 42, .14));
   transform-origin: bottom center;
   transition: filter 180ms ease, transform 180ms ease
-}
-
-.xmimo-tts-sound-whale-all {
-  background-position: left top;
-}
-
-.xmimo-tts-sound-whale-off {
-  background-position: right top;
-}
-
-.xmimo-tts-sound-whale-click {
-  background-position: left bottom;
-}
-
-.xmimo-tts-sound-whale-task {
-  background-position: right bottom;
 }
 
 .xmimo-tts-sound-whale-button:hover:not(:disabled) .xmimo-tts-sound-whale {

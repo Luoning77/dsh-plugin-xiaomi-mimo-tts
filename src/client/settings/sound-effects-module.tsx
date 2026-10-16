@@ -35,6 +35,13 @@ const PREVIEW_CUES = [
 
 type SoundPackTone = 'neutral' | 'calm' | 'cool' | 'bright'
 
+const SOUND_MODE_VIEWBOXES: Record<SoundEffectsMode, string> = {
+  all: '0 0 1 1',
+  off: '1 0 1 1',
+  click: '0 1 1 1',
+  task: '1 1 1 1',
+}
+
 const SOUND_PACK_TONES: Record<SoundPack, SoundPackTone> = {
   minimal: 'neutral',
   soft: 'calm',
@@ -122,11 +129,15 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
     disabled={!writable}
     onClick={onCycle}
   >
-    {!minimal ? <span
-      className={`xmimo-tts-sound-whale xmimo-tts-sound-whale-${mode}`}
-      style={{ backgroundImage: `url(${hostRoute(TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE)})` }}
+    {!minimal ? <svg
+      className="xmimo-tts-sound-whale"
+      viewBox={SOUND_MODE_VIEWBOXES[mode]}
+      preserveAspectRatio="xMidYMid slice"
+      focusable="false"
       aria-hidden="true"
-    /> : null}
+    >
+      <image href={hostRoute(TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE)} width="2" height="2" />
+    </svg> : null}
     <span className={minimal ? 'xmimo-tts-sound-mode-label' : 'xmimo-tts-sound-bubble'} aria-live="polite">
       {bubbleLabel}
     </span>
