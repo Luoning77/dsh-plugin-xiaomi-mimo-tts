@@ -1,0 +1,111 @@
+import type { TtsFormat, TtsLocalSpeechMode, TtsModel, TtsReadScope, TtsVoiceDesignPlaybackMode } from './models.js'
+import type { SoundPack } from './sound.js'
+import {
+  DEFAULT_MAX_MP3_AUDIO_BYTES,
+  DEFAULT_MAX_PAUSED_PCM_BYTES,
+  DEFAULT_MAX_WAV_AUDIO_BYTES,
+  TOKEN_PLAN_TTS_BASE_URL,
+} from '../constants.js'
+import { DEFAULT_SOUND_SETTINGS } from './sound.js'
+
+export interface TtsSettings {
+  enabled?: boolean
+  apiKey?: string
+  baseURL?: string
+  model?: TtsModel
+  localSpeechMode?: TtsLocalSpeechMode
+  localVoiceURI?: string
+  voice?: string
+  voiceDesignPrompt?: string
+  voiceDesignCustomPrompt?: string
+  presetStylePrompt?: string
+  /** @deprecated Retained for Host/API compatibility; Web playback selects its transport automatically. */
+  format?: TtsFormat
+  /** @deprecated Retained for settings migration; use readScope for user-facing playback range. */
+  voiceDesignPlaybackMode?: TtsVoiceDesignPlaybackMode
+  readScope?: TtsReadScope
+  autoPlay?: boolean
+  instruction?: string
+  maxTextLength?: number
+  requestTimeoutMs?: number
+  maxMp3AudioBytes?: number
+  maxWavAudioBytes?: number
+  maxPausedPcmBytes?: number
+  voiceVolume?: number
+  voiceRate?: number
+  soundEnabled?: boolean
+  soundVolume?: number
+  soundPack?: SoundPack
+  taskSounds?: boolean
+  clickSounds?: boolean
+}
+
+export interface ResolvedTtsSettings {
+  enabled: boolean
+  apiKey: string
+  baseURL: string
+  model: TtsModel
+  localSpeechMode: TtsLocalSpeechMode
+  localVoiceURI: string
+  voice: string
+  voiceDesignPrompt: string
+  voiceDesignCustomPrompt: string
+  presetStylePrompt: string
+  format: TtsFormat
+  voiceDesignPlaybackMode: TtsVoiceDesignPlaybackMode
+  readScope: TtsReadScope
+  autoPlay: boolean
+  instruction: string
+  maxTextLength: number
+  requestTimeoutMs: number
+  maxMp3AudioBytes: number
+  maxWavAudioBytes: number
+  maxPausedPcmBytes: number
+  voiceVolume: number
+  voiceRate: number
+  soundEnabled: boolean
+  soundVolume: number
+  soundPack: SoundPack
+  taskSounds: boolean
+  clickSounds: boolean
+}
+
+/** Defaults shared by the Schemastery config and the Web settings form. */
+export const DEFAULT_TTS_SETTINGS: ResolvedTtsSettings = {
+  enabled: true,
+  apiKey: '',
+  baseURL: 'https://api.xiaomimimo.com/v1',
+  model: 'mimo-v2.5-tts',
+  localSpeechMode: 'auto',
+  localVoiceURI: '',
+  voice: '冰糖',
+  voiceDesignPrompt: '青年女性,声线清亮、亲切自然,吐字清楚,语速适中,情绪温柔克制。',
+  voiceDesignCustomPrompt: '青年女性,声线清亮、亲切自然,吐字清楚,语速适中,情绪温柔克制。',
+  presetStylePrompt: '使用清晰、自然、准确的声音朗读,语速适中,停顿自然,语气平和克制,避免夸张表达。',
+  format: 'pcm',
+  voiceDesignPlaybackMode: 'complete',
+  readScope: 'smart',
+  autoPlay: false,
+  instruction: '请忠实朗读原文,根据文本语气自然表达,不添加或改写内容。',
+  maxTextLength: 12000,
+  requestTimeoutMs: 120000,
+  maxMp3AudioBytes: DEFAULT_MAX_MP3_AUDIO_BYTES,
+  maxWavAudioBytes: DEFAULT_MAX_WAV_AUDIO_BYTES,
+  maxPausedPcmBytes: DEFAULT_MAX_PAUSED_PCM_BYTES,
+  voiceVolume: 1,
+  voiceRate: 1,
+  ...DEFAULT_SOUND_SETTINGS,
+}
+
+/** Select the Xiaomi endpoint from the API key while preserving custom settings for other keys. */
+export function resolveTtsBaseURL(apiKey: string, configuredBaseURL: string): string {
+  return apiKey.trim().startsWith('tp-')
+    ? TOKEN_PLAN_TTS_BASE_URL
+    : configuredBaseURL
+}
+
+/** Whether an API key selects one of the Xiaomi endpoints supported by this plugin. */
+export function isSupportedTtsApiKey(apiKey: string): boolean {
+  const normalized = apiKey.trim()
+  return normalized.startsWith('sk-') || normalized.startsWith('tp-')
+}

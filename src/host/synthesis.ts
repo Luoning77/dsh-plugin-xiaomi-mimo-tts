@@ -1,0 +1,46 @@
+import type { ResolvedTtsSettings } from '../types/index.js'
+
+export interface SynthesizeBody {
+  text?: unknown
+  /** Segmented VoiceDesign playback requests WAV for reliable per-segment decoding. */
+  format?: unknown
+  /** Optional, validated overrides used by the settings-card preview. */
+  model?: unknown
+  voice?: unknown
+  voiceDesignPrompt?: unknown
+}
+
+export interface XiaomiAudioResponse {
+  choices?: Array<{
+    message?: {
+      audio?: {
+        data?: unknown
+      }
+    }
+  }>
+  error?: string | { message?: string }
+  message?: string
+}
+
+export function apiErrorMessage(status: number, parsed: XiaomiAudioResponse | undefined): string {
+  const detail = typeof parsed?.error === 'string'
+    ? parsed.error
+    : parsed?.error?.message ?? parsed?.message
+  return detail && detail.length > 0
+    ? detail
+    : `Xiaomi MiMo TTS request failed (HTTP ${status})`
+}
+
+export function requestMessages(options: ResolvedTtsSettings, text: string): Array<{ role: 'user' | 'assistant'; content: string }> {
+  const context = options.model === 'mimo-v2.5-tts-voicedesign'
+    ? options.voiceDesignPrompt.trim()
+    : [options.presetStylePrompt.trim(), options.instruction.trim()].filter((item) => item.length > 0).join('\n')
+  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = []
+  if (context.length > 0) messages.push({ role: 'user', content: context })
+  messages.push({ role: 'assistant', content: text })
+  return messages
+}
+
+export function upstreamModel(options: ResolvedTtsSettings): 'mimo-v2.5-tts' | 'mimo-v2.5-tts-voicedesign' {
+  return options.model === 'mimo-v2.5-tts-voicedesign' ? options.model : 'mimo-v2.5-tts'
+}

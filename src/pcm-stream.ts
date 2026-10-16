@@ -1,4 +1,5 @@
-import { parseSseRecords, TTS_STREAM_ROUTE } from './shared.js'
+import { TTS_STREAM_ROUTE } from './constants.js'
+import { parseSseRecords } from './utils/index.js'
 import { debugConsole } from './debug-console.js'
 
 const STREAM_LOG = '[MiMoTTS Stream]'
