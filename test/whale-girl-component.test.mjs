@@ -85,7 +85,7 @@ test('Loader preserves the full preset configuration and deferred child expressi
     await ctx.plugin(Loader)
     await ctx.plugin(RecordingPresets)
     useChild(ctx)
-    await ctx.loader.root.update([presetRow])
+    await ctx.loader.root.update([{ ...presetRow, disabled: false }])
     await ctx.loader.await()
     assert.equal(active.size, 1)
     assert.deepEqual(registrations[0], presetRow.config)
@@ -103,7 +103,7 @@ test('Loader preserves the full preset configuration and deferred child expressi
   assert.equal(active.size, 0)
 })
 
-test('official registry registers exactly once, disposes, and re-enables through Loader', async () => {
+test('official registry keeps the preset disabled initially, then registers, disposes, and re-enables through Loader', async () => {
   const ctx = new Context()
   try {
     await ctx.plugin(Loader)
@@ -113,10 +113,15 @@ test('official registry registers exactly once, disposes, and re-enables through
     useChild(ctx)
     await ctx.loader.root.update([{ ...presetRow, config: { ...presetRow.config, plugins: [] } }])
     await ctx.loader.await()
+    assert.deepEqual(await ctx.agentPresets.list(), [])
+    await assert.rejects(ctx.agentPresets.resolve('whale-girl'), /Unknown agent preset/u)
+    const entry = [...ctx.loader.entries()].find(row => row.options.id === presetRow.id)
+    assert.ok(entry)
+    await entry.update({ disabled: false })
+    await ctx.loader.await()
     assert.deepEqual((await ctx.agentPresets.list()).map(row => row.id), ['whale-girl'])
     assert.deepEqual(await ctx.agentPresets.resolve('whale-girl'), { id: 'whale-girl' })
     assert.equal((await ctx.agentPresets.list())[0].name, presetRow.config.name)
-    const entry = [...ctx.loader.entries()].find(row => row.options.id === presetRow.id)
     const reenable = await toggle(ctx, entry)
     assert.deepEqual(await ctx.agentPresets.list(), [])
     await assert.rejects(ctx.agentPresets.resolve('whale-girl'), /Unknown agent preset/u)

@@ -32,10 +32,10 @@ const COPY = {
 export function BundleComponents({ locale }: { locale: PreviewLocale }) {
   const copy = COPY[locale]
   const [ttsEnabled, setTtsEnabled] = useState(true)
-  const [agentEnabled, setAgentEnabled] = useState(true)
+  const [agentEnabled, setAgentEnabled] = useState(false)
   const components = [
     { id: 'xiaomi-mimo-tts', icon: pluginIcon, title: copy.ttsTitle, description: copy.ttsDescription, module: 'dsh-xiaomi-tts', enabled: ttsEnabled, setEnabled: setTtsEnabled },
-    { id: 'preset-whale-girl', icon: whaleGirlIcon, title: copy.agentTitle, description: copy.agentDescription, module: '@deepseek-ai/dsh-agent-preset', enabled: agentEnabled, setEnabled: setAgentEnabled },
+    { id: 'preset-whale-girl', icon: whaleGirlIcon, title: copy.agentTitle, description: copy.agentDescription, module: 'dsh-xiaomi-tts/whale-girl', enabled: agentEnabled, setEnabled: setAgentEnabled },
   ]
 
   return <section className="preview-bundle" aria-label={copy.heading}>

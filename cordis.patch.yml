@@ -28,6 +28,7 @@
 - insert:
     - id: preset-whale-girl
       name: 'dsh-xiaomi-tts/whale-girl'
+      disabled: true
       config:
         id: whale-girl
         name: '鲸鱼娘'
