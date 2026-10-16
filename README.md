@@ -1,26 +1,39 @@
-![social](assets/social.webp)
+<p align="center">
+  <img src="assets/social.webp" alt="dsh-xiaomi-tts" width="100%">
+</p>
 
-# dsh-xiaomi-tts
+<h1 align="center">dsh-xiaomi-tts</h1>
 
-[![npm version](https://img.shields.io/npm/v/dsh-xiaomi-tts.svg)](https://www.npmjs.com/package/dsh-xiaomi-tts)
-[![npm downloads](https://img.shields.io/npm/dm/dsh-xiaomi-tts.svg)](https://www.npmjs.com/package/dsh-xiaomi-tts)
-![Xiaomi MiMo](https://img.shields.io/badge/Xiaomi-MiMo-ff6900?logo=xiaomi&logoColor=white)
-[![deepseek-harness](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+<p align="center">
+  <a href="https://www.npmjs.com/package/dsh-xiaomi-tts"><img src="https://img.shields.io/npm/v/dsh-xiaomi-tts.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/dsh-xiaomi-tts"><img src="https://img.shields.io/npm/dm/dsh-xiaomi-tts.svg" alt="npm downloads"></a>
+  <img src="https://img.shields.io/badge/Xiaomi-MiMo-ff6900?logo=xiaomi&amp;logoColor=white" alt="Xiaomi MiMo">
+  <a href="https://github.com/deepseek-ai/deepseek-harness"><img src="https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&amp;logo=deepseek&amp;logoColor=white" alt="deepseek-harness"></a>
+</p>
 
-为 DSH 添加 Xiaomi MiMo TTS 语音朗读、浏览器本地语音兜底和可选 UI 音效。
+<p align="center">为 DSH 添加 Xiaomi MiMo TTS 语音朗读、浏览器本地语音兜底和可选 UI 音效。</p>
+
+<p align="center">
+  <a href="README.md"><img src="https://img.shields.io/badge/简体中文-4D6BFE?style=for-the-badge" alt="简体中文（当前语言）"></a>
+  <a href="README.en.md"><img src="https://img.shields.io/badge/English-64748B?style=for-the-badge" alt="Switch to English"></a>
+</p>
 
 > MiMo TTS 当前可能处于限时免费或调整计费阶段，请以 Xiaomi MiMo 官方平台的最新政策为准。
 
-<p><a href="README.en.md"><strong>English README →</strong></a></p>
-
 ## 🎨 预览
 
-- [在线预览设置页面](https://ppy-web.github.io/dsh-plugin-xiaomi-mimo-tts)
-- QQ 交流群：`1104616387` 欢迎加入
+<p align="center">
+  <a href="https://ppy-web.github.io/dsh-plugin-xiaomi-mimo-tts"><img src="assets/preview-button-zh.svg" alt="在线预览设置页面" width="300" height="64"></a>
+</p>
 
-![插件设置界面](assets/setting.png)
+<p align="center">QQ 交流群：<code>1104616387</code> · 扫描海报二维码加群</p>
 
-![功能简介](assets/image.webp)
+<table width="100%">
+  <tr>
+    <td align="center" valign="middle" width="50%"><img src="assets/setting.png" alt="插件设置界面" width="100%"></td>
+    <td align="center" valign="middle" width="50%"><img src="assets/image.webp" alt="功能简介与 QQ 群二维码" width="100%"></td>
+  </tr>
+</table>
 
 ## ✨ 功能
 
@@ -32,7 +45,7 @@
 - 文本清洗：朗读前移除网址、路径、代码块、表情符号和控制字符等不适合播报的内容。
 - 可选音效：提供任务状态和语义化点击音效，默认关闭。
 - 插件联动：向其他 DSH 插件暴露可选的 PCM 播放服务。
-- 鲸鱼娘 Agent 预设：安装后自动添加鲸鱼娘 Agent 预设。对话、幽默、语境识别、表情包。
+- 鲸鱼娘 Agent 预设：随插件附带，默认关闭，按需启用。对话、幽默、语境识别、表情包。
 
 ## 📋 环境要求
 
@@ -134,7 +147,7 @@ tts?.play('欢迎回来')
 
 ## 🐳 鲸鱼娘 Agent 预设
 
-安装本插件后，新建会话时可以在 Agent 预设列表选择“鲸鱼娘”。
+鲸鱼娘组件默认关闭。安装后，在「设置 → 插件」打开本插件详情，在「包含的组件」中开启“鲸鱼娘”，随后新建会话时即可在 Agent 预设列表选择她。
 默认带一点傲娇、米饭、尾巴和摸鱼梗，也会结合当前语境主动发送本地表情包。
 人设和表情包关键词参考了社区维护的 [DeepSeek-chan Meme Pack](https://github.com/the-beating-light-of-the-nail/deepseek-chan-meme-pack)。
 插件另附 44 张本地表情包。 [素材清单](skills/whale-girl/memes.json) 记录各图的使用语境。

@@ -1,23 +1,39 @@
-![social](assets/social.webp)
+<p align="center">
+  <img src="assets/social.webp" alt="dsh-xiaomi-tts" width="100%">
+</p>
 
-# dsh-xiaomi-tts
+<h1 align="center">dsh-xiaomi-tts</h1>
 
-[![npm version](https://img.shields.io/npm/v/dsh-xiaomi-tts.svg)](https://www.npmjs.com/package/dsh-xiaomi-tts)
-[![npm downloads](https://img.shields.io/npm/dm/dsh-xiaomi-tts.svg)](https://www.npmjs.com/package/dsh-xiaomi-tts)
-![dsh version](https://img.shields.io/badge/dsh-v0.2.0rc1-blue?link=https%3A%2F%2Fgithub.com%2Fdeepseek-ai%2Fdeepseek-harness%2Freleases)
-![Xiaomi MiMo](https://img.shields.io/badge/Xiaomi-MiMo-ff6900?logo=xiaomi&logoColor=white)
-[![deepseek-harness](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+<p align="center">
+  <a href="https://www.npmjs.com/package/dsh-xiaomi-tts"><img src="https://img.shields.io/npm/v/dsh-xiaomi-tts.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/dsh-xiaomi-tts"><img src="https://img.shields.io/npm/dm/dsh-xiaomi-tts.svg" alt="npm downloads"></a>
+  <img src="https://img.shields.io/badge/Xiaomi-MiMo-ff6900?logo=xiaomi&amp;logoColor=white" alt="Xiaomi MiMo">
+  <a href="https://github.com/deepseek-ai/deepseek-harness"><img src="https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&amp;logo=deepseek&amp;logoColor=white" alt="deepseek-harness"></a>
+</p>
 
-Add Xiaomi MiMo TTS read-aloud, browser-local fallback speech, and optional UI sounds to DSH Web.
+<p align="center">Add Xiaomi MiMo TTS read-aloud, browser-local fallback speech, and optional UI sounds to DSH Web.</p>
+
+<p align="center">
+  <a href="README.md"><img src="https://img.shields.io/badge/简体中文-64748B?style=for-the-badge" alt="切换到简体中文"></a>
+  <a href="README.en.md"><img src="https://img.shields.io/badge/English-4D6BFE?style=for-the-badge" alt="English (current language)"></a>
+</p>
 
 > MiMo TTS availability and pricing may change. Check the official Xiaomi MiMo platform for the current policy.
 
-<p><a href="README.md"><strong>中文说明 →</strong></a></p>
-
 ## 🎨 Preview
 
-- [Open the settings page preview](https://ppy-web.github.io/dsh-plugin-xiaomi-mimo-tts)
-- QQ discussion group: `1104616387`
+<p align="center">
+  <a href="https://ppy-web.github.io/dsh-plugin-xiaomi-mimo-tts"><img src="assets/preview-button-en.svg" alt="Open the settings page preview" width="300" height="64"></a>
+</p>
+
+<p align="center">QQ discussion group: <code>1104616387</code> · Scan the poster's QR code to join</p>
+
+<table width="100%">
+  <tr>
+    <td align="center" valign="middle" width="50%"><img src="assets/setting.png" alt="Plugin settings" width="100%"></td>
+    <td align="center" valign="middle" width="50%"><img src="assets/image.webp" alt="Feature overview and QQ group QR code" width="100%"></td>
+  </tr>
+</table>
 
 ## ✨ Features
 
@@ -30,7 +46,7 @@ Add Xiaomi MiMo TTS read-aloud, browser-local fallback speech, and optional UI s
 - Text preparation that removes URLs, paths, code blocks, emoji, and control characters before synthesis.
 - Optional task and semantic click sounds, disabled by default.
 - An optional PCM playback service for other DSH Web plugins.
-- A Whale Girl Agent preset: a whale maid for conversation, companionship, light humor, and local memory tools.
+- An optional Whale Girl Agent preset, disabled by default: a whale maid for conversation, companionship, light humor, and local memory tools.
 
 ## 📋 Requirements
 
@@ -134,7 +150,7 @@ tts?.play('Welcome back')
 
 ## 🐳 Whale Girl Agent preset
 
-After installing this plugin, choose **Whale Girl** (`鲸鱼娘`) from the Agent preset list when creating a session. She is a whale-maid companion with light tsundere humor and occasional rice, tail, and work jokes. She can proactively send local memes that fit the conversation.
+The Whale Girl component is disabled by default. After installation, open this plugin's details in **Settings → Plugins** and enable Whale Girl under its included components. You can then choose **Whale Girl** (`鲸鱼娘`) from the Agent preset list when creating a session. She is a whale-maid companion with light tsundere humor and occasional rice, tail, and work jokes. She can proactively send local memes that fit the conversation.
 
 The persona and meme cues are informed by the community [DeepSeek-chan Meme Pack](https://github.com/the-beating-light-of-the-nail/deepseek-chan-meme-pack). The plugin bundles 44 local memes; the [catalog](skills/whale-girl/memes.json) describes when to use each image.
 
