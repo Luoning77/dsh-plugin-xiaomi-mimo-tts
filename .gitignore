@@ -7,6 +7,9 @@ coverage/
 .vscode/
 output/
 lib/
-.agents/
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/dsh-xiaomi-release/
 canvas/
 tmp/

@@ -329,7 +329,6 @@ function PreviewApp() {
           onFocusToggle={() => { manualToggleRef.current?.focus() }}
         />
         <section className="preview-settings-pane" aria-label={locale === 'zh' ? '设置页预览' : 'Settings preview'}>
-          <ConversationPreview scope={scope} />
           <header className="preview-plugin-header">
             <img className="preview-plugin-icon" src={pluginIcon} alt="" aria-hidden="true" />
             <div className="preview-plugin-copy">
@@ -349,6 +348,7 @@ function PreviewApp() {
              <SettingsCard view="page" scope={scope} t={t} controller={soundEffects} history={history} />
           </ul>
           <BundleComponents locale={locale} />
+          <ConversationPreview scope={scope} />
         </section>
       </div>
       }

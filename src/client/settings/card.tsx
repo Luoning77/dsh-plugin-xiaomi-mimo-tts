@@ -518,7 +518,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
           <Button type="button" variant="outline" size="sm" className="xmimo-tts-discard" disabled={!snapshot.writable || !dirty || state === 'saving'} onClick={discard}>
             {t('settings.discard')}
           </Button>
-          <Button type="button" variant="primary" size="sm" disabled={!snapshot.writable || !dirty || state === 'saving'} onClick={() => { void save() }}>
+          <Button type="button" variant="primary" size="sm" className="xmimo-tts-save" disabled={!snapshot.writable || !dirty || state === 'saving'} onClick={() => { void save() }}>
             {state === 'saving' ? t('settings.saving') : t('settings.save')}
           </Button>
         </div>

@@ -42,4 +42,6 @@ Do not write “傻逼断言”: never assert optional metadata, removed feature
 
 History uses prefixes such as `feat:`, `fix:`, `chore(deps-dev):`, and `release:`; keep subjects concise.
 
+For version preparation, Git tags, and GitHub Releases, use the project skill at [`.agents/skills/dsh-xiaomi-release/SKILL.md`](.agents/skills/dsh-xiaomi-release/SKILL.md).
+
 PRs should explain the changed behavior, link relevant issues, and report validation. Include screenshots for settings or preview changes. Keep `README.md` and `README.en.md` aligned, and verify preview builds and package contents when affected. Never commit API keys or local profile credentials.

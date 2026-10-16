@@ -385,6 +385,10 @@
   gap: 6px;
 }
 
+.xmimo-tts-card-minimal .xmimo-ui-stack {
+  gap: 6px;
+}
+
 .xmimo-tts-card-minimal .xmimo-tts-preview-input > textarea {
   order: 1;
   min-width: 0;
@@ -538,13 +542,6 @@
   flex-wrap: wrap;
   gap: 6px;
   padding: 0 var(--xmimo-ui-space-3) var(--xmimo-ui-space-3);
-}
-
-.xmimo-tts-card-minimal .xmimo-tts-card-actions button,
-.xmimo-tts-card-minimal .xmimo-tts-card-actions .xmimo-tts-mode-toggle {
-  min-height: 30px;
-  border-radius: 8px;
-  padding: 5px 10px;
 }
 
 @media (max-width: 520px) {

@@ -4,43 +4,136 @@
 
 .xmimo-tts-card-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  /* padding-top: 12px; */
-  /* border-top: 1px solid var(--xmimo-ui-border-soft); */
   font-size: 12px;
   color: var(--xmimo-ui-text-subtle)
 }
 
-.xmimo-tts-card-actions button {
+.xmimo-tts-card-actions > :is(button, a),
+.xmimo-ui-scope .xmimo-tts-action-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 30px;
+  height: auto;
+  border: 1px solid var(--xmimo-ui-border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  color: var(--xmimo-ui-text);
+  background: var(--xmimo-ui-surface);
   cursor: pointer;
-  font: inherit
+  font: inherit;
+  font-weight: 500;
+  line-height: 18px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease
 }
 
-.xmimo-tts-card-actions .xmimo-tts-update {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--dsw-alias-brand-primary, #4f6ef7);
-  border-radius: 8px;
-  padding: 5px 14px;
-  color: var(--dsw-alias-brand-primary, #4f6ef7);
-  background: transparent;
+.xmimo-tts-card-actions > :is(button, a):where(:hover, :focus-visible):not(:disabled),
+.xmimo-ui-scope .xmimo-tts-action-button:where(:hover, :focus-visible):not(:disabled) {
+  border-color: var(--xmimo-ui-brand);
+  background: var(--xmimo-ui-hover);
   text-decoration: none
 }
 
-.xmimo-tts-card-actions .xmimo-tts-update:hover {
-  filter: brightness(1.08)
+.xmimo-tts-card-actions > :is(button, a):focus-visible,
+.xmimo-ui-scope .xmimo-tts-action-button:focus-visible {
+  outline: var(--xmimo-ui-focus);
+  outline-offset: 3px
+}
+
+.xmimo-tts-card-actions > button:disabled,
+.xmimo-ui-scope .xmimo-tts-action-button:disabled {
+  border-color: var(--xmimo-ui-border);
+  color: var(--xmimo-ui-text-muted);
+  background: var(--xmimo-ui-control-surface);
+  cursor: not-allowed;
+  opacity: 1
+}
+
+.xmimo-tts-card-actions .xmimo-tts-save {
+  border-color: var(--xmimo-ui-brand);
+  color: var(--dsw-alias-label-primary-foreground, #fff);
+  background: var(--dsw-alias-button-primary-fill, var(--xmimo-ui-brand));
+  font-weight: 600
+}
+
+.xmimo-tts-card-actions .xmimo-tts-save:is(:hover, :focus-visible):not(:disabled) {
+  background: var(--dsw-alias-button-primary-hover, color-mix(in srgb, var(--xmimo-ui-brand) 85%, var(--xmimo-ui-text)))
+}
+
+.xmimo-tts-card-actions .xmimo-tts-save:disabled {
+  border-color: color-mix(in srgb, var(--xmimo-ui-brand) 25%, var(--xmimo-ui-border));
+  color: var(--xmimo-ui-text-muted);
+  background: color-mix(in srgb, var(--xmimo-ui-brand) 12%, var(--xmimo-ui-surface))
+}
+
+.xmimo-tts-card-actions .xmimo-tts-update {
+  border-color: var(--xmimo-ui-brand);
+  color: var(--xmimo-ui-brand)
 }
 
 .xmimo-tts-card-actions .xmimo-tts-star {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   margin-right: auto;
-  border-color: transparent;
-  color: var(--dsw-alias-brand-primary, #4f6ef7);
+  border: 1px solid color-mix(in srgb, var(--xmimo-ui-brand) 30%, var(--xmimo-ui-border));
+  color: var(--xmimo-ui-brand);
   background: transparent;
-  font-weight: 500
+  font-weight: 600;
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, transform 180ms ease
 }
 
-.xmimo-tts-card-actions .xmimo-tts-star:hover {
-  text-decoration: underline
+.xmimo-tts-card-actions .xmimo-tts-star::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 15%, color-mix(in srgb, var(--xmimo-ui-brand) 12%, transparent) 35%, color-mix(in srgb, var(--xmimo-ui-brand) 28%, transparent) 50%, color-mix(in srgb, var(--xmimo-ui-brand) 12%, transparent) 65%, transparent 85%);
+  content: '';
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-110%)
+}
+
+.xmimo-tts-card-actions .xmimo-tts-star:is(:hover, :focus-visible) {
+  border-color: var(--xmimo-ui-brand);
+  background: color-mix(in srgb, var(--xmimo-ui-brand) 6%, transparent);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--xmimo-ui-brand) 16%, transparent);
+  text-decoration: none;
+  transform: translateY(-1px)
+}
+
+.xmimo-tts-card-actions .xmimo-tts-star:is(:hover, :focus-visible)::before {
+  opacity: 1;
+  animation: xmimo-tts-star-shine 1s ease-in-out infinite
+}
+
+.xmimo-tts-card-actions .xmimo-tts-star:focus-visible {
+  outline: var(--xmimo-ui-focus);
+  outline-offset: 3px
+}
+
+.xmimo-tts-card-actions .xmimo-tts-star:active {
+  box-shadow: none;
+  transform: translateY(0)
+}
+
+@keyframes xmimo-tts-star-shine {
+  0% { transform: translateX(-110%) }
+  65%, 100% { transform: translateX(110%) }
+}
+
+@media (pointer: coarse) {
+  .xmimo-tts-card-actions > :is(button, a),
+  .xmimo-ui-scope .xmimo-tts-action-button {
+    min-height: 44px
+  }
 }

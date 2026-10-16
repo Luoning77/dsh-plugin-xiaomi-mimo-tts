@@ -1,0 +1,4 @@
+interface:
+  display_name: "小米 TTS Release 与 Tag 规则"
+  short_description: "基于仓库历史与 CI 规则准备版本、Tag 和中文 Release"
+  default_prompt: "使用 $dsh-xiaomi-release，为当前项目准备下一个版本的 Tag 和中文 Release 说明。"
