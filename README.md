@@ -49,7 +49,7 @@
 
 ## 📋 环境要求
 
-- `@deepseek-ai/dsh` `0.2.0-rc.2`（当前目标版本；兼容 `0.1.7-x` 至 `0.2.x` 版本）
+- `@deepseek-ai/dsh` `0.2.1-rc.1`（当前目标版本；兼容 `0.1.7-x` 至 `0.2.x` 版本）
 - Node.js 22+
 - 使用 MiMo 语音时需要 Xiaomi MiMo API Key
 - [官方 TTS API 文档](https://mimo.mi.com/models/zh-CN/mimo-v2.5-tts)

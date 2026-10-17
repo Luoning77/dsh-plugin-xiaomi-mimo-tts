@@ -157,7 +157,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
     if (snapshot.status === 'unavailable') return
     let active = true
     setApiKeyStatus('loading')
-    void fetch(TTS_API_KEY_STATUS_ROUTE, { headers: { accept: 'application/json' } })
+    void fetch(hostRoute(TTS_API_KEY_STATUS_ROUTE), { headers: { accept: 'application/json' } })
       .then(async (response) => {
         if (!response.ok) throw new Error('api-key-status-failed')
         return await response.json() as { configured?: unknown; supported?: unknown }
@@ -488,19 +488,21 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
           {latestVersion !== null
             ? <a className="xmimo-tts-update" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">{t('settings.updateAvailable')}</a>
             : null}
-          <a
-            className="xmimo-tts-star"
-            href="https://github.com/ppy-web/dsh-plugin-xiaomi-mimo-tts"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t('settings.source')}
-          </a>
-          {history ? <HistoryLink history={history} t={t} buttonRef={historyLinkRef} onOpen={() => {
-            previewPlayer.stop()
-            toggleSoundPlayer.dispose()
-            setHistoryOpen(true)
-          }} /> : null}
+          <div className="xmimo-tts-card-action-links">
+            <a
+              className="xmimo-tts-star"
+              href="https://github.com/ppy-web/dsh-plugin-xiaomi-mimo-tts"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('settings.source')}
+            </a>
+            {history ? <HistoryLink history={history} t={t} buttonRef={historyLinkRef} onOpen={() => {
+              previewPlayer.stop()
+              toggleSoundPlayer.dispose()
+              setHistoryOpen(true)
+            }} /> : null}
+          </div>
           {!snapshot.writable ? <span>{t('settings.readOnly')}</span> : null}
           {state === 'saved' && !dirty ? <span role="status">{t('settings.saved')}</span> : null}
           {state === 'failed' ? <span className="xmimo-tts-failed" role="status">{t('settings.failed')}</span> : null}

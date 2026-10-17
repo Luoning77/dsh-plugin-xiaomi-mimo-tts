@@ -6,6 +6,7 @@ import {
   splitTtsSegments,
 } from '../../shared.js'
 import type { TtsLocalSpeechMode, TtsModel } from '../../shared.js'
+import { hostRoute } from '../host-route.js'
 import { PcmAudioQueue } from './pcm-audio-queue.js'
 import { applyMediaVoiceRate, applySpeechVoiceRate } from './voice-rate.js'
 import type { AudioHistory } from '../history/audio-history.js'
@@ -232,7 +233,7 @@ export class PreviewPlayer {
     this.publish('loading', 'mimo')
     const controller = new AbortController()
     this.request = controller
-    const response = await fetch(TTS_ROUTE, {
+    const response = await fetch(hostRoute(TTS_ROUTE), {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(this.requestBody(text, settings, format)),
@@ -289,7 +290,7 @@ export class PreviewPlayer {
     const controller = new AbortController()
     this.request = controller
     this.requestBusy = true
-    const response = await fetch(TTS_STREAM_ROUTE, {
+    const response = await fetch(hostRoute(TTS_STREAM_ROUTE), {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(this.requestBody(text, settings)),

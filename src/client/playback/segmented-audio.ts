@@ -1,4 +1,5 @@
 import { TTS_ROUTE } from '../../shared.js'
+import { hostRoute } from '../host-route.js'
 import { applyMediaVoiceRate } from './voice-rate.js'
 
 type SegmentAudioResult = { ok: true; blob: Blob } | { ok: false; error: unknown }
@@ -10,7 +11,7 @@ export async function prefetchSegmentAudio(text: string, signal: AbortSignal): P
     for (let attempt = 0; attempt < 2; attempt += 1) {
       signal.throwIfAborted()
       try {
-        const response = await fetch(TTS_ROUTE, {
+        const response = await fetch(hostRoute(TTS_ROUTE), {
           method: 'POST', headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ text, format: 'wav' }), signal,
         })

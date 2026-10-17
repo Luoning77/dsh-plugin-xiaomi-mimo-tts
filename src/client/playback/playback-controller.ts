@@ -1,4 +1,5 @@
 import { normalizeVoiceRate, splitTtsSegments, TTS_ROUTE } from '../../shared.js'
+import { hostRoute } from '../host-route.js'
 import type { PlaybackStatus, PlaybackView } from './types.js'
 import { applyMediaVoiceRate } from './voice-rate.js'
 import { playSegmentAudio, prefetchSegmentAudio } from './segmented-audio.js'
@@ -235,7 +236,7 @@ export class PlaybackController {
     this.publish({ sessionId, messageId, source: 'complete', status: 'loading', error: null })
 
     try {
-      const response = await fetch(TTS_ROUTE, {
+      const response = await fetch(hostRoute(TTS_ROUTE), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ text, format }),

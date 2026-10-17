@@ -1,4 +1,5 @@
 import { TTS_STREAM_ROUTE } from './constants.js'
+import { hostRoute } from './client/host-route.js'
 import { parseSseRecords } from './utils/index.js'
 import { debugConsole } from './debug-console.js'
 
@@ -27,7 +28,7 @@ export async function streamPcmAudio(text: string, signal: AbortSignal, consume:
     return
   }
   debugConsole?.info(STREAM_LOG, `[请求 ${requestId}] POST ${TTS_STREAM_ROUTE}`, { text, model: 'mimo-v2.5-tts' })
-  const response = await fetch(TTS_STREAM_ROUTE, {
+  const response = await fetch(hostRoute(TTS_STREAM_ROUTE), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ text, model: 'mimo-v2.5-tts' }),

@@ -50,7 +50,7 @@
 
 ## 📋 Requirements
 
-- `@deepseek-ai/dsh` `0.2.0-rc.2` (the current target; compatible with `0.1.7-rc.1` through `0.2.x` releases)
+- `@deepseek-ai/dsh` `0.2.1-rc.1` (the current target; compatible with `0.1.7-rc.1` through `0.2.x` releases)
 - Node.js 22+
 - A Xiaomi MiMo API key for MiMo speech
 - [Official TTS API documentation](https://mimo.mi.com/models/zh-CN/mimo-v2.5-tts)

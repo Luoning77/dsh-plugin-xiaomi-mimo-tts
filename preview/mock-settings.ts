@@ -85,7 +85,6 @@ export class PreviewSettingsScope implements ConfigForm<TtsSettings> {
       user: this.user,
       revision: this.revision,
       writable: this.writable,
-      mode: 'memory',
     }
   }
 
