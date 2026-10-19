@@ -10,15 +10,19 @@ export class PcmRecording {
   constructor(maxBytes = 100 * 1024 * 1024 - 44) { this.maxBytes = maxBytes }
 
   append(base64: string): void {
-    if (this.overflow) return
     const binary = atob(base64)
-    this.bytes += binary.length
+    this.appendBytes(Uint8Array.from(binary, (character) => character.charCodeAt(0)))
+  }
+
+  appendBytes(bytes: Uint8Array): void {
+    if (this.overflow) return
+    this.bytes += bytes.length
     if (this.bytes > this.maxBytes) {
       this.overflow = true
       this.chunks = []
       return
     }
-    this.chunks.push(Uint8Array.from(binary, (character) => character.charCodeAt(0)))
+    this.chunks.push(Uint8Array.from(bytes))
   }
 
   toWav(): Blob | null {

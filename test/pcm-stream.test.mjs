@@ -18,7 +18,7 @@ function chunkedResponse(chunks) {
   }), { status: 200, headers: { 'content-type': 'text/event-stream' } })
 }
 
-test('PCM transport posts the preset model and preserves split SSE records', async () => {
+test('PCM transport uses the saved provider and preserves split SSE records', async () => {
   const originalFetch = globalThis.fetch
   let request
   const event = sseAudio('AQID')
@@ -30,7 +30,7 @@ test('PCM transport posts the preset model and preserves split SSE records', asy
     const chunks = []
     await streamPcmAudio('欢迎回来', new AbortController().signal, (pcm) => { chunks.push(pcm) })
     assert.equal(request.input, '/plugins/xiaomi-mimo-tts/synthesize-stream')
-    assert.deepEqual(JSON.parse(request.init.body), { text: '欢迎回来', model: 'mimo-v2.5-tts' })
+    assert.deepEqual(JSON.parse(request.init.body), { text: '欢迎回来' })
     assert.deepEqual(chunks, ['AQID'])
   } finally {
     globalThis.fetch = originalFetch

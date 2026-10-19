@@ -1,0 +1,39 @@
+import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
+import { isSupportedTtsApiKey } from '../../types/settings.js'
+import type { TtsSettings } from '../../types/settings.js'
+import { resolveTtsSettings } from '../../utils/settings.js'
+import type { DraftChanges, SettingsValues, EditableSettingField } from './types.js'
+
+export const EDITABLE_SETTING_FIELDS: readonly EditableSettingField[] = ['provider', 'doubaoModel', 'doubaoVoice', 'doubaoClonedVoice', 'doubaoInstruction', 'enabled', 'autoPlay', 'voiceVolume', 'voiceRate', 'readScope', 'model', 'localSpeechMode', 'localVoiceURI', 'voice', 'voiceDesignPrompt', 'voiceDesignCustomPrompt', 'soundEnabled', 'soundVolume', 'soundPack', 'taskSounds', 'clickSounds']
+
+export function validateSettingsDraft(draft: SettingsValues): string | null {
+  return draft.provider === 'doubao' && !(draft.doubaoModel === 'seed-icl-2.0' ? draft.doubaoClonedVoice : draft.doubaoVoice).trim()
+    ? 'voice-required' : null
+}
+
+/** Set provider last so a rejected credential write cannot select an unprepared provider. */
+export async function saveSettingsDraft(scope: ConfigForm<TtsSettings>, draft: SettingsValues, changes: DraftChanges, keys: { xiaomi: string; doubao: string }): Promise<void> {
+  const invalid = validateSettingsDraft(draft)
+  if (invalid) throw new Error(invalid)
+  for (const [provider, field] of [['xiaomi', 'apiKey'], ['doubao', 'doubaoApiKey']] as const) {
+    if (changes[field]?.kind === 'set' && keys[provider].trim() && !isSupportedTtsApiKey(keys[provider], provider)) throw new Error('api-key-rejected')
+  }
+  const snapshot = scope.getSnapshot()
+  const acceptedValues = resolveTtsSettings(snapshot.value)
+  const overridden = (field: string) => snapshot.user !== null && typeof snapshot.user === 'object' && Object.hasOwn(snapshot.user, field)
+  const write = async (field: string, value: unknown): Promise<void> => {
+    const change = changes[field as keyof DraftChanges]
+    if (!change) return
+    if (change.kind === 'set' && (field === 'apiKey' || field === 'doubaoApiKey') && !String(value).trim()) return
+    if (change.kind === 'set' && field !== 'apiKey' && field !== 'doubaoApiKey' && Object.is(acceptedValues[field as keyof typeof acceptedValues], value)) return
+    if (change.kind === 'clear' && !overridden(field)) return
+    const accepted = change.kind === 'clear' ? await scope.unset(field) : await scope.set(field, value)
+    if (!accepted) throw new Error('Host rejected a settings update')
+  }
+  for (const field of EDITABLE_SETTING_FIELDS) {
+    if (field !== 'provider') await write(field, draft[field])
+  }
+  await write('apiKey', keys.xiaomi.trim())
+  await write('doubaoApiKey', keys.doubao.trim())
+  await write('provider', draft.provider)
+}

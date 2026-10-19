@@ -90,6 +90,8 @@ export function firstTtsSegments(value: string, count = 1): string {
 export class TtsFirstSegmentLimiter {
   private locked: string | null = null
 
+  get complete(): boolean { return this.locked !== null }
+
   constructor(private readonly segmentCount = 1) {}
 
   limit(value: string, final = false): string {

@@ -9,6 +9,8 @@ export interface AudioHistoryEntry {
   format: 'mp3' | 'wav'
   sessionId?: string
   messageId?: string
+  /** The saved audio already includes the requested synthesis speed. */
+  voiceRateApplied?: boolean
   blob: Blob
 }
 

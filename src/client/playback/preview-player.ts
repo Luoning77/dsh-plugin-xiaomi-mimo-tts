@@ -10,10 +10,14 @@ import { PcmAudioQueue } from './pcm-audio-queue.js'
 import { applyMediaVoiceRate, applySpeechVoiceRate } from './voice-rate.js'
 import type { AudioHistory } from '../history/audio-history.js'
 import { PcmRecording } from '../history/pcm-recording.js'
+import { ttsSelection } from '../../types/providers.js'
+import { resolveTtsSettings } from '../../utils/settings.js'
+import type { TtsProvider, DoubaoTtsModel } from '../../types/providers.js'
+import { DuplexPcmStream, DuplexPcmError } from './duplex-pcm.js'
 
 export type PreviewStatus = 'idle' | 'loading' | 'playing' | 'error'
-export type PreviewSource = 'mimo' | 'local' | null
-export type PreviewError = 'api-key-not-configured' | 'api-key-rejected' | 'rate-limited' | 'timeout' | 'local-voice-unavailable' | 'autoplay-blocked' | 'request-failed'
+export type PreviewSource = 'mimo' | 'doubao' | 'local' | null
+export type PreviewError = 'api-key-not-configured' | 'api-key-rejected' | 'rate-limited' | 'timeout' | 'local-voice-unavailable' | 'autoplay-blocked' | 'request-failed' | 'save-key-first' | 'voice-required' | 'voice-unavailable' | 'resource-unavailable' | 'stream-buffer-limit'
 
 export interface PreviewView {
   status: PreviewStatus
@@ -22,6 +26,11 @@ export interface PreviewView {
 }
 
 export interface PreviewSettings {
+  provider?: TtsProvider
+  doubaoModel?: DoubaoTtsModel
+  doubaoVoice?: string
+  doubaoClonedVoice?: string
+  doubaoInstruction?: string
   model: TtsModel
   localSpeechMode: TtsLocalSpeechMode
   localVoiceURI: string
@@ -32,6 +41,7 @@ export interface PreviewSettings {
 }
 
 interface PreviewRequestBody {
+  provider?: TtsProvider
   text: string
   model: TtsModel
   voice: string
@@ -69,6 +79,10 @@ class PreviewPlaybackError extends Error {
 }
 
 function previewError(error: unknown): PreviewError {
+  if (error instanceof DuplexPcmError) {
+    if (error.code === 'tts-timeout') return 'timeout'
+    if (['api-key-not-configured', 'api-key-rejected', 'rate-limited', 'voice-required', 'voice-unavailable', 'resource-unavailable', 'stream-buffer-limit'].includes(error.code)) return error.code as PreviewError
+  }
   return error instanceof PreviewPlaybackError ? error.code : 'request-failed'
 }
 
@@ -212,6 +226,7 @@ export class PreviewPlayer {
   private requestBody(text: string, settings: PreviewSettings, format?: 'mp3' | 'wav'): PreviewRequestBody {
     return {
       text,
+      provider: settings.provider ?? 'xiaomi',
       model: settings.model,
       voice: settings.voice,
       voiceDesignPrompt: settings.voiceDesignPrompt,
@@ -220,6 +235,28 @@ export class PreviewPlayer {
   }
 
   private async playRemote(text: string, settings: PreviewSettings, generation: number): Promise<void> {
+    if (settings.provider === 'doubao') {
+      this.pcm.setPlaybackRate(1)
+      this.publish('loading', 'doubao')
+      const controller = new AbortController()
+      this.request = controller
+      this.requestBusy = true
+      const recording = new PcmRecording()
+      try {
+        const stream = new DuplexPcmStream(ttsSelection(resolveTtsSettings(settings)), controller.signal, async bytes => {
+          if (generation !== this.generation || controller.signal.aborted) return
+          recording.appendBytes(bytes)
+          await this.pcm.enqueueBytes(bytes)
+        })
+        stream.append(text)
+        await stream.finish()
+        if (generation === this.generation) recording.save(this.history, { text, source: 'preview', voiceRateApplied: true })
+      } finally {
+        controller.abort()
+        if (generation === this.generation) { this.request = null; this.requestBusy = false; this.maybeFinishPcm() }
+      }
+      return
+    }
     if (settings.model === 'mimo-v2.5-tts-voicedesign') {
       if (splitTtsSegments(text).length > 1) await this.playSegmented(text, settings, generation)
       else await this.playComplete(text, settings, generation, 'mp3')
@@ -389,7 +426,7 @@ export class PreviewPlayer {
   }
 
   private maybeFinishPcm(): void {
-    if (!this.requestBusy && !this.pcmBusy && (this.status === 'loading' || this.status === 'playing')) this.publish('idle', 'mimo')
+    if (!this.requestBusy && !this.pcmBusy && (this.status === 'loading' || this.status === 'playing')) this.publish('idle', this.source)
   }
 
   private publish(status: PreviewStatus, source: PreviewSource = this.source, error: PreviewError | null = null): void {

@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactElement } from 'react'
 import { useId, useState } from 'react'
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { TtsProvider } from '../../types/providers.js'
 import { TTS_API_KEY_WHALE_ASSET_ROUTE, TTS_MIMO_LOGO_ASSET_ROUTE } from '../../shared.js'
 import type { Translate } from '../localization.js'
 import { hostRoute } from '../host-route.js'
@@ -31,6 +32,8 @@ function randomCopyKey<T extends readonly string[]>(keys: T, current?: string): 
 }
 
 export interface ApiKeyModuleProps {
+  provider: TtsProvider
+  onProviderChange: (provider: TtsProvider) => void
   t: Translate
   value: string
   message: string
@@ -42,20 +45,40 @@ export interface ApiKeyModuleProps {
   onClear: () => void
 }
 
-export function ApiKeyModule({ t, value, message, invalid, clearable, writable, minimal, onChange, onClear }: ApiKeyModuleProps): ReactElement {
+export function ApiKeyModule({ t, provider, onProviderChange, value, message, invalid, clearable, writable, minimal, onChange, onClear }: ApiKeyModuleProps): ReactElement {
   const [bubbleKey, setBubbleKey] = useState<ApiKeyBubbleKey>(() => randomCopyKey(API_KEY_IDLE_COPY_KEYS))
   const inputId = useId()
   const messageId = useId()
+  const keyUrl = provider === 'doubao' ? 'https://console.volcengine.com/speech/new/setting/apikeys?projectName=default' : 'https://platform.xiaomimimo.com/console/api-keys'
+  const nextProvider = provider === 'xiaomi' ? 'doubao' : 'xiaomi'
+  const providerLabel = t(provider === 'xiaomi' ? 'settings.providerXiaomi' : 'settings.providerDoubao')
+  const nextProviderLabel = t(nextProvider === 'xiaomi' ? 'settings.providerXiaomi' : 'settings.providerDoubao')
+  const switchLabel = `${t('settings.provider')}: ${providerLabel} · ${t('settings.switchProvider')}: ${nextProviderLabel}`
+  const providerSwitch = <Button
+    type="button"
+    variant="ghost"
+    size="sm"
+    className="xmimo-tts-provider-cycle"
+    aria-label={switchLabel}
+    title={switchLabel}
+    disabled={!writable}
+    onClick={() => onProviderChange(nextProvider)}
+  >
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 7h18m-4-4 4 4-4 4M21 17H3m4-4-4 4 4 4" />
+    </svg>
+  </Button>
 
   return <ModuleShell className="xmimo-tts-settings-module xmimo-tts-api-key xmimo-ui-module-padded" title={minimal ? t('settings.apiKey') : <SettingFieldHeading
-      label={minimal ? t('settings.apiKey') : <span
+      label={provider === 'doubao' ? t('settings.providerDoubao') : minimal ? t('settings.apiKey') : <span
         className="xmimo-tts-api-key-logo"
         role="img"
         aria-label={t('settings.apiKey')}
         style={{ '--xmimo-tts-api-key-logo-image': `url(${hostRoute(TTS_MIMO_LOGO_ASSET_ROUTE)})` } as CSSProperties}
       />}
       suffix={<>
-        <a className="xmimo-tts-api-key-link" href="https://platform.xiaomimimo.com/console/api-keys" target="_blank" rel="noopener noreferrer">{t('settings.getApiKey')}</a>
+        {providerSwitch}
+        <a className="xmimo-tts-api-key-link" href={keyUrl} target="_blank" rel="noopener noreferrer">{t('settings.getApiKey')}</a>
         {clearable ? <Button type="button" variant="ghost" size="sm" className="xmimo-tts-reset" disabled={!writable} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onClear() }}>{t('settings.apiKeyClear')}</Button> : null}
       </>}
       disabled={!writable}
@@ -92,7 +115,8 @@ export function ApiKeyModule({ t, value, message, invalid, clearable, writable, 
           style={{ padding: '0 var(--xmimo-ui-space-4)' }}
       />
       {minimal ? <span className="xmimo-tts-api-key-inline-actions">
-        <a className="xmimo-tts-api-key-link" href="https://platform.xiaomimimo.com/console/api-keys" target="_blank" rel="noopener noreferrer">{t('settings.getApiKey')}</a>
+        {providerSwitch}
+        <a className="xmimo-tts-api-key-link" href={keyUrl} target="_blank" rel="noopener noreferrer">{t('settings.getApiKey')}</a>
         {clearable ? <Button type="button" variant="ghost" size="sm" className="xmimo-tts-reset" disabled={!writable} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onClear() }}>{t('settings.apiKeyClear')}</Button> : null}
       </span> : null}
       </div>

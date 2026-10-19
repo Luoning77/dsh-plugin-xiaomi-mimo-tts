@@ -1,4 +1,4 @@
-import { applyTtsLivePlaybackScope, TtsFirstSegmentLimiter } from '../../shared.js'
+import { applyTtsLivePlaybackScope, TtsFirstSegmentLimiter, countTtsSpeechCharacters } from '../../shared.js'
 import type { LiveSpeechCursor, TtsLocalSpeechMode, TtsReadScope } from '../../shared.js'
 import type { LiveSpeechController } from './live-speech-controller.js'
 import type { LocalSpeechController } from './local-speech-controller.js'
@@ -17,6 +17,7 @@ interface SpeechStep {
   text: string
   checkpoint: string | null
   final: LiveMessageIdentity | null
+  inputFinished: boolean
 }
 
 type SpeechBackend = 'live' | 'system'
@@ -76,10 +77,11 @@ export class RealtimeSpeechSession {
       message = {
         cursor: { sessionId, turn, step },
         limiter: new TtsFirstSegmentLimiter(current.scope === 'smart' ? 2 : 1),
-        text: '', checkpoint: null, final: null,
+        text: '', checkpoint: null, final: null, inputFinished: false,
       }
       current.steps.set(step, message)
     }
+    if (message.inputFinished) return
     message.text = this.scopeText(markdown, message)
     const controller = this.controller(current.backend)
     if (prime) {
@@ -87,6 +89,16 @@ export class RealtimeSpeechSession {
       controller.prime(sessionId, turn, step, message.text)
     }
     controller.observe(sessionId, turn, step, message.text)
+    if (current.backend === 'live' && this.live.isDuplex() && message.limiter.complete && current.scope !== 'full') {
+      const prepared = prepareSpeechText(markdown)
+      const spoken = countTtsSpeechCharacters(message.text)
+      if (current.scope === 'first-segment' || countTtsSpeechCharacters(prepared) >= spoken * 2) {
+        message.text = this.scopeText(markdown, message, true)
+        controller.observe(sessionId, turn, step, message.text)
+        message.inputFinished = true
+        this.live.finishInput(sessionId, turn, step)
+      }
+    }
   }
 
   finish(sessionId: string, final: LiveMessageIdentity): void {
@@ -99,7 +111,7 @@ export class RealtimeSpeechSession {
       this.local.blockTurn(sessionId, final.turn)
       return
     }
-    message.text = this.scopeText(final.text, message, true)
+    if (!message.inputFinished) message.text = this.scopeText(final.text, message, true)
     message.final = { ...final, text: message.text }
     this.controller(this.turn.backend).finish(sessionId, message.final)
   }

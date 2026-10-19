@@ -22,6 +22,7 @@ export class HistoryReplay {
   private attempt = 0
   private volume = 1
   private voiceRate = 1
+  private voiceRateApplied = false
   private disposed = false
   private offStop: (() => void) | null = null
   private offHistory: (() => void) | null = null
@@ -50,7 +51,7 @@ export class HistoryReplay {
     this.beforePlayback = beforePlayback
     if (this.media !== null) {
       this.media.volume = volume
-      applyMediaVoiceRate(this.media, voiceRate)
+      applyMediaVoiceRate(this.media, this.voiceRateApplied ? 1 : voiceRate)
     }
   }
 
@@ -64,9 +65,10 @@ export class HistoryReplay {
         this.url = URL.createObjectURL(entry.blob)
         const media = new Audio(this.url)
         this.media = media
+        this.voiceRateApplied = entry.voiceRateApplied === true
         media.preload = 'metadata'
         media.volume = this.volume
-        applyMediaVoiceRate(media, this.voiceRate)
+        applyMediaVoiceRate(media, this.voiceRateApplied ? 1 : this.voiceRate)
         const valid = (): boolean => !this.disposed && this.media === media && this.epoch === epoch
         const timing = (): void => {
           if (valid()) this.publish({ ...this.view, currentTime: Number.isFinite(media.currentTime) ? media.currentTime : 0,
@@ -154,6 +156,7 @@ export class HistoryReplay {
     }
     if (this.url !== null) URL.revokeObjectURL(this.url)
     this.url = null
+    this.voiceRateApplied = false
   }
 
   private publish(view: HistoryReplayView): void {

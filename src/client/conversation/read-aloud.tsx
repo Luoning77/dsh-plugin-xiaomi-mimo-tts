@@ -19,6 +19,14 @@ import { useApiKeySupported } from './api-key-status.js'
 import { handleReadAloudClick, playCompletedReply } from '../playback/read-aloud-playback.js'
 
 const PLAYBACK_ERROR_KEYS: Record<string, Parameters<Translate>[0]> = {
+  'api-key-rejected': 'error.apiKeyRejected',
+  'voice-unavailable': 'error.voiceUnavailable',
+  'voice-required': 'error.voiceUnavailable',
+  'resource-unavailable': 'error.resourceUnavailable',
+  'rate-limited': 'error.rateLimited',
+  'tts-timeout': 'error.timeout',
+  'pcm-pause-buffer-limit': 'error.bufferLimit',
+  'stream-buffer-limit': 'error.bufferLimit',
   'no-text': 'error.noText',
   'local-speech-not-allowed': 'error.localNotAllowed',
   'local-voice-unavailable': 'error.localVoiceUnavailable',
@@ -55,7 +63,7 @@ export function ReadAloudAction({ sessionId, messageId, useSession, useChat, pla
   const text = message.text
   const settingsSnapshot = useSettingsSnapshot(settings)
   const resolvedSettings = resolveTtsSettings(settingsSnapshot.value)
-  const apiKeySupported = useApiKeySupported(resolvedSettings.localSpeechMode !== 'disabled')
+  const apiKeySupported = useApiKeySupported(resolvedSettings.localSpeechMode !== 'disabled', resolvedSettings.provider, settingsSnapshot.revision)
   local.setVoiceURI(resolvedSettings.localVoiceURI)
   local.setTimeoutMs(resolvedSettings.requestTimeoutMs)
   const view = useSyncExternalStore(playback.subscribe, playback.getSnapshot, playback.getSnapshot)
@@ -72,7 +80,7 @@ export function ReadAloudAction({ sessionId, messageId, useSession, useChat, pla
       if (!live.hasHandled(sessionId, message.identity) && !local.hasHandled(sessionId, message.identity) && playback.claimAutomaticPlayback(sessionId, messageId)) playCompletedReply(request, true)
     }, 0)
     return () => window.clearTimeout(cancel)
-  }, [apiKeySupported, live, local, message.identity, message.latestMessageId, message.time, messageId, playback, resolvedSettings.localSpeechMode, resolvedSettings.model, resolvedSettings.readScope, running, sessionId, settingsSnapshot.value?.autoPlay, settingsSnapshot.value?.enabled, text])
+  }, [apiKeySupported, live, local, message.identity, message.latestMessageId, message.time, messageId, playback, resolvedSettings.localSpeechMode, resolvedSettings.model, resolvedSettings.provider, resolvedSettings.doubaoModel, resolvedSettings.doubaoVoice, resolvedSettings.doubaoClonedVoice, resolvedSettings.readScope, running, sessionId, settingsSnapshot.value?.autoPlay, settingsSnapshot.value?.enabled, text])
 
   if (settingsSnapshot.value?.enabled !== true || text.length === 0) return null
 

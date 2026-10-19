@@ -1,6 +1,7 @@
 import { TTS_STREAM_ROUTE } from './constants.js'
 import { parseSseRecords } from './utils/index.js'
 import { debugConsole } from './debug-console.js'
+import type { TtsSelection } from './types/providers.js'
 
 const STREAM_LOG = '[MiMoTTS Stream]'
 let nextStreamRequestId = 1
@@ -20,7 +21,7 @@ function pcmDeltaFromSse(data: string): string | null {
 }
 
 /** Request one preset-model PCM16 stream and deliver each decoded SSE audio payload in order. */
-export async function streamPcmAudio(text: string, signal: AbortSignal, consume: PcmChunkConsumer): Promise<void> {
+export async function streamPcmAudio(text: string, signal: AbortSignal, consume: PcmChunkConsumer, selection?: TtsSelection): Promise<void> {
   const requestId = nextStreamRequestId++
   if (signal.aborted) {
     debugConsole?.warn(STREAM_LOG, `[请求 ${requestId}] 发起前已取消`)
@@ -30,7 +31,7 @@ export async function streamPcmAudio(text: string, signal: AbortSignal, consume:
   const response = await fetch(TTS_STREAM_ROUTE, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ text, model: 'mimo-v2.5-tts' }),
+    body: JSON.stringify({ text, ...(selection ?? {}) }),
     signal,
   })
   debugConsole?.info(STREAM_LOG, `[请求 ${requestId}] 收到 HTTP 响应`, { ok: response.ok, status: response.status, contentType: response.headers.get('content-type') })

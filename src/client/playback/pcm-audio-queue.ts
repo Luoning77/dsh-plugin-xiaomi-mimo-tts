@@ -58,9 +58,12 @@ export class PcmAudioQueue {
   }
 
   enqueue(base64: string): Promise<void> {
+    return this.enqueueBytes(Uint8Array.from(atob(base64), (character) => character.charCodeAt(0)))
+  }
+
+  enqueueBytes(bytes: Uint8Array): Promise<void> {
     const revision = this.revision
-    debugConsole?.info(this.logPrefix, '[入队] 收到 PCM Base64', { revision, base64Chars: base64.length })
-    const run = this.chain.then(() => this.schedule(base64, revision))
+    const run = this.chain.then(() => this.schedule(bytes, revision))
     this.chain = run.catch(() => {})
     return run
   }
@@ -93,12 +96,12 @@ export class PcmAudioQueue {
     if (context !== null && context.state !== 'closed') await context.close()
   }
 
-  private async schedule(base64: string, revision: number): Promise<void> {
+  private async schedule(bytes: Uint8Array, revision: number): Promise<void> {
     if (revision !== this.revision) {
       debugConsole?.warn(this.logPrefix, '[调度] 已跳过过期 PCM 块', { chunkRevision: revision, currentRevision: this.revision })
       return
     }
-    const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0))
+    if (bytes.byteLength % 2) throw new Error('invalid-pcm-sample')
     if (bytes.byteLength < 2) {
       debugConsole?.warn(this.logPrefix, '[解码] 已跳过空 PCM 块', { bytes: bytes.byteLength })
       return

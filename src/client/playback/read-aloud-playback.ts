@@ -1,4 +1,4 @@
-import { applyTtsPlaybackScope, splitTtsSegments } from '../../shared.js'
+import { applyTtsPlaybackScope, splitTtsSegments, supportsRealtimeTts } from '../../shared.js'
 import type { ResolvedTtsSettings } from '../../shared.js'
 import type { LiveSpeechController } from './live-speech-controller.js'
 import type { LocalSpeechController } from './local-speech-controller.js'
@@ -20,11 +20,13 @@ export interface ReadAloudRequest {
 /** Start a completed reply with one directed fallback, using the selected playback range. */
 export function playCompletedReply(request: ReadAloudRequest, automatic: boolean): void {
   const { sessionId, messageId, text, settings, apiKeySupported, playback, live, local } = request
+  live.configure(settings)
+  playback.configure(settings)
   const scopedText = applyTtsPlaybackScope(text, settings.readScope, automatic)
   const localFallback = settings.localSpeechMode === 'auto' ? () => local.playCompleted(sessionId, messageId, scopedText) : undefined
   const playRemote = (): void => {
     local.cancelSession(sessionId)
-    if (settings.model === 'mimo-v2.5-tts-voicedesign') {
+    if (!supportsRealtimeTts(settings)) {
       live.cancelSession(sessionId)
       if (splitTtsSegments(scopedText).length > 1) void playback.segmented(sessionId, messageId, scopedText, automatic, localFallback)
       else void playback.toggle(sessionId, messageId, scopedText, automatic, localFallback, 'mp3')

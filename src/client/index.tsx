@@ -6,7 +6,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import { TTS_SETTINGS_NAMESPACE, resolveTtsSettings } from '../shared.js'
+import { TTS_SETTINGS_NAMESPACE, resolveTtsSettings, ttsSelection } from '../shared.js'
 import type { TtsSettings } from '../shared.js'
 import { ReadAloudAction } from './conversation/read-aloud.js'
 import { SessionPlaybackObserver } from './conversation/session-playback-observer.js'
@@ -14,6 +14,7 @@ import { NS, en, zh } from './localization.js'
 import type { Translate } from './localization.js'
 import { LiveSpeechController, LocalSpeechController, PlaybackController } from './playback/index.js'
 import { XiaomiMimoTtsPcmService } from './playback/pcm-play-service.js'
+import { onTtsCredentialsSaved } from './conversation/api-key-status.js'
 import { SettingsCard } from './settings/card.js'
 import { createSoundEffectsController, installClickSounds } from './sound-effects/index.js'
 import { installTaskSoundWatcher } from './sound-effects/task-watcher.js'
@@ -93,11 +94,25 @@ export function apply(ctx: Context): void {
     local.interrupt()
     playback.interrupt()
   }, history)
+  let providerSelectionKey: string | null = null
+  const updateProvider = () => {
+    const settings = resolveTtsSettings(scope.getSnapshot().value)
+    const key = JSON.stringify({ ...ttsSelection(settings), voiceRate: undefined })
+    if (providerSelectionKey !== null && providerSelectionKey !== key) {
+      live.interrupt(); playback.interrupt(); local.interrupt(); pcmService.stop()
+    }
+    providerSelectionKey = key
+    live.configure(settings)
+    playback.configure(settings)
+  }
+  updateProvider()
+  ctx.effect(() => scope.subscribe(updateProvider), 'xiaomi-mimo-tts: provider selection')
+  ctx.effect(() => onTtsCredentialsSaved(() => { live.interrupt(); playback.interrupt(); local.interrupt(); pcmService.stop() }), 'xiaomi-mimo-tts: saved credentials')
   const stopOptionalPcm = () => { pcmService.stop(); history.stopReplay() }
   live.setBeforePlayback(stopOptionalPcm)
   local.setBeforePlayback(stopOptionalPcm)
   playback.setBeforePlayback(stopOptionalPcm)
-  live.setStateChangeListener((sessionId, messageId, status) => playback.updateLivePlayback(sessionId, messageId, status, 'live'))
+  live.setStateChangeListener((sessionId, messageId, status, error) => playback.updateLivePlayback(sessionId, messageId, status, 'live', error))
   local.setStateChangeListener((sessionId, messageId, status, error) => playback.updateLivePlayback(sessionId, messageId, status, 'system', error))
   const updateVoiceVolume = () => { const volume = resolveTtsSettings(scope.getSnapshot().value).voiceVolume; live.setVolume(volume); local.setVolume(volume); playback.setVolume(volume); pcmService.setVolume(volume) }
   updateVoiceVolume()

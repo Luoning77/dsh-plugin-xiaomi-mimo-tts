@@ -20,7 +20,12 @@ export interface PreviewModuleProps {
 
 export function PreviewModule({ t, enabled, minimal, status, source, error, text, onToggle, onTextChange }: PreviewModuleProps): ReactElement {
   const busy = status === 'loading' || status === 'playing'
-  const errorKey = error === 'api-key-not-configured'
+  const errorKey = error === 'save-key-first' ? 'settings.previewSaveKeyFirst'
+    : error === 'voice-required' ? 'settings.doubaoVoiceRequired'
+    : error === 'voice-unavailable' ? 'settings.previewErrorVoiceUnavailable'
+    : error === 'resource-unavailable' ? 'settings.previewErrorResourceUnavailable'
+    : error === 'stream-buffer-limit' ? 'settings.previewErrorBufferLimit'
+    : error === 'api-key-not-configured'
     ? 'settings.previewErrorApiKeyMissing'
     : error === 'api-key-rejected'
       ? 'settings.previewErrorApiKeyRejected'
@@ -36,10 +41,10 @@ export function PreviewModule({ t, enabled, minimal, status, source, error, text
   const messageKey = status === 'error'
     ? errorKey
     : status === 'loading'
-      ? source === 'local' ? 'settings.previewLoadingLocal' : 'settings.previewLoadingMimo'
+      ? source === 'doubao' ? 'settings.previewLoadingDoubao' : source === 'local' ? 'settings.previewLoadingLocal' : 'settings.previewLoadingMimo'
       : status === 'playing'
-        ? source === 'local' ? 'settings.previewPlayingLocal' : 'settings.previewPlayingMimo'
-        : source === 'local'
+        ? source === 'doubao' ? 'settings.previewPlayingDoubao' : source === 'local' ? 'settings.previewPlayingLocal' : 'settings.previewPlayingMimo'
+        : source === 'doubao' ? 'settings.previewCompletedDoubao' : source === 'local'
           ? 'settings.previewCompletedLocal'
           : source === 'mimo'
             ? 'settings.previewCompletedMimo'

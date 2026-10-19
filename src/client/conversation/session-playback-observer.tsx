@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type { SessionSnapshot } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
-import { resolveTtsSettings } from '../../shared.js'
+import { resolveTtsSettings, supportsRealtimeTts, ttsSelection } from '../../shared.js'
 import type { TtsSettings } from '../../shared.js'
 import type { LiveSpeechController, LocalSpeechController, PlaybackController } from '../playback/index.js'
 import { RealtimeSpeechSession } from '../playback/realtime-speech-session.js'
@@ -25,7 +25,7 @@ interface SessionPlaybackObserverProps {
 export function SessionPlaybackObserver({ sessionId, useSession, useChat, playback, live, local, settings }: SessionPlaybackObserverProps): null {
   const settingsSnapshot = useSettingsSnapshot(settings)
   const resolvedSettings = resolveTtsSettings(settingsSnapshot.value)
-  const apiKeySupported = useApiKeySupported(resolvedSettings.localSpeechMode !== 'disabled')
+  const apiKeySupported = useApiKeySupported(resolvedSettings.localSpeechMode !== 'disabled', resolvedSettings.provider, settingsSnapshot.revision)
   live.setMaxPausedPcmBytes(resolvedSettings.maxPausedPcmBytes)
   local.setVoiceURI(resolvedSettings.localVoiceURI)
   local.setTimeoutMs(resolvedSettings.requestTimeoutMs)
@@ -35,6 +35,8 @@ export function SessionPlaybackObserver({ sessionId, useSession, useChat, playba
   const runningSnapshot = sessionSnapshot.running
 
   const [speech] = useState(() => new RealtimeSpeechSession(live, local))
+  const selectionKey = JSON.stringify(ttsSelection(resolvedSettings))
+  const previousSelection = useRef(selectionKey)
   const active = useRef<{ turn: number; step: number } | null>(null)
   const wasRunning = useRef(runningSnapshot)
   const runArmed = useRef(true)
@@ -62,6 +64,15 @@ export function SessionPlaybackObserver({ sessionId, useSession, useChat, playba
   }, [playback, sessionId, speech])
 
   useEffect(() => {
+    if (previousSelection.current !== selectionKey) {
+      previousSelection.current = selectionKey
+      const previousTurn = active.current?.turn
+      speech.cancel()
+      if (previousTurn !== undefined) { live.blockTurn(sessionId, previousTurn); local.blockTurn(sessionId, previousTurn) }
+      live.configure(resolvedSettings)
+      active.current = null
+      if (runningSnapshot) runArmed.current = false
+    }
     speech.configure({ localSpeechMode: resolvedSettings.localSpeechMode, apiKeySupported, readScope: resolvedSettings.readScope })
     const beganRun = runningSnapshot && !wasRunning.current
     wasRunning.current = runningSnapshot
@@ -76,7 +87,7 @@ export function SessionPlaybackObserver({ sessionId, useSession, useChat, playba
       active.current = null
     }
 
-    const localModel = resolvedSettings.model === 'mimo-v2.5-tts'
+    const localModel = supportsRealtimeTts(resolvedSettings)
     const realtimeSpeechEnabled = localModel
     playback.observeSession(sessionId, runningSnapshot && runArmed.current, latestMessageId, attachedMidRun.current && realtimeSpeechEnabled)
     if (!resolvedSettings.enabled || !resolvedSettings.autoPlay || !realtimeSpeechEnabled) {
@@ -114,7 +125,7 @@ export function SessionPlaybackObserver({ sessionId, useSession, useChat, playba
       }
       active.current = null
     }
-  }, [apiKeySupported, legacy, latestMessageId, live, local, partial, partialText, playback, resolvedSettings.autoPlay, resolvedSettings.enabled, resolvedSettings.localSpeechMode, resolvedSettings.model, resolvedSettings.readScope, runningSnapshot, sessionId, sessionSnapshot.openState, speech])
+  }, [selectionKey, apiKeySupported, legacy, latestMessageId, live, local, partial, partialText, playback, resolvedSettings.autoPlay, resolvedSettings.enabled, resolvedSettings.localSpeechMode, resolvedSettings.model, resolvedSettings.provider, resolvedSettings.doubaoModel, resolvedSettings.doubaoVoice, resolvedSettings.doubaoClonedVoice, resolvedSettings.readScope, runningSnapshot, sessionId, sessionSnapshot.openState, speech])
 
   return null
 }
