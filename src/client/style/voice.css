@@ -232,3 +232,88 @@
 .xmimo-tts-builtin-voice-option-custom {
   grid-column: 1/-1
 }
+
+.xmimo-tts-doubao-voice-picker { display: grid; gap: var(--xmimo-ui-space-2, 8px); min-width: 0; }
+.xmimo-tts-doubao-voice-picker small, .xmimo-tts-details-summary > span { overflow-wrap: anywhere; }
+.xmimo-tts-doubao-voice-avatar {
+  display: grid;
+  place-items: center;
+  color: var(--xmimo-ui-brand);
+  background: color-mix(in srgb, var(--xmimo-ui-brand) 10%, var(--xmimo-ui-surface));
+  font-size: 16px;
+  font-weight: 600
+}
+
+.xmimo-tts-card-minimal .xmimo-tts-doubao-voice-picker .xmimo-tts-builtin-voice-menu {
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+}
+
+.xmimo-tts-card-minimal .xmimo-tts-doubao-voice-picker .xmimo-tts-builtin-voice-option-custom {
+  grid-column: 1 / -1
+}
+
+.xmimo-tts-doubao-voice > .xmimo-tts-field-heading {
+  flex-wrap: wrap
+}
+
+.xmimo-tts-doubao-voice .xmimo-tts-field-label {
+  flex: 1
+}
+
+.xmimo-tts-doubao-voice .xmimo-tts-field-label > span {
+  flex: none
+}
+
+.xmimo-tts-doubao-voice-hint {
+  font-size: 11px
+}
+
+.xmimo-tts-doubao-voice-hint a {
+  white-space: nowrap
+}
+
+.xmimo-tts-cloned-voice-history,
+.xmimo-tts-instruction-presets {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px
+}
+
+.xmimo-tts-cloned-voice-tag,
+.xmimo-tts-instruction-tag {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 3px 8px;
+  border: 1px solid var(--xmimo-ui-border-soft);
+  border-radius: 999px;
+  color: var(--xmimo-ui-text-muted);
+  background: var(--xmimo-ui-control-surface);
+  font: inherit;
+  font-size: 11px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer
+}
+
+.xmimo-tts-cloned-voice-tag:hover:not(:disabled),
+.xmimo-tts-cloned-voice-tag[aria-pressed=true],
+.xmimo-tts-instruction-tag:hover:not(:disabled),
+.xmimo-tts-instruction-tag[aria-pressed=true] {
+  color: var(--dsw-alias-brand-primary, #4f6ef7);
+  border-color: currentColor
+}
+
+.xmimo-tts-cloned-voice-tag:focus-visible,
+.xmimo-tts-instruction-tag:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary, #4f6ef7);
+  outline-offset: 2px
+}
+
+.xmimo-tts-cloned-voice-tag:disabled,
+.xmimo-tts-instruction-tag:disabled {
+  cursor: not-allowed;
+  opacity: .55
+}

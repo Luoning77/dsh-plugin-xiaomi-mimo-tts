@@ -3,7 +3,7 @@ import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
 
 export interface SettingFieldHeadingProps {
   label: ReactNode
-  suffix?: ReactElement
+  suffix?: ReactElement | undefined
   overriddenLabel?: string
   resetLabel?: string
   overridden?: boolean

@@ -15,6 +15,18 @@ import { PcmAudioQueue } from './pcm-audio-queue.js'
 import type { LiveMessageIdentity, PlaybackStatus } from './types.js'
 import type { AudioHistory } from '../history/audio-history.js'
 import { PcmRecording } from '../history/pcm-recording.js'
+import { DuplexPcmStream } from './duplex-pcm.js'
+import { ttsSelection } from '../../types/providers.js'
+import type { TtsSelection } from '../../types/providers.js'
+import type { ResolvedTtsSettings } from '../../types/settings.js'
+
+interface DuplexJob {
+  text: string[]
+  finished: boolean
+  stream: DuplexPcmStream | null
+  sessionId: string | null
+  messageId: string | null
+}
 
 interface CompletedStreamPlayback {
   sessionId: string
@@ -50,11 +62,41 @@ export class LiveSpeechController {
   private completed: CompletedStreamPlayback | null = null
   private audioStarted = false
   private fallbackHandler: ((cursor: LiveSpeechCursor, text: string) => void) | null = null
-  private onStateChange: ((sessionId: string, messageId: string, status: PlaybackStatus) => void) | null = null
+  private onStateChange: ((sessionId: string, messageId: string, status: PlaybackStatus, error: string | null) => void) | null = null
+  private playbackError: string | null = null
   private beforePlayback: (() => void) | null = null
   private voiceRate = 1
+  private selection: TtsSelection = { provider: 'xiaomi', model: 'mimo-v2.5-tts', voice: '冰糖', voiceDesignPrompt: '' }
+  private duplexAbort = new AbortController()
+  private duplexJobs: DuplexJob[] = []
+  private duplexStep: DuplexJob | null = null
+  private duplexRunning = false
+  private timeoutMs = 120000
+  private maxPcmBytes = 32 * 1024 * 1024
+  private maxTextLength = 12000
 
-  setStateChangeListener(listener: (sessionId: string, messageId: string, status: PlaybackStatus) => void): void {
+  configure(settings: ResolvedTtsSettings): void {
+    const next = ttsSelection(settings)
+    // Rate changes apply to the next playback without interrupting the current session.
+    if (JSON.stringify({ ...next, voiceRate: undefined }) !== JSON.stringify({ ...this.selection, voiceRate: undefined })) this.interrupt()
+    this.selection = next
+    this.voiceRate = settings.voiceRate
+    this.timeoutMs = settings.requestTimeoutMs
+    this.maxPcmBytes = settings.maxPausedPcmBytes
+    this.maxTextLength = settings.maxTextLength
+    this.audio.setMaxPausedPcmBytes(settings.maxPausedPcmBytes)
+  }
+
+  isDuplex(): boolean { return this.selection.provider === 'doubao' }
+
+  /** Close bounded read scopes before generation ends; final identity can arrive later. */
+  finishInput(sessionId: string, turn: number, step: number): void {
+    if (!this.isDuplex() || this.sessionId !== sessionId || this.active?.turn !== turn || this.active.step !== step) return
+    this.drain(true)
+    this.finishDuplexStep()
+  }
+
+  setStateChangeListener(listener: (sessionId: string, messageId: string, status: PlaybackStatus, error: string | null) => void): void {
     this.onStateChange = listener
   }
 
@@ -66,7 +108,10 @@ export class LiveSpeechController {
 
   setVolume(value: number): void { this.audio.setVolume(value) }
 
-  setVoiceRate(value: number): void { this.voiceRate = normalizeVoiceRate(value) }
+  setVoiceRate(value: number): void {
+    this.voiceRate = normalizeVoiceRate(value)
+    if (this.selection.provider === 'doubao') this.selection = { ...this.selection, voiceRate: this.voiceRate }
+  }
 
   async pause(sessionId: string): Promise<boolean> {
     if (this.sessionId !== sessionId || this.status !== 'playing') return false
@@ -142,11 +187,16 @@ export class LiveSpeechController {
     if (this.sessionId !== sessionId || text.length === 0) return
     this.beforePlayback?.()
     this.resetState()
-    this.audio.setPlaybackRate(this.voiceRate)
+    this.audio.setPlaybackRate(this.isDuplex() ? 1 : this.voiceRate)
     this.completed = { sessionId, messageId, audioStarted: false, fallback }
     this.audioStarted = false
     this.messageId = messageId
     this.setStatus('loading')
+    if (this.isDuplex()) {
+      this.enqueueDuplex(text)
+      this.finishDuplexStep()
+      return
+    }
     for (const segment of splitTtsSegments(text)) this.queue.enqueue(segment)
   }
 
@@ -166,8 +216,10 @@ export class LiveSpeechController {
     }
     if (final.text.startsWith(this.observed)) this.observed = final.text
     this.messageId = final.messageId
+    if (this.duplexStep !== null) this.duplexStep.messageId = final.messageId
     this.reportStatus()
     this.drain(true)
+    this.finishDuplexStep()
     this.handled.add(key)
   }
 
@@ -213,13 +265,15 @@ export class LiveSpeechController {
   private reset(next: LiveSpeechCursor): void {
     this.replaceQueue()
     this.audio.stop()
-    this.audio.setPlaybackRate(this.voiceRate)
+    this.audio.setPlaybackRate(this.isDuplex() ? 1 : this.voiceRate)
     this.beginSegment(next, false)
     this.setStatus('idle')
   }
 
   private advanceSegment(next: LiveSpeechCursor): void {
     this.drain(true)
+    this.finishDuplexStep()
+    this.duplexStep = null
     this.beginSegment(next, true)
   }
 
@@ -280,6 +334,10 @@ export class LiveSpeechController {
 
   private stageSentences(sentences: readonly string[], flush: boolean): void {
     const prepared = sentences.map(prepareSpeechText).filter(text => countTtsSpeechCharacters(text) > 0)
+    if (this.isDuplex()) {
+      for (const text of prepared) this.enqueueDuplex(text)
+      return
+    }
     const batch = batchTtsStreamSegments(this.pendingText, prepared, flush)
     this.pendingText = batch.pending
     for (const request of batch.requests) this.queue.enqueue(request)
@@ -308,6 +366,11 @@ export class LiveSpeechController {
     this.requestBusy = false
     this.queue.cancel()
     this.queue = this.createQueue()
+    this.duplexAbort.abort()
+    this.duplexAbort = new AbortController()
+    this.duplexJobs = []
+    this.duplexStep = null
+    this.duplexRunning = false
   }
 
   private isCurrentStream(generation: number, signal: AbortSignal): boolean {
@@ -324,7 +387,7 @@ export class LiveSpeechController {
         if (!this.isCurrentStream(generation, signal)) return
         recording.append(pcm)
         await this.audio.enqueue(pcm)
-      })
+      }, this.selection)
       if (this.isCurrentStream(generation, signal)) recording.save(this.history, {
         text: sentence, source: 'conversation',
         ...(sessionId === null ? {} : { sessionId }),
@@ -353,10 +416,67 @@ export class LiveSpeechController {
       return
     }
     if (this.active !== null) this.blockedTurn = `${this.active.sessionId}:${this.active.turn}`
+    this.playbackError = error instanceof Error && 'code' in error && typeof error.code === 'string' ? error.code : error instanceof Error ? error.message : 'request-failed'
     this.setStatus('error')
     this.replaceQueue()
     this.audio.stop()
     void error
+  }
+
+  private enqueueDuplex(text: string): void {
+    if (this.duplexStep?.finished) return
+    if (this.duplexStep === null) {
+      this.duplexStep = { text: [], finished: false, stream: null, sessionId: this.sessionId, messageId: this.messageId }
+      this.duplexJobs.push(this.duplexStep)
+    }
+    const job = this.duplexStep
+    job.text.push(text)
+    try { job.stream?.append(text) } catch (error) { this.handleStreamError(error); return }
+    if (!this.duplexRunning) void this.runDuplexJobs()
+  }
+
+  private finishDuplexStep(): void {
+    const job = this.duplexStep
+    if (job === null || job.finished) return
+    job.finished = true
+    void job.stream?.finish().catch(() => {})
+  }
+
+  private async runDuplexJobs(): Promise<void> {
+    this.duplexRunning = true
+    const generation = this.streamGeneration
+    const signal = this.duplexAbort.signal
+    this.requestBusy = true
+    if (this.status === 'idle') this.setStatus('loading')
+    try {
+      while (this.duplexJobs.length && this.isCurrentStream(generation, signal)) {
+        const job = this.duplexJobs[0]!
+        const recording = new PcmRecording()
+        job.stream = new DuplexPcmStream(this.selection, signal, async bytes => {
+          if (!this.isCurrentStream(generation, signal)) return
+          recording.appendBytes(bytes)
+          await this.audio.enqueueBytes(bytes)
+        }, this.maxPcmBytes, this.timeoutMs, this.maxTextLength)
+        for (const text of job.text) job.stream.append(text)
+        if (job.finished) void job.stream.finish().catch(() => {})
+        await job.stream.done
+        if (!this.isCurrentStream(generation, signal)) return
+        recording.save(this.history, {
+          text: job.text.join(''), source: 'conversation', voiceRateApplied: true,
+          ...(job.sessionId === null ? {} : { sessionId: job.sessionId }),
+          ...(job.messageId === null ? {} : { messageId: job.messageId }),
+        })
+        this.duplexJobs.shift()
+      }
+    } catch (error) {
+      if (this.isCurrentStream(generation, signal)) this.handleStreamError(error)
+    } finally {
+      if (generation === this.streamGeneration) {
+        this.duplexRunning = false
+        this.requestBusy = false
+        this.maybeFinishPlayback()
+      }
+    }
   }
 
   private maybeFinishPlayback(): void {
@@ -364,6 +484,7 @@ export class LiveSpeechController {
   }
 
   private setStatus(status: PlaybackStatus): void {
+    if (status !== 'error') this.playbackError = null
     if (this.status === status) return
     this.status = status
     if (status === 'playing') {
@@ -374,7 +495,7 @@ export class LiveSpeechController {
   }
 
   private reportStatus(): void {
-    if (this.sessionId !== null && this.messageId !== null) this.onStateChange?.(this.sessionId, this.messageId, this.status)
+    if (this.sessionId !== null && this.messageId !== null) this.onStateChange?.(this.sessionId, this.messageId, this.status, this.playbackError)
   }
 }
 

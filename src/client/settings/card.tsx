@@ -11,6 +11,8 @@ import {
   resolveSoundEffectsMode,
   resolveTtsSettings,
 } from '../../shared.js'
+import { saveSettingsDraft, validateSettingsDraft, EDITABLE_SETTING_FIELDS } from './save-settings.js'
+import { invalidateApiKeyStatus } from '../conversation/api-key-status.js'
 import type { TtsSettings } from '../../shared.js'
 import type { Translate } from '../localization.js'
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
@@ -43,7 +45,6 @@ interface SettingsCardProps {
 
 type DraftSettings = SettingsValues
 
-const EDITABLE_SETTING_FIELDS: EditableSettingField[] = ['enabled', 'autoPlay', 'voiceVolume', 'voiceRate', 'readScope', 'model', 'localSpeechMode', 'localVoiceURI', 'voice', 'voiceDesignPrompt', 'voiceDesignCustomPrompt', 'soundEnabled', 'soundVolume', 'soundPack', 'taskSounds', 'clickSounds']
 const RELEASES_URL = 'https://github.com/ppy-web/dsh-plugin-xiaomi-mimo-tts/releases'
 const PREVIEW_TEXT_KEYS = [
   'settings.previewDefaultText',
@@ -77,7 +78,15 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
   const snapshot = useSettingsSnapshot(scope)
   const value = snapshot.value
   const initial = resolveTtsSettings(value)
-  const [apiKey, setApiKey] = useState('')
+  const [apiKeys, setApiKeys] = useState({ xiaomi: '', doubao: '' })
+  const [provider, setProvider] = useState(initial.provider)
+  const [doubaoModel, setDoubaoModel] = useState(initial.doubaoModel)
+  const [doubaoVoice, setDoubaoVoice] = useState(initial.doubaoVoice)
+  const [doubaoClonedVoice, setDoubaoClonedVoice] = useState(initial.doubaoClonedVoice)
+  const [doubaoInstruction, setDoubaoInstruction] = useState(initial.doubaoInstruction)
+  const apiKey = apiKeys[provider]
+  const apiKeyField = provider === 'doubao' ? 'doubaoApiKey' : 'apiKey'
+  const setApiKey = (next: string): void => { setApiKeys(current => ({ ...current, [provider]: next })) }
   const [enabled, setEnabled] = useState(initial.enabled)
   const [autoPlay, setAutoPlay] = useState(initial.autoPlay)
   const [voiceVolume, setVoiceVolume] = useState(initial.voiceVolume)
@@ -112,7 +121,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
 
   const accepted = resolveTtsSettings(value)
   const base = resolveTtsSettings(layerSettings(snapshot.base))
-  const draft: DraftSettings = { enabled, autoPlay: enabled && autoPlay, voiceVolume, voiceRate, readScope, model, localSpeechMode, localVoiceURI, voice, voiceDesignPrompt, voiceDesignCustomPrompt, soundEnabled, soundVolume, soundPack, taskSounds, clickSounds }
+  const draft: DraftSettings = { provider, doubaoModel, doubaoVoice, doubaoClonedVoice, doubaoInstruction, enabled, autoPlay: enabled && autoPlay, voiceVolume, voiceRate, readScope, model, localSpeechMode, localVoiceURI, voice, voiceDesignPrompt, voiceDesignCustomPrompt, soundEnabled, soundVolume, soundPack, taskSounds, clickSounds }
   const acceptedValue = (field: EditableSettingField): ResolvedSettings[typeof field] => {
     const raw = value?.[field]
     return (raw === undefined ? accepted[field] : raw) as ResolvedSettings[typeof field]
@@ -121,7 +130,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
   const fieldOverridden = (field: SettingField): boolean => {
     const change = changes[field]
     if (change?.kind === 'clear') return false
-    if (change?.kind === 'set') return field === 'apiKey' ? apiKey.trim().length > 0 : true
+    if (change?.kind === 'set') return field === 'apiKey' ? apiKeys.xiaomi.trim().length > 0 : field === 'doubaoApiKey' ? apiKeys.doubao.trim().length > 0 : true
     return hasOverride(field)
   }
   const fieldDirty = (field: EditableSettingField): boolean => {
@@ -130,17 +139,16 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
     if (change.kind === 'clear') return hasOverride(field)
     return !Object.is(draft[field], acceptedValue(field))
   }
-  const apiKeyDirty = changes.apiKey?.kind === 'clear'
-    ? hasOverride('apiKey')
-    : changes.apiKey?.kind === 'set' && apiKey.trim().length > 0
-  const dirty = EDITABLE_SETTING_FIELDS.some(fieldDirty) || apiKeyDirty === true
-  const apiKeyViewState = resolveApiKeyViewState(apiKey, isSupportedTtsApiKey(apiKey), apiKeyStatus, changes.apiKey?.kind)
+  const apiKeyDirty = (['apiKey', 'doubaoApiKey'] as const).some(field => changes[field]?.kind === 'clear' ? hasOverride(field) : changes[field]?.kind === 'set' && apiKeys[field === 'apiKey' ? 'xiaomi' : 'doubao'].trim().length > 0)
+  const dirty = EDITABLE_SETTING_FIELDS.some(fieldDirty) || apiKeyDirty
+  const validationError = validateSettingsDraft(draft)
+  const apiKeyViewState = resolveApiKeyViewState(apiKey, isSupportedTtsApiKey(apiKey, provider), apiKeyStatus, changes[apiKeyField]?.kind)
   const apiKeyMessage = t(apiKeyViewState === 'loading'
     ? 'settings.apiKeyLoading'
     : apiKeyViewState === 'missing'
       ? 'settings.apiKeyMissing'
       : apiKeyViewState === 'recognized'
-        ? 'settings.apiKeyRecognized'
+        ? provider === 'doubao' ? 'settings.doubaoKeyConfigured' : 'settings.apiKeyRecognized'
         : apiKeyViewState === 'unrecognized'
           ? 'settings.apiKeyUnsupportedSaved'
           : apiKeyViewState === 'unavailable'
@@ -151,13 +159,13 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
                 ? 'settings.apiKeyPendingClear'
                 : 'settings.apiKeyUnsupported')
   const apiKeyInvalid = apiKeyViewState === 'pending-invalid' || apiKeyViewState === 'unrecognized'
-  const apiKeyClearable = hasOverride('apiKey') && changes.apiKey?.kind !== 'clear'
+  const apiKeyClearable = hasOverride(apiKeyField) && changes[apiKeyField]?.kind !== 'clear'
 
   useEffect(() => {
     if (snapshot.status === 'unavailable') return
     let active = true
     setApiKeyStatus('loading')
-    void fetch(hostRoute(TTS_API_KEY_STATUS_ROUTE), { headers: { accept: 'application/json' } })
+    void fetch(`${hostRoute(TTS_API_KEY_STATUS_ROUTE)}?provider=${provider}`, { headers: { accept: 'application/json' } })
       .then(async (response) => {
         if (!response.ok) throw new Error('api-key-status-failed')
         return await response.json() as { configured?: unknown; supported?: unknown }
@@ -170,7 +178,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
         if (active) setApiKeyStatus('unavailable')
       })
     return () => { active = false }
-  }, [snapshot.status, value])
+  }, [provider, snapshot.status, value])
 
   useEffect(() => {
     let active = true
@@ -190,6 +198,11 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
   useEffect(() => {
     if (dirty) return
     const next = resolveTtsSettings(value)
+    setProvider(next.provider)
+    setDoubaoModel(next.doubaoModel)
+    setDoubaoVoice(next.doubaoVoice)
+    setDoubaoClonedVoice(next.doubaoClonedVoice)
+    setDoubaoInstruction(next.doubaoInstruction)
     setEnabled(next.enabled)
     setAutoPlay(next.autoPlay)
     setVoiceVolume(next.voiceVolume)
@@ -231,7 +244,13 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
   }
 
   const resetField = (field: EditableSettingField): void => {
+    previewPlayer.stop()
     markChange(field, 'clear')
+    if (field === 'provider') setProvider(base.provider)
+    if (field === 'doubaoModel') setDoubaoModel(base.doubaoModel)
+    if (field === 'doubaoVoice') setDoubaoVoice(base.doubaoVoice)
+    if (field === 'doubaoClonedVoice') setDoubaoClonedVoice(base.doubaoClonedVoice)
+    if (field === 'doubaoInstruction') setDoubaoInstruction(base.doubaoInstruction)
     if (field === 'enabled') setEnabled(base.enabled)
     if (field === 'autoPlay') setAutoPlay(base.autoPlay)
     if (field === 'voiceVolume') setVoiceVolume(base.voiceVolume)
@@ -252,11 +271,16 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
 
   const clearApiKey = (): void => {
     setApiKey('')
-    markChange('apiKey', 'clear')
+    markChange(apiKeyField, 'clear')
   }
 
   const discard = (): void => {
     const next = resolveTtsSettings(scope.getSnapshot().value)
+    setProvider(next.provider)
+    setDoubaoModel(next.doubaoModel)
+    setDoubaoVoice(next.doubaoVoice)
+    setDoubaoClonedVoice(next.doubaoClonedVoice)
+    setDoubaoInstruction(next.doubaoInstruction)
     setEnabled(next.enabled)
     setAutoPlay(next.autoPlay)
     setVoiceVolume(next.voiceVolume)
@@ -273,7 +297,8 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
     setSoundPack(next.soundPack)
     setTaskSounds(next.taskSounds)
     setClickSounds(next.clickSounds)
-    setApiKey('')
+    setApiKeys({ xiaomi: '', doubao: '' })
+    previewPlayer.stop()
     setChanges({})
     setState('idle')
   }
@@ -283,25 +308,9 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
     setSoundEffectsOpen(false)
     setState('saving')
     try {
-      const requireAccepted = async (write: Promise<boolean>): Promise<void> => {
-        if (!await write) throw new Error('Host rejected a settings update')
-      }
-      for (const field of EDITABLE_SETTING_FIELDS) {
-        const change = changes[field]
-        if (change === undefined) continue
-        if (change.kind === 'clear') {
-          if (hasOverride(field)) await requireAccepted(scope.unset(field))
-        } else if (!Object.is(draft[field], acceptedValue(field))) {
-          await requireAccepted(scope.set(field, draft[field]))
-        }
-      }
-      const apiKeyChange = changes.apiKey
-      if (apiKeyChange?.kind === 'clear') {
-        if (hasOverride('apiKey')) await requireAccepted(scope.unset('apiKey'))
-      } else if (apiKeyChange?.kind === 'set' && apiKey.trim().length > 0) {
-        await requireAccepted(scope.set('apiKey', apiKey.trim()))
-      }
-      setApiKey('')
+      await saveSettingsDraft(scope, draft, changes, apiKeys)
+      if (changes.apiKey !== undefined || changes.doubaoApiKey !== undefined) invalidateApiKeyStatus()
+      setApiKeys({ xiaomi: '', doubao: '' })
       setChanges({})
       setState('saved')
     } catch {
@@ -316,7 +325,12 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
       previewPlayer.stop()
       return
     }
+    if (validationError !== null || changes[apiKeyField] !== undefined) {
+      setPreviewView({ status: 'error', source: provider === 'doubao' ? 'doubao' : 'mimo', error: validationError !== null ? 'voice-required' : 'save-key-first' })
+      return
+    }
     void previewPlayer.play(text, {
+      provider, doubaoModel, doubaoVoice, doubaoClonedVoice, doubaoInstruction,
       model,
       localSpeechMode,
       localVoiceURI,
@@ -412,17 +426,28 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
         />
         <ApiKeyModule
           t={t}
+          provider={provider}
+          onProviderChange={next => { previewPlayer.stop(); setProvider(next); markChange('provider') }}
           value={apiKey}
           message={apiKeyMessage}
           invalid={apiKeyInvalid}
           clearable={apiKeyClearable}
           writable={snapshot.writable}
           minimal={minimalMode}
-          onChange={(next) => { setApiKey(next); markChange('apiKey') }}
+          onChange={(next) => { setApiKey(next); markChange(apiKeyField) }}
           onClear={clearApiKey}
         />
         {enabled ? <DetailsModule
           t={t}
+          provider={provider}
+          doubaoModel={doubaoModel}
+          doubaoVoice={doubaoVoice}
+          doubaoClonedVoice={doubaoClonedVoice}
+          doubaoInstruction={doubaoInstruction}
+          onDoubaoInstructionChange={next => { previewPlayer.stop(); setDoubaoInstruction(next); markChange('doubaoInstruction') }}
+          onDoubaoModelChange={next => { previewPlayer.stop(); setDoubaoModel(next); markChange('doubaoModel') }}
+          onDoubaoVoiceChange={next => { previewPlayer.stop(); setDoubaoVoice(next); markChange('doubaoVoice') }}
+          onDoubaoClonedVoiceChange={next => { previewPlayer.stop(); setDoubaoClonedVoice(next); markChange('doubaoClonedVoice') }}
           open={detailsOpen}
           minimal={minimalMode}
           previewing={previewBusy}
@@ -446,14 +471,14 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
           onVoiceRateChange={(next) => { setVoiceRate(next); markChange('voiceRate') }}
           onVoiceRateInteractionEnd={(next) => { controller.play('success', { playbackRate: next }) }}
           onReadScopeChange={(next) => { setReadScope(next); markChange('readScope') }}
-          onModelChange={(nextModel) => { setModel(nextModel); markChange('model') }}
+          onModelChange={(nextModel) => { previewPlayer.stop(); setModel(nextModel); markChange('model') }}
           onVoiceDesignPromptChange={(next) => {
             setVoiceDesignPrompt(next)
             setVoiceDesignCustomPrompt(next)
             setChanges((current) => ({ ...current, voiceDesignPrompt: { kind: 'set' }, voiceDesignCustomPrompt: { kind: 'set' } }))
             setState('idle')
           }}
-          onVoiceChange={(next) => { setVoice(next); markChange('voice') }}
+          onVoiceChange={(next) => { previewPlayer.stop(); setVoice(next); markChange('voice') }}
           onLocalVoiceURIChange={(next) => { setLocalVoiceURI(next); markChange('localVoiceURI') }}
           onLocalSpeechModeChange={(next) => { setLocalSpeechMode(next); markChange('localSpeechMode') }}
         /> : null}
@@ -505,6 +530,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
           </div>
           {!snapshot.writable ? <span>{t('settings.readOnly')}</span> : null}
           {state === 'saved' && !dirty ? <span role="status">{t('settings.saved')}</span> : null}
+          {validationError !== null ? <span role="alert" className="xmimo-tts-failed">{t('settings.doubaoVoiceRequired')}</span> : null}
           {state === 'failed' ? <span className="xmimo-tts-failed" role="status">{t('settings.failed')}</span> : null}
           <Button
             type="button"
@@ -520,7 +546,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
           <Button type="button" variant="outline" size="sm" className="xmimo-tts-discard" disabled={!snapshot.writable || !dirty || state === 'saving'} onClick={discard}>
             {t('settings.discard')}
           </Button>
-          <Button type="button" variant="primary" size="sm" className="xmimo-tts-save" disabled={!snapshot.writable || !dirty || state === 'saving'} onClick={() => { void save() }}>
+          <Button type="button" variant="primary" size="sm" className="xmimo-tts-save" disabled={!snapshot.writable || !dirty || state === 'saving' || validationError !== null} onClick={() => { void save() }}>
             {state === 'saving' ? t('settings.saving') : t('settings.save')}
           </Button>
         </div>

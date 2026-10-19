@@ -1,15 +1,11 @@
 import type { Context, Volatile } from '@deepseek-ai/cordis'
 import { readFileSync } from 'node:fs'
-import type { IncomingMessage, ServerResponse } from 'node:http'
 import { createRequire } from 'node:module'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-settings'
 import z from '@deepseek-ai/schemastery'
-import { debugConsole } from './debug-console.js'
 import {
   TTS_SETTINGS_NAMESPACE,
-  TTS_ROUTE,
-  TTS_STREAM_ROUTE,
   TTS_UPDATE_ROUTE,
   TTS_API_KEY_STATUS_ROUTE,
   TTS_MIMO_LOGO_ASSET_ROUTE,
@@ -34,41 +30,22 @@ import {
   TTS_FORMATS,
   TTS_VOICE_DESIGN_PLAYBACK_MODES,
   TTS_READ_SCOPES,
-  TTS_VOICES,
   TTS_VOICE_PRESETS,
   TTS_VOICE_DESIGN_PRESETS,
   SOUND_PACKS,
   DEFAULT_TTS_SETTINGS,
   isSupportedTtsApiKey,
-  resolveTtsBaseURL,
 } from './types/index.js'
-import { prepareTtsText, isNewerTtsVersion } from './text/index.js'
-import {
-  registerStaticAsset,
-  registerStaticAssetMap,
-  json,
-  readJsonBody,
-  apiErrorMessage,
-  requestMessages,
-  upstreamModel,
-  synthesisOptions,
-  completeAudioFormat,
-  completeAudioLimit,
-  completeAudioJsonLimit,
-  chatCompletionsEndpoint,
-  CompleteAudioResponseError,
-  readLimitedXiaomiResponse,
-  decodeCompleteAudio,
-} from './host/index.js'
-import type { SynthesizeBody, XiaomiAudioResponse } from './host/index.js'
+import { isNewerTtsVersion } from './text/index.js'
+import { registerStaticAsset, registerStaticAssetMap, json } from './host/index.js'
+import { registerSynthesisRoutes } from './host/synthesis-routes.js'
+import { TTS_PROVIDERS, DOUBAO_TTS_MODELS, ttsApiKey } from './shared.js'
 
 const packageJson = createRequire(import.meta.url)('../package.json') as { version?: unknown }
 const USER_AGENT = typeof packageJson.version === 'string'
   ? `dsh-xiaomi-tts/${packageJson.version}`
   : 'dsh-xiaomi-tts'
 const NPM_LATEST_URL = 'https://registry.npmjs.org/dsh-xiaomi-tts/latest'
-const STREAM_HOST_LOG = '[MiMoTTS Host]'
-let nextHostStreamRequestId = 1
 
 /** Cordis plugin identifier. */
 export const name = 'xiaomi-mimo-tts'
@@ -81,6 +58,12 @@ export const XIAOMI_MIMO_TTS_SETTINGS_NAMESPACE = TTS_SETTINGS_NAMESPACE
 
 /** Validated Host settings schema. */
 export const Config = z.object({
+  provider: z.union(TTS_PROVIDERS).default(DEFAULT_TTS_SETTINGS.provider).volatile(),
+  doubaoApiKey: z.string().role('secret').default('').volatile(),
+  doubaoModel: z.union(DOUBAO_TTS_MODELS).default(DEFAULT_TTS_SETTINGS.doubaoModel).volatile(),
+  doubaoVoice: z.string().default(DEFAULT_TTS_SETTINGS.doubaoVoice).volatile(),
+  doubaoClonedVoice: z.string().default('').volatile(),
+  doubaoInstruction: z.string().default(DEFAULT_TTS_SETTINGS.doubaoInstruction).volatile(),
   enabled: z.boolean().default(DEFAULT_TTS_SETTINGS.enabled).volatile(),
   apiKey: z.string().role('secret').default(DEFAULT_TTS_SETTINGS.apiKey).volatile(),
   baseURL: z.string().pattern(/^https?:\/\/\S+$/iu).default(DEFAULT_TTS_SETTINGS.baseURL).volatile(),
@@ -116,8 +99,6 @@ type ConfigValues = { [Key in keyof Config]: Config[Key] extends Volatile<infer 
 function readConfig(config: Config): ConfigValues {
   return Object.fromEntries(Object.entries(config).map(([key, value]) => [key, (value as Volatile<unknown>).get()])) as ConfigValues
 }
-
-type CompleteAudioAbortReason = 'client-disconnect' | 'timeout' | null
 
 async function latestTtsVersion(): Promise<string | null> {
   try {
@@ -277,283 +258,18 @@ export function apply(ctx: Context, config: Config): void {
         return
       }
 
-      const apiKey = current().apiKey.trim()
+      const settings = current()
+      const query = new URL(req.url ?? '/', 'http://localhost').searchParams.get('provider')
+      if (query !== null && query !== 'xiaomi' && query !== 'doubao') { json(res, 400, { error: 'invalid-provider' }); return }
+      const provider = query ?? settings.provider
+      const apiKey = ttsApiKey({ ...settings, provider })
       json(res, 200, {
+        provider,
         configured: apiKey.length > 0,
-        supported: apiKey.length > 0 && isSupportedTtsApiKey(apiKey),
+        supported: apiKey.length > 0 && isSupportedTtsApiKey(apiKey, provider),
       })
     },
   }), 'xiaomi-mimo-tts: API key status route')
 
-  ctx.effect(() => ctx.webServer.register({
-    kind: 'exact',
-    path: TTS_ROUTE,
-    async handler(req, res) {
-      if (req.method !== 'POST') {
-        res.setHeader('allow', 'POST')
-        json(res, 405, { error: 'method-not-allowed' })
-        return
-      }
-
-      let body: SynthesizeBody
-      try {
-        body = await readJsonBody(req) as SynthesizeBody
-      } catch (error) {
-        json(res, error instanceof Error && error.message === 'request-body-too-large' ? 413 : 400, {
-          error: error instanceof Error && error.message === 'request-body-too-large'
-            ? 'request-body-too-large'
-            : 'invalid-json',
-        })
-        return
-      }
-
-      const text = typeof body.text === 'string' ? prepareTtsText(body.text) : ''
-      const options = synthesisOptions(current(), body)
-
-      if (text.length === 0) {
-        json(res, 400, { error: 'text-required' })
-        return
-      }
-      if (text.length > options.maxTextLength) {
-        json(res, 413, {
-          error: 'text-too-long',
-          maxTextLength: options.maxTextLength,
-        })
-        return
-      }
-      if (options.apiKey.trim().length === 0) {
-        json(res, 409, { error: 'api-key-not-configured' })
-        return
-      }
-
-      const controller = new AbortController()
-      let abortReason: CompleteAudioAbortReason = null
-      const abort = (reason: Exclude<CompleteAudioAbortReason, null>): void => {
-        if (controller.signal.aborted) return
-        abortReason = reason
-        controller.abort()
-      }
-      const timeout = setTimeout(() => abort('timeout'), options.requestTimeoutMs)
-      const abortOnRequest = () => abort('client-disconnect')
-      const abortOnResponseClose = () => {
-        if (!res.writableEnded) abort('client-disconnect')
-      }
-      req.once('aborted', abortOnRequest)
-      res.once('close', abortOnResponseClose)
-
-      try {
-        if (body.format !== undefined && body.format !== 'mp3' && body.format !== 'wav') {
-          json(res, 400, { error: 'invalid-audio-format' })
-          return
-        }
-        const format = body.format === 'mp3' || body.format === 'wav' ? body.format : completeAudioFormat(options)
-        const endpoint = chatCompletionsEndpoint(options.apiKey, options.baseURL)
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          redirect: 'error',
-          headers: {
-            authorization: `Bearer ${options.apiKey.trim()}`,
-            'content-type': 'application/json',
-            accept: 'application/json',
-            'user-agent': USER_AGENT,
-          },
-          body: JSON.stringify({
-            model: upstreamModel(options),
-            messages: requestMessages(options, text),
-            audio: options.model === 'mimo-v2.5-tts-voicedesign'
-              ? { format }
-              : { format, voice: options.voice },
-            stream: false,
-          }),
-          signal: controller.signal,
-        })
-
-        const audioLimit = completeAudioLimit(options, format)
-        const parsed = await readLimitedXiaomiResponse(response, completeAudioJsonLimit(audioLimit), controller)
-
-        if (!response.ok) {
-          json(res, response.status, {
-            error: 'xiaomi-api-error',
-            message: apiErrorMessage(response.status, parsed),
-          })
-          return
-        }
-
-        const audioBase64 = parsed?.choices?.[0]?.message?.audio?.data
-        if (typeof audioBase64 !== 'string' || audioBase64.length === 0) {
-          json(res, 502, {
-            error: 'invalid-xiaomi-response',
-            message: 'Xiaomi MiMo response did not contain choices[0].message.audio.data',
-          })
-          return
-        }
-
-        const audio = decodeCompleteAudio(audioBase64, format, audioLimit)
-
-        res.statusCode = 200
-        res.setHeader('content-type', format === 'mp3' ? 'audio/mpeg' : 'audio/wav')
-        res.setHeader('content-length', String(audio.byteLength))
-        res.setHeader('cache-control', 'no-store')
-        res.end(audio)
-      } catch (error) {
-        if (abortReason === 'client-disconnect' || res.destroyed || res.writableEnded) return
-        if (error instanceof CompleteAudioResponseError) {
-          json(res, 502, { error: error.code, message: error.message })
-          return
-        }
-        json(res, abortReason === 'timeout' ? 504 : 502, {
-          error: abortReason === 'timeout' ? 'xiaomi-timeout' : 'xiaomi-request-failed',
-          message: error instanceof Error ? error.message : String(error),
-        })
-      } finally {
-        clearTimeout(timeout)
-        req.off('aborted', abortOnRequest)
-        res.off('close', abortOnResponseClose)
-      }
-    },
-  }), 'xiaomi-mimo-tts: synthesis route')
-
-  ctx.effect(() => ctx.webServer.register({
-    kind: 'exact',
-    path: TTS_STREAM_ROUTE,
-    async handler(req, res) {
-      const requestId = nextHostStreamRequestId++
-      debugConsole?.info(STREAM_HOST_LOG, `[请求 ${requestId}] 收到流式合成请求`, { method: req.method, path: TTS_STREAM_ROUTE })
-      if (req.method !== 'POST') {
-        debugConsole?.warn(STREAM_HOST_LOG, `[请求 ${requestId}] 拒绝：仅支持 POST`)
-        res.setHeader('allow', 'POST')
-        json(res, 405, { error: 'method-not-allowed' })
-        return
-      }
-
-      let body: SynthesizeBody
-      try {
-        body = await readJsonBody(req) as SynthesizeBody
-      } catch (error) {
-        debugConsole?.error(STREAM_HOST_LOG, `[请求 ${requestId}] 请求体解析失败`, error)
-        json(res, error instanceof Error && error.message === 'request-body-too-large' ? 413 : 400, {
-          error: error instanceof Error && error.message === 'request-body-too-large'
-            ? 'request-body-too-large'
-            : 'invalid-json',
-        })
-        return
-      }
-
-      const text = typeof body.text === 'string' ? prepareTtsText(body.text) : ''
-      const options = synthesisOptions(current(), body)
-      debugConsole?.info(STREAM_HOST_LOG, `[请求 ${requestId}] 请求参数已解析`, {
-        text,
-        textLength: text.length,
-        model: upstreamModel(options),
-        voice: options.voice,
-        apiKeyConfigured: options.apiKey.trim().length > 0,
-        requestTimeoutMs: options.requestTimeoutMs,
-      })
-      if (text.length === 0) {
-        debugConsole?.warn(STREAM_HOST_LOG, `[请求 ${requestId}] 拒绝：文本为空`)
-        json(res, 400, { error: 'text-required' })
-        return
-      }
-      if (text.length > options.maxTextLength) {
-        debugConsole?.warn(STREAM_HOST_LOG, `[请求 ${requestId}] 拒绝：文本过长`, { textLength: text.length, maxTextLength: options.maxTextLength })
-        json(res, 413, { error: 'text-too-long', maxTextLength: options.maxTextLength })
-        return
-      }
-      if (options.apiKey.trim().length === 0) {
-        debugConsole?.warn(STREAM_HOST_LOG, `[请求 ${requestId}] 拒绝：API Key 未配置`)
-        json(res, 409, { error: 'api-key-not-configured' })
-        return
-      }
-      if (upstreamModel(options) !== 'mimo-v2.5-tts') {
-        debugConsole?.warn(STREAM_HOST_LOG, `[请求 ${requestId}] 拒绝：模型不支持 PCM 流式播放`, { model: upstreamModel(options) })
-        json(res, 409, { error: 'streaming-model-unsupported', message: 'Realtime PCM streaming requires mimo-v2.5-tts.' })
-        return
-      }
-
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), options.requestTimeoutMs)
-      const abortOnDisconnect = () => controller.abort()
-      req.once('aborted', abortOnDisconnect)
-      res.once('close', abortOnDisconnect)
-
-      try {
-        debugConsole?.info(STREAM_HOST_LOG, `[请求 ${requestId}] 正在请求小米 MiMo 上游`)
-        const endpoint = chatCompletionsEndpoint(options.apiKey, options.baseURL)
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          redirect: 'error',
-          headers: {
-            authorization: `Bearer ${options.apiKey.trim()}`,
-            'content-type': 'application/json',
-            accept: 'text/event-stream',
-            'user-agent': USER_AGENT,
-          },
-          body: JSON.stringify({
-            model: upstreamModel(options),
-            messages: requestMessages(options, text),
-            audio: { format: 'pcm16', voice: options.voice },
-            stream: true,
-          }),
-          signal: controller.signal,
-        })
-        debugConsole?.info(STREAM_HOST_LOG, `[请求 ${requestId}] 收到小米上游响应`, { ok: response.ok, status: response.status, contentType: response.headers.get('content-type') })
-
-        if (!response.ok) {
-          let parsed: XiaomiAudioResponse | undefined
-          try {
-            parsed = await response.json() as XiaomiAudioResponse
-          } catch {
-            parsed = undefined
-          }
-          debugConsole?.error(STREAM_HOST_LOG, `[请求 ${requestId}] 小米上游返回错误`, { status: response.status, message: apiErrorMessage(response.status, parsed) })
-          json(res, response.status, { error: 'xiaomi-api-error', message: apiErrorMessage(response.status, parsed) })
-          return
-        }
-        if (response.body === null) {
-          debugConsole?.error(STREAM_HOST_LOG, `[请求 ${requestId}] 小米上游响应没有 body`)
-          json(res, 502, { error: 'invalid-xiaomi-response', message: 'Xiaomi MiMo streaming response had no body.' })
-          return
-        }
-
-        res.statusCode = 200
-        res.setHeader('content-type', response.headers.get('content-type') ?? 'text/event-stream; charset=utf-8')
-        res.setHeader('cache-control', 'no-store')
-        res.setHeader('x-accel-buffering', 'no')
-        const reader = response.body.getReader()
-        let forwardedChunks = 0
-        let forwardedBytes = 0
-        try {
-          while (!res.destroyed) {
-            const chunk = await reader.read()
-            if (chunk.done) break
-            forwardedChunks += 1
-            forwardedBytes += chunk.value.byteLength
-            debugConsole?.info(STREAM_HOST_LOG, `[请求 ${requestId}] 转发上游数据块 #${forwardedChunks}`, { bytes: chunk.value.byteLength })
-            res.write(chunk.value)
-          }
-        } finally {
-          reader.releaseLock()
-          debugConsole?.info(STREAM_HOST_LOG, `[请求 ${requestId}] 上游流读取结束`, { responseDestroyed: res.destroyed, forwardedChunks, forwardedBytes })
-        }
-        if (!res.destroyed) {
-          res.end()
-          debugConsole?.info(STREAM_HOST_LOG, `[请求 ${requestId}] 已完成浏览器响应`)
-        }
-      } catch (error) {
-        debugConsole?.error(STREAM_HOST_LOG, `[请求 ${requestId}] 流式代理失败`, { aborted: controller.signal.aborted, error })
-        if (!res.destroyed) {
-          const aborted = controller.signal.aborted
-          json(res, aborted ? 504 : 502, {
-            error: aborted ? 'xiaomi-timeout' : 'xiaomi-request-failed',
-            message: error instanceof Error ? error.message : String(error),
-          })
-        }
-      } finally {
-        clearTimeout(timeout)
-        req.off('aborted', abortOnDisconnect)
-        res.off('close', abortOnDisconnect)
-        debugConsole?.info(STREAM_HOST_LOG, `[请求 ${requestId}] 请求清理完成`, { aborted: controller.signal.aborted, responseDestroyed: res.destroyed })
-      }
-    },
-  }), 'xiaomi-mimo-tts: streaming synthesis route')
+  registerSynthesisRoutes(ctx, current)
 }

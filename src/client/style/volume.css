@@ -174,5 +174,56 @@
 }
 
 .xmimo-tts-volume>.xmimo-tts-field-heading {
-  min-height: 20px
+  position: relative;
+  min-height: 28px
+}
+
+.xmimo-tts-field-info {
+  display: inline-flex;
+  flex: none;
+  align-items: center
+}
+
+.xmimo-tts-field-info-button {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  color: var(--xmimo-ui-text-muted);
+  background: transparent;
+  cursor: help
+}
+
+.xmimo-tts-field-info-button:hover,
+.xmimo-tts-field-info-button:focus-visible {
+  color: var(--xmimo-ui-brand)
+}
+
+.xmimo-tts-field-info-button:focus-visible {
+  outline: 2px solid var(--xmimo-ui-brand);
+  outline-offset: 2px
+}
+
+.xmimo-tts-field-info-tooltip {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 4px);
+  right: 0;
+  box-sizing: border-box;
+  width: min(320px, calc(100vw - 48px));
+  border: 1px solid var(--xmimo-ui-border-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--xmimo-ui-text);
+  background: var(--xmimo-ui-surface);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+  white-space: normal;
+  overflow-wrap: anywhere
 }

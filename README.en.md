@@ -40,7 +40,9 @@
 - One-click read-aloud action on assistant messages.
 - Low-latency PCM streaming for `mimo-v2.5-tts`, with complete-audio or browser-speech fallback when appropriate.
 - Official built-in voices and text-described custom voices through `mimo-v2.5-tts-voicedesign`.
-- MiMo-first, local-first, or MiMo-only speech strategies.
+- Xiaomi / Doubao selection with separate credentials, models and voices.
+- Doubao TTS 2.0 and existing cloned voices 2.0, with continuous text input and streamed audio per message.
+- Cloud-first, local-first, or cloud-only speech strategies.
 - Smart, full, and first-segment read-aloud ranges.
 - 0.5×–2.0× playback speed, voice volume, pause, resume, and stop controls.
 - Text preparation that removes URLs, paths, code blocks, emoji, and control characters before synthesis.
@@ -52,7 +54,8 @@
 
 - `@deepseek-ai/dsh` `0.2.1-rc.1` (the current target; compatible with `0.1.7-rc.1` through `0.2.x` releases)
 - Node.js 22+
-- A Xiaomi MiMo API key for MiMo speech
+- An API key for the selected provider, with access to the selected speech resource.
+- Doubao continuous text input requires a DSH Web Host supporting WebSocket upgrade registration (current target: `0.2.0-rc.2`); reverse proxies must forward WebSocket Upgrade.
 - [Official TTS API documentation](https://mimo.mi.com/models/zh-CN/mimo-v2.5-tts)
 
 ## 🚀 Installation
@@ -84,19 +87,39 @@ New installations start with:
 - the manual Read aloud action available;
 - **automatic playback disabled**;
 - **UI sound effects disabled**;
-- browser-local fallback available under the default MiMo-first strategy, even before a MiMo key is saved.
+- browser-local fallback available under the default cloud-first strategy, even before a provider key is saved.
 
 Recommended setup order:
 
-1. [Create a Xiaomi MiMo API key](https://platform.xiaomimimo.com/console/api-keys).
-2. Enter it in the plugin settings and click **Save**.
-3. Open Mixing Console and choose a model and voice.
-4. Test it in Broadcast Studio.
-5. Enable automatic playback and UI sounds only if wanted, then save again.
+1. Select Xiaomi MiMo or Doubao Voice in the API key module.
+2. [Create a Xiaomi key](https://platform.xiaomimimo.com/console/api-keys) or [a Doubao key](https://console.volcengine.com/speech/new/setting/apikeys?projectName=default), enter it, and click **Save**.
+3. Open Mixing Console and choose a model and voice for that provider.
+4. Test it in Broadcast Studio. Key drafts must be saved first; model and voice drafts can be previewed with the saved key.
+5. Enable automatic playback and UI sounds if wanted, then save again.
 
 ## ⚙️ Configuration
 
-### Official built-in voices
+### Providers and Doubao Voice
+
+In minimal mode, Doubao standard TTS shows only Custom voice ID, Vivi 2.0, Xiaohe 2.0, Yunzhou 2.0 and Xiaotian 2.0. Other selected voices retain their IDs through custom entry; normal mode keeps the full voice catalog.
+Speech instructions show only the first eight tags, with the text box and hint hidden. Existing custom instructions are retained and can be edited again in normal mode.
+
+The standard voice picker offers 20 speech instruction tags (including Cantonese, Shanghai, Henan, Beijing, Tianjin, Sichuan, Shaanxi and Northeastern dialects), including gentle, cheerful, storytelling, argument, whisper, shy anticipation, world-weary, tearful and accent styles. Click to fill an editable instruction, or select Natural to clear it. Preview accepts the draft; saving applies it to subsequent speech. Presets are adapted from the [official examples](https://docs.volcengine.com/docs/DoubaoVoice/DoubaoTextToSpeech20CapabilityIntroduction?lang=zh), and results vary by voice. Cloned voices neither display nor send instructions.
+
+Switching providers edits the settings draft until saved; Discard restores saved settings. Key drafts remain separate for each provider. Saved keys are never filled back into the browser. Clear removes only that provider's user override and retains any inherited base credential.
+
+- **Standard TTS 2.0**: `seed-tts-2.0`, default Vivi 2.0. A two-column card picker features 30 distinctive voices, with Custom voice ID first. Other standard voices and previously saved IDs outside the selection remain available through custom entry.
+- **Voice cloning 2.0**: `seed-icl-2.0`. Enter an existing cloned voice ID from the [voice library](https://console.volcengine.com/speech/new/voices?projectName=default). Upload and training are outside this feature; an empty ID blocks saving and preview.
+- Cloned voice IDs are remembered in this browser on blur or Enter. The 10 most recently used unique IDs appear as clickable tags for reuse; history does not indicate upstream validation.
+- Standard and cloned voice IDs are remembered separately. Configured key status does not verify network access; preview checks model and voice permissions.
+- Uses the new `X-Api-Key` authentication. Legacy App ID / Access Token authentication and advanced language, dialect and emotion controls are not included.
+- Doubao emits 24 kHz mono PCM16. The 0.5×–2.0× speech speed maps to upstream `speech_rate` (`-50`–`100`) starting with the next synthesis. Playback and newly saved audio history use 1× to avoid applying speed twice; volume remains local.
+
+Existing settings default to Xiaomi. Doubao uses `provider: doubao`, `doubaoApiKey`, `doubaoModel`, `doubaoVoice`, and `doubaoClonedVoice`. Existing `apiKey`, `baseURL`, `model`, `voice`, and voice-design prompts remain Xiaomi settings. Xiaomi `sk-` / `tp-` keys and automatic Token Plan routing remain supported.
+
+See the [Doubao bidirectional API](https://docs.volcengine.com/docs/DoubaoVoice/bidirectional-streaming-text-to-speech-websocket?lang=zh) and [official voice catalog](https://docs.volcengine.com/docs/DoubaoVoice/Tonelist-1?lang=zh). Bundled entries were checked on 2026-10-19 and include bidirectional voices only; other IDs can be entered and checked by previewing.
+
+### Xiaomi official built-in voices
 
 `mimo-v2.5-tts` currently provides:
 
@@ -111,9 +134,9 @@ Recommended setup order:
 
 ### Browser-local speech
 
-- **MiMo first**: tries browser speech if MiMo fails before audio starts.
-- **Local first**: uses browser speech first, then tries MiMo if local speech fails.
-- **Disable local speech**: uses MiMo only.
+- **Cloud first**: tries browser speech if the selected cloud provider fails before audio starts.
+- **Local first**: uses browser speech first, then tries the selected cloud provider if local speech fails.
+- **Disable local speech**: uses only the selected cloud provider.
 
 Browser voices come from the Web Speech API. Offline availability, language coverage, and actual voice output depend on the browser, operating system, and their speech services.
 
@@ -123,7 +146,9 @@ Browser voices come from the Web Speech API. Offline availability, language cove
 - **Full mode**: automatic and manual playback both read the full reply.
 - **First-segment mode**: automatic and manual playback both read only the opening segment.
 
-PCM requests and semantic segments accumulate complete sentences toward 160 spoken characters, with a preferred maximum of 240. An individual long sentence may exceed that maximum, and the final shorter tail is also played. PCM streaming can begin when unfinished prose reaches the target size, without repeating already queued text. History saves one WAV per synthesis slice, combining all PCM data chunks received by that request.
+Xiaomi PCM requests and semantic segments accumulate complete sentences toward 160 spoken characters, with a preferred maximum of 240. An individual long sentence may exceed that maximum, and the final shorter tail is also played. PCM streaming can begin when unfinished prose reaches the target size, without repeating already queued text. History saves one WAV per synthesis slice, combining all PCM data chunks received by that request.
+
+Doubao submits complete sentences promptly through one continuous session per message and flushes the final tail before finishing input. Bounded read scopes can finish early. History stores one WAV per message. Failure after playback starts does not replay from the beginning or switch to another cloud provider. Pausing continues receiving bounded audio; overflow stops playback. Cumulative message text is limited by `maxTextLength`, and connection inactivity by `requestTimeoutMs`.
 
 The settings panel supports keyboard navigation: use `Tab` to move focus, arrow keys to adjust sliders and options, and `Space` to activate buttons and switches.
 
@@ -131,7 +156,7 @@ The settings panel supports keyboard navigation: use `Tab` to move focus, arrow 
 
 ![whale-girls](assets/whale-girls.webp)
 
-The plugin exposes an optional PCM streaming service to Web plugins:
+The plugin exposes the selected provider through its existing optional PCM streaming service name:
 
 ```ts
 ctx.get('xiaomiMimoTts')?.play('Welcome back')
@@ -158,16 +183,17 @@ The preset keeps file access, web lookup, interactive questions, and conversatio
 
 ## 🔒 Privacy and network access
 
-- The DSH Host stores the API key. The browser reads only whether a key is configured and whether its prefix is recognized, not the secret itself.
+- The DSH Host stores the API key. The browser reads only whether a key is configured and whether its format is supported for that provider, not the secret itself.
+- Doubao connections are proxied by the Host. Text and voice IDs go only to the selected provider; the browser never receives the upstream key.
 - Browser-local speech uses the Web Speech API. Voices marked online may send text to browser, operating-system, or network speech services.
-- Generated MiMo audio is saved in this browser's IndexedDB. Settings → Audio history supports replay, download, deletion, and clearing, including after a page refresh. The latest 100 entries / 100 MB are retained, with oldest entries removed when full. Records include audio and up to 500 characters of text, never API keys.
-- Streaming PCM is saved as 24 kHz mono WAV. Streaming batches and generated segments appear separately; only successfully completed generation requests are saved, so cancelled or failed streams are not presented as complete audio. Web Speech API speech has no exportable audio file. Replay and download do not call MiMo again. History belongs to this browser and site address, does not sync across devices, and is removed when site data is cleared. If browser storage is unavailable or full, the list warns that it lasts only for the current visit.
+- Generated cloud audio is saved in this browser's IndexedDB. Settings → Audio history supports replay, download, deletion, and clearing, including after a page refresh. The latest 100 entries / 100 MB are retained, with oldest entries removed when full. Records include audio and up to 500 characters of text, never API keys.
+- Streaming PCM is saved as 24 kHz mono WAV. Xiaomi batches and generated segments appear separately; Doubao saves one recording per message; only successfully completed generation requests are saved, so cancelled or failed streams are not presented as complete audio. Web Speech API speech has no exportable audio file. Replay and download do not call the speech provider again. History belongs to this browser and site address, does not sync across devices, and is removed when site data is cleared. If browser storage is unavailable or full, the list warns that it lasts only for the current visit.
 - The sound core is migrated from [uisfx 0.4.0](https://github.com/romainsimon/uisfx) under the MIT License; see `NOTICE`.
 
 ## 🏗️ Architecture
 
 - **Shared layer**: defaults, text processing, segmentation, SSE, and playback contracts.
-- **Host plugin**: settings and static assets, plus complete-audio and PCM streaming proxies for MiMo.
+- **Host plugin**: settings and static assets, plus complete-audio, PCM SSE, and duplex WebSocket proxies for Xiaomi and Doubao.
 - **Web Client**: settings, message actions, browser-speech fallback, previews, and the optional third-party playback service.
 
 ```mermaid
@@ -176,6 +202,7 @@ flowchart LR
     THIRD["Third-party Web plugin"] -. "ctx.get('xiaomiMimoTts')" .-> CLIENT
     CLIENT -->|"Complete audio / PCM stream"| HOST["Host plugin<br/>Settings and API proxy"]
     HOST --> MIMO["Xiaomi MiMo API"]
+    HOST -->|"WebSocket bidirectional"| DOUBAO["Doubao Voice API"]
     CLIENT -->|"Web Speech API"| SPEECH["Browser / system speech service"]
     SHARED["Shared layer<br/>Configuration, text, SSE"] -.-> CLIENT
     SHARED -.-> HOST

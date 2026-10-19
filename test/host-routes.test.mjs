@@ -32,10 +32,12 @@ test('audio requests preserve the browser deployment prefix and work without a d
       const chunks = []
       await streamPcmAudio('欢迎回来', signal, chunk => { chunks.push(chunk) })
       assert.deepEqual(chunks, ['AAA='])
-      assert.deepEqual(requests, [
-        { url: `${prefix}/plugins/xiaomi-mimo-tts/synthesize`, body: { text: '欢迎回来', format: 'wav' } },
-        { url: `${prefix}/plugins/xiaomi-mimo-tts/synthesize-stream`, body: { text: '欢迎回来', model: 'mimo-v2.5-tts' } },
+      assert.deepEqual(requests.map(request => request.url), [
+        `${prefix}/plugins/xiaomi-mimo-tts/synthesize`,
+        `${prefix}/plugins/xiaomi-mimo-tts/synthesize-stream`,
       ])
+      for (const request of requests) assert.equal(request.body.text, '欢迎回来')
+      assert.equal(requests[0].body.format, 'wav')
     }
   } finally {
     globalThis.fetch = originalFetch

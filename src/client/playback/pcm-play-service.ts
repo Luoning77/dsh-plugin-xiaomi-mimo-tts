@@ -8,6 +8,8 @@ import { PcmAudioQueue } from './pcm-audio-queue.js'
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { AudioHistory } from '../history/audio-history.js'
 import { PcmRecording } from '../history/pcm-recording.js'
+import { ttsSelection } from '../../types/providers.js'
+import { DuplexPcmStream } from './duplex-pcm.js'
 
 export class XiaomiMimoTtsPcmService extends Service implements XiaomiMimoTtsService {
   private readonly logPrefix = '[MiMoTTS Service]'
@@ -61,25 +63,39 @@ export class XiaomiMimoTtsPcmService extends Service implements XiaomiMimoTtsSer
       debugConsole?.info(this.logPrefix, '[准备] 已请求中断会话朗读')
       this.audio.setMaxPausedPcmBytes(settings.maxPausedPcmBytes)
       this.audio.setVolume(settings.voiceVolume)
-      this.audio.setPlaybackRate(settings.voiceRate)
+      this.audio.setPlaybackRate(settings.provider === 'doubao' ? 1 : settings.voiceRate)
 
       const generation = this.generation
       const controller = new AbortController()
       this.request = controller
       let chunkCount = 0
       const recording = new PcmRecording()
-      void streamPcmAudio(normalized, controller.signal, async (pcm) => {
-        if (this.disposed || controller.signal.aborted || generation !== this.generation) {
-          debugConsole?.warn(this.logPrefix, '[流] 已忽略过期 PCM 块', { disposed: this.disposed, aborted: controller.signal.aborted, generation, currentGeneration: this.generation })
+      const consume = async (bytes: Uint8Array): Promise<void> => {
+        if (this.disposed || controller.signal.aborted || generation !== this.generation) return
+        recording.appendBytes(bytes)
+        await this.audio.enqueueBytes(bytes)
+      }
+      const synthesize = async (): Promise<void> => {
+        if (settings.provider === 'doubao') {
+          const stream = new DuplexPcmStream(ttsSelection(settings), controller.signal, consume, settings.maxPausedPcmBytes, settings.requestTimeoutMs, settings.maxTextLength)
+          stream.append(normalized)
+          await stream.finish()
           return
         }
-        chunkCount += 1
-        recording.append(pcm)
-        debugConsole?.info(this.logPrefix, `[流] 向音频队列提交 PCM 块 #${chunkCount}`, { base64Chars: pcm.length })
-        await this.audio.enqueue(pcm)
-      }).then(() => {
+        await streamPcmAudio(normalized, controller.signal, async (pcm) => {
+          if (this.disposed || controller.signal.aborted || generation !== this.generation) {
+            debugConsole?.warn(this.logPrefix, '[流] 已忽略过期 PCM 块', { disposed: this.disposed, aborted: controller.signal.aborted, generation, currentGeneration: this.generation })
+            return
+          }
+          chunkCount += 1
+          recording.append(pcm)
+          debugConsole?.info(this.logPrefix, `[流] 向音频队列提交 PCM 块 #${chunkCount}`, { base64Chars: pcm.length })
+          await this.audio.enqueue(pcm)
+        }, ttsSelection({ ...settings, model: 'mimo-v2.5-tts' }))
+      }
+      void synthesize().then(() => {
         if (!this.disposed && !controller.signal.aborted && generation === this.generation) {
-          recording.save(this.history, { text: normalized, source: 'service' })
+          recording.save(this.history, { text: normalized, source: 'service', voiceRateApplied: settings.provider === 'doubao' })
         }
       }).catch((error: unknown) => {
         if (this.disposed || controller.signal.aborted || generation !== this.generation) return

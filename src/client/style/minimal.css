@@ -248,7 +248,7 @@
 
 .xmimo-tts-card-minimal
   .xmimo-tts-details-body
-  > :not(.xmimo-tts-volume)
+  > :not(.xmimo-tts-volume):not(.xmimo-tts-doubao-voice)
   > .xmimo-tts-field-heading {
   position: absolute;
   width: 1px;

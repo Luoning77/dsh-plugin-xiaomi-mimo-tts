@@ -1,27 +1,41 @@
 import { useEffect, useState } from 'react'
 import { TTS_API_KEY_STATUS_ROUTE } from '../../shared.js'
+import type { TtsProvider } from '../../types/providers.js'
 import { hostRoute } from '../host-route.js'
 
-let apiKeyStatusPromise: Promise<boolean> | null = null
-let apiKeyStatusExpires = 0
+const cache = new Map<TtsProvider, { expires: number; request: Promise<boolean> }>()
+const listeners = new Set<() => void>()
 
-export function useApiKeySupported(active: boolean): boolean | null {
+export function onTtsCredentialsSaved(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => { listeners.delete(listener) }
+}
+
+export function invalidateApiKeyStatus(): void {
+  cache.clear()
+  for (const listener of listeners) listener()
+}
+
+export function useApiKeySupported(active: boolean, provider: TtsProvider = 'xiaomi', revision?: unknown): boolean | null {
   const [supported, setSupported] = useState<boolean | null>(null)
+  const [generation, setGeneration] = useState(0)
+  useEffect(() => onTtsCredentialsSaved(() => setGeneration(value => value + 1)), [])
   useEffect(() => {
-    if (!active) { setSupported(null); return }
-    if (apiKeyStatusPromise === null || apiKeyStatusExpires <= Date.now()) {
-      apiKeyStatusExpires = Date.now() + 2000
-      apiKeyStatusPromise = fetch(hostRoute(TTS_API_KEY_STATUS_ROUTE), { headers: { accept: 'application/json' } })
-        .then(async (response) => {
+    setSupported(null)
+    if (!active) return
+    let entry = cache.get(provider)
+    if (!entry || entry.expires <= Date.now()) {
+      entry = { expires: Date.now() + 2000, request: fetch(`${hostRoute(TTS_API_KEY_STATUS_ROUTE)}?provider=${provider}`, { headers: { accept: 'application/json' } })
+        .then(async response => {
           if (!response.ok) throw new Error('api-key-status-failed')
           const result = await response.json() as { supported?: unknown }
           return result.supported === true
-        })
-        .catch(() => false)
+        }).catch(() => false) }
+      cache.set(provider, entry)
     }
     let mounted = true
-    void apiKeyStatusPromise.then((value) => { if (mounted) setSupported(value) })
+    void entry.request.then(value => { if (mounted) setSupported(value) })
     return () => { mounted = false }
-  }, [active])
+  }, [active, provider, revision, generation])
   return supported
 }

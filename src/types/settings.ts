@@ -1,5 +1,6 @@
 import type { TtsFormat, TtsLocalSpeechMode, TtsModel, TtsReadScope, TtsVoiceDesignPlaybackMode } from './models.js'
 import type { SoundPack } from './sound.js'
+import type { DoubaoTtsModel, TtsProvider } from './providers.js'
 import {
   DEFAULT_MAX_MP3_AUDIO_BYTES,
   DEFAULT_MAX_PAUSED_PCM_BYTES,
@@ -9,6 +10,12 @@ import {
 import { DEFAULT_SOUND_SETTINGS } from './sound.js'
 
 export interface TtsSettings {
+  provider?: TtsProvider
+  doubaoApiKey?: string
+  doubaoModel?: DoubaoTtsModel
+  doubaoVoice?: string
+  doubaoClonedVoice?: string
+  doubaoInstruction?: string
   enabled?: boolean
   apiKey?: string
   baseURL?: string
@@ -41,6 +48,12 @@ export interface TtsSettings {
 }
 
 export interface ResolvedTtsSettings {
+  provider: TtsProvider
+  doubaoApiKey: string
+  doubaoModel: DoubaoTtsModel
+  doubaoVoice: string
+  doubaoClonedVoice: string
+  doubaoInstruction: string
   enabled: boolean
   apiKey: string
   baseURL: string
@@ -72,6 +85,12 @@ export interface ResolvedTtsSettings {
 
 /** Defaults shared by the Schemastery config and the Web settings form. */
 export const DEFAULT_TTS_SETTINGS: ResolvedTtsSettings = {
+  provider: 'xiaomi',
+  doubaoApiKey: '',
+  doubaoModel: 'seed-tts-2.0',
+  doubaoVoice: 'zh_female_vv_uranus_bigtts',
+  doubaoClonedVoice: '',
+  doubaoInstruction: '',
   enabled: true,
   apiKey: '',
   baseURL: 'https://api.xiaomimimo.com/v1',
@@ -105,7 +124,8 @@ export function resolveTtsBaseURL(apiKey: string, configuredBaseURL: string): st
 }
 
 /** Whether an API key selects one of the Xiaomi endpoints supported by this plugin. */
-export function isSupportedTtsApiKey(apiKey: string): boolean {
+export function isSupportedTtsApiKey(apiKey: string, provider: TtsProvider = 'xiaomi'): boolean {
   const normalized = apiKey.trim()
+  if (provider === 'doubao') return normalized.length > 0 && !/[\r\n]/u.test(normalized)
   return normalized.startsWith('sk-') || normalized.startsWith('tp-')
 }

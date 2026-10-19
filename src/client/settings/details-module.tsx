@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Button, SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives'
 import {
   TTS_LOCAL_SPEECH_MODES,
+  DOUBAO_VOICE_PRESETS,
   TTS_MIXER_WHALE_ASSET_ROUTE,
   TTS_MODELS,
   TTS_READ_SCOPES,
@@ -13,7 +14,12 @@ import type { Translate } from '../localization.js'
 import { hostRoute } from '../host-route.js'
 import { BuiltInVoicePicker } from './controls/built-in-voice-picker.js'
 import { EnergyVolumeSlider } from './controls/energy-volume-slider.js'
+import { FieldInfo } from './controls/field-info.js'
 import { LocalVoicePicker } from './controls/local-voice-picker.js'
+import { DoubaoVoicePicker } from './controls/doubao-voice-picker.js'
+import { ClonedVoiceInput } from './controls/cloned-voice-input.js'
+import { DoubaoInstructionPicker } from './controls/doubao-instruction-picker.js'
+import type { TtsProvider, DoubaoTtsModel } from '../../types/providers.js'
 import {
   VoiceDesignPresetPicker,
   CUSTOM_VOICE_DESIGN_OPTION,
@@ -72,6 +78,15 @@ function ModelPicker({ value, disabled, label, presetLabel, voiceDesignLabel, on
 }
 
 export interface DetailsModuleProps {
+  provider: TtsProvider
+  doubaoModel: DoubaoTtsModel
+  doubaoVoice: string
+  doubaoClonedVoice: string
+  doubaoInstruction: string
+  onDoubaoInstructionChange: (instruction: string) => void
+  onDoubaoModelChange: (model: DoubaoTtsModel) => void
+  onDoubaoVoiceChange: (voice: string) => void
+  onDoubaoClonedVoiceChange: (voice: string) => void
   t: Translate
   open: boolean
   minimal: boolean
@@ -103,15 +118,15 @@ export interface DetailsModuleProps {
   onLocalSpeechModeChange: (value: TtsLocalSpeechMode) => void
 }
 
-export function DetailsModule({ t, open, minimal, previewing, writable, autoPlay, voiceVolume, voiceRate, readScope, model, localSpeechMode, localVoiceURI, voice, voiceDesignPrompt, voiceDesignCustomPrompt, fieldOverridden, resetField, onToggle, onPreview, onVoiceVolumeChange, onVoiceVolumeInteractionEnd, onVoiceRateChange, onVoiceRateInteractionEnd, onReadScopeChange, onModelChange, onVoiceDesignPromptChange, onVoiceChange, onLocalVoiceURIChange, onLocalSpeechModeChange }: DetailsModuleProps): ReactElement {
+export function DetailsModule({ t, provider, doubaoModel, doubaoVoice, doubaoClonedVoice, doubaoInstruction, onDoubaoInstructionChange, onDoubaoModelChange, onDoubaoVoiceChange, onDoubaoClonedVoiceChange, open, minimal, previewing, writable, autoPlay, voiceVolume, voiceRate, readScope, model, localSpeechMode, localVoiceURI, voice, voiceDesignPrompt, voiceDesignCustomPrompt, fieldOverridden, resetField, onToggle, onPreview, onVoiceVolumeChange, onVoiceVolumeInteractionEnd, onVoiceRateChange, onVoiceRateInteractionEnd, onReadScopeChange, onModelChange, onVoiceDesignPromptChange, onVoiceChange, onLocalVoiceURIChange, onLocalSpeechModeChange }: DetailsModuleProps): ReactElement {
   const [localVoicesAvailable, setLocalVoicesAvailable] = useState<boolean | null>(null)
   const onLocalVoicesAvailabilityChange = useCallback((available: boolean): void => { setLocalVoicesAvailable(available) }, [])
   useEffect(() => {
     if (localVoicesAvailable === false && localSpeechMode !== 'auto') onLocalSpeechModeChange('auto')
   }, [localSpeechMode, localVoicesAvailable, onLocalSpeechModeChange])
-  const summaryModel = t(model === 'mimo-v2.5-tts-voicedesign' ? 'settings.summaryVoiceDesignModel' : 'settings.summaryPresetModel')
+  const summaryModel = provider === 'doubao' ? t(doubaoModel === 'seed-icl-2.0' ? 'settings.doubaoCloneModel' : 'settings.doubaoStandardModel') : t(model === 'mimo-v2.5-tts-voicedesign' ? 'settings.summaryVoiceDesignModel' : 'settings.summaryPresetModel')
   const voiceDesignPreset = TTS_VOICE_DESIGN_PRESETS.find((item) => item.prompt === voiceDesignPrompt)
-  const summaryVoice = model === 'mimo-v2.5-tts-voicedesign'
+  const summaryVoice = provider === 'doubao' ? (doubaoModel === 'seed-icl-2.0' ? doubaoClonedVoice || t('settings.doubaoVoiceId') : DOUBAO_VOICE_PRESETS.find(voice => voice.value === doubaoVoice)?.name ?? doubaoVoice) : model === 'mimo-v2.5-tts-voicedesign'
     ? voiceDesignPreset?.label ?? t('settings.customVoiceOption')
     : voice
   const summaryReadScope = t(readScopeLabel(readScope))
@@ -160,23 +175,39 @@ export function DetailsModule({ t, open, minimal, previewing, writable, autoPlay
         <EnergyVolumeSlider value={voiceVolume} label={t('settings.voiceVolume')} minimal={minimal} disabled={!writable} onChange={onVoiceVolumeChange} onInteractionEnd={onVoiceVolumeInteractionEnd} />
       </div>
       <div className="xmimo-tts-volume">
-        <SettingFieldHeading label={`${t('settings.voiceRate')} ${voiceRate.toFixed(1)}×`} overriddenLabel={t('settings.overridden')} resetLabel={t('settings.reset')} overridden={fieldOverridden('voiceRate')} resettable disabled={!writable} onReset={() => { resetField('voiceRate') }} />
+        <SettingFieldHeading label={`${t('settings.voiceRate')} ${voiceRate.toFixed(1)}×`} suffix={<FieldInfo label={t('settings.voiceRateInfo')} text={t('settings.voiceRatePcmHint')} />} overriddenLabel={t('settings.overridden')} resetLabel={t('settings.reset')} overridden={fieldOverridden('voiceRate')} resettable disabled={!writable} onReset={() => { resetField('voiceRate') }} />
         <EnergyVolumeSlider value={voiceRate} min={0.5} max={2} step={0.1} formatValue={(value) => `${value.toFixed(1)}×`} label={t('settings.voiceRate')} minimal={minimal} disabled={!writable} onChange={onVoiceRateChange} onInteractionEnd={onVoiceRateInteractionEnd} />
-        {minimal ? null : <small>{t('settings.voiceRatePcmHint')}</small>}
       </div>
       <div className="xmimo-tts-model">
-        <SettingFieldHeading label={t('settings.model')} overriddenLabel={t('settings.overridden')} resetLabel={t('settings.reset')} overridden={fieldOverridden('model')} resettable disabled={!writable} onReset={() => { resetField('model') }} />
-        <ModelPicker
+        <SettingFieldHeading label={t('settings.model')} overriddenLabel={t('settings.overridden')} resetLabel={t('settings.reset')} overridden={fieldOverridden(provider === 'doubao' ? 'doubaoModel' : 'model')} resettable disabled={!writable} onReset={() => { resetField(provider === 'doubao' ? 'doubaoModel' : 'model') }} />
+        {provider === 'doubao' ? <SegmentedControl id="xmimo-tts-doubao-model" value={doubaoModel} options={[{ value: 'seed-tts-2.0', label: t('settings.doubaoStandardModel') }, { value: 'seed-icl-2.0', label: t('settings.doubaoCloneModel') }]} label={t('settings.model')} disabled={!writable} onChange={onDoubaoModelChange} className="xmimo-tts-settings-segmented" /> : <ModelPicker
           value={model}
           disabled={!writable}
           label={t('settings.model')}
           presetLabel={t('settings.presetModelShort')}
           voiceDesignLabel={t('settings.voiceDesignModelShort')}
           onChange={onModelChange}
-        />
-        {autoPlay && !minimal ? <small>{t(model === 'mimo-v2.5-tts' ? 'settings.modelAutoPlayHintPreset' : 'settings.modelAutoPlayHintVoiceDesign')}</small> : null}
+        />}
+        {autoPlay && !minimal ? <small>{t(provider === 'doubao' ? 'settings.doubaoStreamingHint' : model === 'mimo-v2.5-tts' ? 'settings.modelAutoPlayHintPreset' : 'settings.modelAutoPlayHintVoiceDesign')}</small> : null}
       </div>
-      {model === 'mimo-v2.5-tts-voicedesign' ? <div className="xmimo-tts-voice-design-prompt">
+      {provider === 'doubao' ? <div className={`xmimo-tts-voice xmimo-tts-doubao-voice${doubaoModel === 'seed-icl-2.0' ? ' xmimo-tts-cloned-voice' : ''}`}>
+        <SettingFieldHeading
+          label={t(doubaoModel === 'seed-icl-2.0' ? 'settings.doubaoClonedVoiceLabel' : 'settings.voice')}
+          suffix={<small className="xmimo-tts-doubao-voice-hint">{doubaoModel === 'seed-icl-2.0' ? <>{t('settings.doubaoCloneHint')} </> : null}<a href="https://console.volcengine.com/speech/new/voices?projectName=default" target="_blank" rel="noopener noreferrer">{t('settings.doubaoVoiceLibrary')}</a></small>}
+          overriddenLabel={t('settings.overridden')}
+          resetLabel={t('settings.reset')}
+          overridden={fieldOverridden(doubaoModel === 'seed-icl-2.0' ? 'doubaoClonedVoice' : 'doubaoVoice')}
+          resettable
+          disabled={!writable}
+          onReset={() => resetField(doubaoModel === 'seed-icl-2.0' ? 'doubaoClonedVoice' : 'doubaoVoice')}
+        />
+        {doubaoModel === 'seed-icl-2.0' ? <ClonedVoiceInput value={doubaoClonedVoice} disabled={!writable} onChange={onDoubaoClonedVoiceChange} t={t} /> : <DoubaoVoicePicker value={doubaoVoice} disabled={!writable} minimal={minimal} onChange={onDoubaoVoiceChange} t={t} />}
+      </div> : null}
+      {provider === 'doubao' && doubaoModel === 'seed-tts-2.0' ? <div className="xmimo-tts-voice">
+        <SettingFieldHeading label={t('settings.doubaoInstruction')} overriddenLabel={t('settings.overridden')} resetLabel={t('settings.reset')} overridden={fieldOverridden('doubaoInstruction')} resettable disabled={!writable} onReset={() => resetField('doubaoInstruction')} />
+        <DoubaoInstructionPicker value={doubaoInstruction} disabled={!writable} minimal={minimal} onChange={onDoubaoInstructionChange} t={t} />
+      </div> : null}
+      {provider === 'xiaomi' && model === 'mimo-v2.5-tts-voicedesign' ? <div className="xmimo-tts-voice-design-prompt">
         <SettingFieldHeading
           label={t('settings.voiceDesignPrompt')}
           overriddenLabel={t('settings.overridden')}
@@ -204,7 +235,7 @@ export function DetailsModule({ t, open, minimal, previewing, writable, autoPlay
         />
         {!minimal ? <small>{t('settings.voiceDesignPromptHint')}</small> : null}
       </div> : null}
-      {model === 'mimo-v2.5-tts' ? <>
+      {provider === 'xiaomi' && model === 'mimo-v2.5-tts' ? <>
         <div className="xmimo-tts-voice">
           <SettingFieldHeading label={t('settings.voice')} overriddenLabel={t('settings.overridden')} resetLabel={t('settings.reset')} overridden={fieldOverridden('voice')} resettable disabled={!writable} onReset={() => { resetField('voice') }} />
           <BuiltInVoicePicker value={voice} disabled={!writable} label={t('settings.voice')} minimal={minimal} onChange={onVoiceChange} />
