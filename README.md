@@ -11,7 +11,7 @@
   <a href="https://github.com/deepseek-ai/deepseek-harness"><img src="https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&amp;logo=deepseek&amp;logoColor=white" alt="deepseek-harness"></a>
 </p>
 
-<p align="center">为 DSH 添加 Xiaomi MiMo TTS 语音朗读、浏览器本地语音兜底和可选 UI 音效。</p>
+<p align="center">为 DSH 添加 Xiaomi MiMo 与豆包语音朗读、浏览器本地语音兜底和可选 UI 音效。</p>
 
 <p align="center">
   <a href="README.md"><img src="https://img.shields.io/badge/简体中文-4D6BFE?style=for-the-badge" alt="简体中文（当前语言）"></a>
@@ -19,6 +19,8 @@
 </p>
 
 > MiMo TTS 当前可能处于限时免费或调整计费阶段，请以 Xiaomi MiMo 官方平台的最新政策为准。
+
+> `4.0.0` 使用 npm `next` 渠道，安装命令：`dsh plugin --profile web add dsh-xiaomi-tts@next`。稳定版仍使用 `@latest`。
 
 ## 🎨 预览
 
@@ -51,10 +53,10 @@
 
 ## 📋 环境要求
 
-- `@deepseek-ai/dsh` `0.2.1-rc.1`（当前目标版本；兼容 `0.1.7-x` 至 `0.2.x` 版本）
+- `@deepseek-ai/dsh` `0.2.1-rc.2`（当前目标版本；兼容 `0.1.7-x` 至 `0.2.x` 版本）
 - Node.js 22+
 - 使用云端语音需要对应服务商的 API Key；豆包需要开通所选语音资源。
-- 豆包持续文本输入需要支持 WebSocket upgrade 注册的 DSH Web Host（当前目标版本 `0.2.0-rc.2`）；反向代理需转发 WebSocket Upgrade。
+- 豆包持续文本输入需要支持 WebSocket upgrade 注册的 DSH Web Host；反向代理需转发 WebSocket Upgrade。
 - [官方 TTS API 文档](https://mimo.mi.com/models/zh-CN/mimo-v2.5-tts)
 
 ## 🚀 安装
@@ -99,23 +101,18 @@ dsh plugin --profile web remove dsh-xiaomi-tts
 
 ### 服务商与豆包语音
 
-极简模式下，豆包标准合成仅展示自定义音色 ID、Vivi 2.0、小何 2.0、云舟 2.0 和小天 2.0；其他已选音色通过自定义 ID 保留，切回普通模式仍显示完整音色目录。
-语音指令仅保留前 8 个标签，隐藏输入框与说明；已有自定义指令仍保留，切回普通模式可继续编辑。
+在 API Key 模块切换小米 MiMo / 豆包语音，保存后生效。两家的密钥、模型和音色分别保留；旧配置默认使用小米。
 
-标准合成的音色选择下方提供 20 个语音指令标签（含粤语、上海话、河南话、北京话、天津话、四川话、陕西话、东北话 8 种方言），包含温柔、欢快、讲故事、争执互怼、悄悄话、害羞期待、沧桑低沉、心碎哭腔及口音等风格。点击填入后可继续编辑，选择“自然表达”清空；指令单独保存，试听可使用草稿，保存后用于后续朗读。标签根据[官方示例库](https://docs.volcengine.com/docs/DoubaoVoice/DoubaoTextToSpeech20CapabilityIntroduction?lang=zh)改写，实际效果随音色而异。复刻模式不显示或发送指令。
+| 豆包模型 | 音色配置 |
+| --- | --- |
+| 标准合成（`seed-tts-2.0`） | 选择内置音色，或填写标准音色 ID。 |
+| 声音复刻（`seed-icl-2.0`） | [创建一个音色](https://console.volcengine.com/speech/new/experience/clone?projectName=default)，将音色 ID 填回插件。 |
 
-服务商切换先修改设置草稿，保存后应用于实际朗读；放弃修改恢复已保存配置。两家未保存的 Key 草稿分别保留，已保存的 Key 不回显。清除只移除当前服务商的用户层凭证，配置了基础 Key 时继续继承。
+豆包需开通对应模型服务，使用新版控制台的 API Key。保存密钥后在“演播厅”试听；复刻音色 ID 不能为空。
 
-- **标准合成 2.0**：`seed-tts-2.0`，默认 Vivi 2.0，双列卡片精选 30 个风格鲜明的音色，首项为自定义音色 ID；其他标准音色和已保存的目录外 ID 仍可通过自定义入口使用。
-- **声音复刻 2.0**：`seed-icl-2.0`，填写 [音色库](https://console.volcengine.com/speech/new/voices?projectName=default) 中已有的复刻音色 ID；不包含上传录音或训练音色，ID 为空时无法保存或试听。
-- 复刻音色 ID 在失焦或按 Enter 后记入当前浏览器历史，最多保留最近 10 条，去重并按最近使用排序；点击标签即可回填。历史不代表音色已通过上游验证。
-- 两种模型分别记忆音色。Key 的“已配置”状态不代表联网鉴权成功，试听可验证资源与音色权限。
-- 首版使用新版 `X-Api-Key` 鉴权；不提供旧版 App ID / Access Token、多语种、方言、情绪指令等高级设置。
-- 豆包固定输出 24 kHz 单声道 PCM16；0.5×–2.0× 语速映射为上游 `speech_rate`（`-50`–`100`），下次合成生效，播放器及新保存的音频历史均以 1× 播放，避免重复调速；音量仍由播放器处理。
+语速在合成时应用，调整后对下一次合成生效；历史录音保留生成时的语速。
 
-旧配置默认继续使用小米。豆包字段为 `provider: doubao`、`doubaoApiKey`、`doubaoModel`、`doubaoVoice`、`doubaoClonedVoice`；原 `apiKey`、`baseURL`、`model`、`voice` 和设计音色提示词仍归属小米。小米 `sk-` / `tp-` 与 Token Plan 自动选址保持兼容。
-
-接口与音色兼容性以 [豆包双向流式文档](https://docs.volcengine.com/docs/DoubaoVoice/bidirectional-streaming-text-to-speech-websocket?lang=zh) 和 [官方音色列表](https://docs.volcengine.com/docs/DoubaoVoice/Tonelist-1?lang=zh) 为准。随包目录核对日期为 2026-10-19，仅纳入双向流式条目；其他音色可填写 ID 后试听确认。
+更多音色参见[官方音色列表](https://docs.volcengine.com/docs/DoubaoVoice/Tonelist-1?lang=zh)。
 
 ### 小米官方内置音色
 
@@ -146,7 +143,7 @@ dsh plugin --profile web remove dsh-xiaomi-tts
 
 小米 PCM 流式合成与语义分段按约 160 个文字字符累计完整句子，建议上限为 240 字；单个长句可以超过上限，结束时不足一段的尾部也会播放。生成中的未完句积累到目标字数后可以先开始 PCM 播放，已排队的文字不会重复合成。历史音频按合成切片保存，同一请求收到的多个 PCM 数据块会合并为一条 WAV。
 
-豆包在完整句子可用时尽快提交，同一消息使用一个持续会话，最终尾句会在结束输入前提交。智能或首段范围确定后可以提前收尾，音频历史按消息保存。已经出声后失败不会从头重播，也不会自动换用另一家云服务。暂停期间继续接收有界音频，达到缓存上限后停止。累计消息文本受 `maxTextLength` 限制；连接空闲超时受 `requestTimeoutMs` 限制。
+豆包支持边生成边播放，音频历史按消息保存。已经开始播放后发生错误，不会从头重播或自动切换云端服务。
 
 ## 🔌 三方插件联动
 
@@ -211,7 +208,7 @@ pnpm pack:check
 Windows 从本地开发链接切换到 npm 包前，请先停止 DSH Web，避免运行中的 Node 进程占用 Junction：
 
 ```powershell
-.\start\dsh-plugin-reinstall.bat 3.0.9
+.\start\dsh-plugin-reinstall.bat 4.0.0
 ```
 
 如果是 DSH Desktop profile，只需要卸载残留的本地链接，可在退出 Desktop 后运行：

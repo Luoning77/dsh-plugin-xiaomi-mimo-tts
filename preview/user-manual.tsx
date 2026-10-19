@@ -15,6 +15,7 @@ interface ManualCopy {
     title: string
     summary: string
     items: Array<{ label: string, detail: string }>
+    links?: Array<{ label: string, href: string }>
   }>
   notes: Array<{ title: string, body: string }>
 }
@@ -30,10 +31,10 @@ const COPY: Record<ManualLocale, ManualCopy> = {
       {
         id: 'manual-start',
         title: '01 · 开始使用',
-        summary: '先保存密钥，再试听 MiMo；自动播报和音效按需开启。',
+        summary: '先选择小米 MiMo 或豆包语音并保存密钥，再选择模型和音色试听。',
         items: [
           { label: '设置卡片标题按钮', detail: '点击“语音朗读 (Xiaomi MiMo)”标题栏可展开或收起全部设置。标题栏右侧的箭头和 aria 状态会同步变化；有未保存修改时，标题栏会显示“未保存”。' },
-          { label: '推荐操作顺序', detail: '依次填写 API Key → 点击底部“保存” → 选择模型和声音 → 在“演播厅”试听 → 按需开启自动播报和音效。除 API Key 外，演播厅会即时使用当前草稿；新密钥必须先保存到 Host 才能用于 MiMo。' },
+          { label: '推荐操作顺序', detail: '依次选择语音服务商 → 填写该服务商的 API Key → 点击底部“保存” → 选择模型和音色 → 在“演播厅”试听 → 按需开启自动播报和音效。除 API Key 外，演播厅会即时使用当前草稿；新密钥必须先保存才能用于云端合成。' },
           { label: '只读状态', detail: '如果顶部勾选“只读”，所有输入、开关、滑块和选择器都会禁用；仍可阅读内容，但不能提交设置。' },
         ],
       },
@@ -52,8 +53,8 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         title: '03 · API Key',
         summary: '密钥只在点击“保存”时写入 DSH。',
         items: [
-          { label: '获取 API Key 链接', detail: '点击 API Key 标题右侧的“获取 API Key”，会在新标签页打开 Xiaomi MiMo 控制台的密钥页面。创建或复制密钥后，回到 Preview。' },
-          { label: '密钥输入框', detail: '在密码框中输入新的 Xiaomi MiMo API Key。输入内容会被隐藏；聚焦和移出输入框时，旁边的鲸鱼提示会切换文案。输入后状态提示会即时检查格式，但不会立即保存。' },
+          { label: '服务商与获取 API Key', detail: '点击服务商名称可在小米 MiMo 与豆包语音之间切换。“获取 API Key”会打开当前服务商的密钥页面；豆包使用新版控制台的 API Key。两家的密钥、模型与音色分别保存，切换服务商不会覆盖另一家的配置。' },
+          { label: '密钥输入框', detail: '在密码框中输入当前服务商的新 API Key。输入内容会被隐藏；输入后不会立即保存。清空输入草稿不会删除已保存密钥，需要删除时使用“清除”并保存。' },
           { label: '状态与清除', detail: '提示会区分读取中、未配置、格式已识别、格式异常、Host 状态不可用和待保存。格式识别不等于连接已验证；保存后请用演播厅确认。已保存密钥时可点击“清除”；保存后会移除该密钥，若基础配置仍有密钥，会恢复继承。' },
         ],
       },
@@ -64,22 +65,22 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         items: [
           { label: '调音台标题与箭头', detail: '点击“调音台”标题栏展开或收起详细设置。标题栏摘要会显示当前音量、倍速、朗读范围、模型、声音和策略。右上角鲸鱼精灵图会随当前模型切换，并显示对应台词。' },
           { label: '音量滑块', detail: '拖动或用键盘方向键调整语音音量；松开鼠标或完成键盘操作时会试听当前音量。旁边的“恢复默认”按钮会把该项恢复为基础配置，恢复动作仍需点击“保存”。' },
-          { label: '播放速度滑块', detail: '拖动或用键盘调整 0.5×–2.0× 速度；完成操作时会按当前速度播放提示音。PCM 流式播放会随速度改变音高。' },
-          { label: '模型按钮', detail: '在“预设声音 (MiMo-TTS)”和“声音设计 (MiMo-VoiceDesign)”之间点击切换。预设模型显示内置声音选择器；Voice Design 模型显示预设/自定义声音设计输入。' },
+          { label: '播放速度滑块', detail: '拖动或用键盘调整 0.5×–2.0× 速度。豆包在云端合成时应用语速，播放时保持 1×；小米 PCM 在本地调整速度，音高会随速度改变。' },
+          { label: '模型按钮', detail: '小米可选择预置音色或音色设计；豆包可选择标准合成（seed-tts-2.0）或声音复刻（seed-icl-2.0）。下方音色控件随所选模型切换。' },
           { label: 'Voice Design 选择器与手动编辑', detail: '点击声音设计选择器，选择“自定义”或一个预设。选择自定义后可直接编辑音色描述文本框；右上角鲸鱼精灵图和台词会随模型切换。' },
           { label: '内置声音 / 浏览器声音选择器', detail: '点击选择器打开列表，再点击一个声音完成选择；也可用方向键、Home、End 浏览，Esc 关闭。浏览器声音会显示语言及在线/离线状态；本地语音策略关闭时，浏览器声音选择器会禁用。' },
           { label: '朗读范围单选项', detail: '点击“智能模式”“完整模式”或“首段模式”之一。智能模式会根据回复长度决定范围；完整模式朗读全文；首段模式只朗读开头。选择后下方说明会同步更新。' },
-          { label: '语音策略单选项', detail: '点击“MiMo 优先”“本地优先”或“禁用本地语音”。前两者分别决定 MiMo 与浏览器语音的兜底顺序；禁用本地语音时只使用 MiMo。' },
+          { label: '语音策略单选项', detail: '点击“云端优先”“本地优先”或“关闭本地语音”。云端使用当前选择的小米或豆包服务；前两项决定云端与浏览器语音的兜底顺序，关闭本地语音后只使用云端。' },
           { label: '字段“恢复默认”按钮', detail: '带“已覆盖”标记的字段会出现“恢复默认”按钮。点击后只清除该字段的用户覆盖并回到基础值；它不会绕过底部保存，也不会影响其他字段。' },
         ],
       },
       {
         id: 'manual-broadcast',
         title: '05 · 演播厅',
-        summary: '用当前草稿试听，并明确显示 MiMo 或浏览器本地语音来源。',
+        summary: '用当前草稿试听，并显示小米、豆包或浏览器本地语音来源。',
         items: [
           { label: '试听文本框', detail: '点击文本框输入或替换试听内容，最多 100 个字符。文本为空时，鲸鱼按钮会禁用；试听文本本身不会写入 DSH。模型、声音、音量和速度可直接使用草稿，但新 API Key 必须先保存。' },
-          { label: '播放 / 停止鲸鱼按钮', detail: '点击“播放试听”生成并播放；准备中或播放中再次点击可中断。气泡会显示正在连接 MiMo 或使用浏览器本地语音，并针对未配置密钥、密钥被拒绝、限流、超时、本地音色不可用和自动播放限制给出对应提示。' },
+          { label: '播放 / 停止鲸鱼按钮', detail: '点击“播放试听”生成并播放；准备中或播放中再次点击可中断。气泡会显示当前语音来源，并针对未配置密钥、密钥被拒绝、限流、超时、本地音色不可用和自动播放限制给出对应提示。' },
         ],
       },
       {
@@ -107,8 +108,25 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         ],
       },
       {
+        id: 'manual-doubao',
+        title: '08 · 豆包模型与音色',
+        summary: '标准音色、专属音色和流式回复使用同一套豆包服务配置。',
+        links: [
+          { label: '创建一个音色', href: 'https://console.volcengine.com/speech/new/experience/clone?projectName=default' },
+          { label: '豆包双向流式合成文档', href: 'https://docs.volcengine.com/docs/DoubaoVoice/WebSocketBidirectionalStreaming-V3?lang=zh' },
+          { label: '豆包音色设计文档', href: 'https://docs.volcengine.com/docs/DoubaoVoice/SoundDesignAPI?lang=zh' },
+        ],
+        items: [
+          { label: '开通与密钥', detail: '在火山引擎豆包语音控制台开通需要的模型服务，获取 API Key。回到设置切换到“豆包语音”，填写密钥并保存；密钥已保存不代表服务权限或音色已经可用，请用演播厅确认。' },
+          { label: '标准合成（seed-tts-2.0）', detail: '选择内置标准音色，或通过自定义选项填写其他标准音色 ID。语音指令可描述情绪、语气、方言或表达风格；可以选用预设，也可以手动编辑，留空使用默认表达，效果随音色而异。' },
+          { label: '声音复刻（seed-icl-2.0）', detail: '在豆包控制台创建专属音色后，将音色 ID 填入“复刻音色 ID”。输入框下会保留最近使用的 ID，标准音色与复刻音色分别保存；复刻 ID 为空时不能保存或试听。音色创建在控制台完成，插件使用已有 ID 进行合成。' },
+          { label: '边生成边播放', detail: '自动播报时，同一条回复的文本会持续追加到豆包双向流式会话，音频生成后即可播放。停止朗读会取消当前会话；切换服务商或修改已保存的语音指令后，当前朗读会停止，新设置用于后续回复。' },
+          { label: '语速与音频历史', detail: '豆包在每次合成开始时应用语速。生成的历史录音已包含该语速，重听时按 1× 播放，避免重复加速；之后调整设置不会改变这份录音。' },
+        ],
+      },
+      {
         id: 'manual-preview-tools',
-        title: '08 · Preview 工具栏',
+        title: '09 · Preview 工具栏',
         summary: '这些控件只服务于本地预览，不属于插件设置。',
         items: [
           { label: '语言', detail: '选择“中文”或“English”切换手册和右侧真实设置卡片的显示语言；切换后会重置当前本地预览状态。' },
@@ -133,10 +151,10 @@ const COPY: Record<ManualLocale, ManualCopy> = {
       {
         id: 'manual-start',
         title: '01 · Getting started',
-        summary: 'Save the key before testing MiMo; enable autoplay and sounds only when wanted.',
+        summary: 'Choose Xiaomi MiMo or Doubao, save its key, then select a model and voice to preview.',
         items: [
           { label: 'Settings card header', detail: 'Click the “Text To Speech (Xiaomi MiMo)” header to expand or collapse all settings. The arrow and aria state update together; “Unsaved” appears while a draft is dirty.' },
-          { label: 'Recommended order', detail: 'Enter an API key → click Save → choose a model and voice → test it in Broadcast Studio → optionally enable automatic playback and sounds. Broadcast Studio uses most drafts immediately, but a new key must be saved to the Host before MiMo can use it.' },
+          { label: 'Recommended order', detail: 'Choose a speech provider → enter its API key → click Save → choose a model and voice → test it in Broadcast Studio → optionally enable autoplay and sounds. Most drafts apply to previews immediately, but a new key must be saved before cloud synthesis can use it.' },
           { label: 'Read-only state', detail: 'Check Read-only in the toolbar to disable inputs, switches, sliders, and pickers. You can still read the guide, but cannot submit settings.' },
         ],
       },
@@ -155,8 +173,8 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         title: '03 · API Key',
         summary: 'The key is written to DSH only when Save is clicked.',
         items: [
-          { label: 'Get API Key link', detail: 'Click Get API Key beside the heading to open the Xiaomi MiMo console key page in a new tab. Create or copy a key, then return to Preview.' },
-          { label: 'Key input', detail: 'Enter a new Xiaomi MiMo API key in the password field. The value is hidden; focusing and leaving the field changes the Whale Maid message. Format feedback is immediate, but the key is not saved yet.' },
+          { label: 'Provider and API key', detail: 'Click the provider name to switch between Xiaomi MiMo and Doubao. Get API Key opens the selected provider’s key page; Doubao uses an API key from the new console. Keys, models, and voices are saved separately for each provider.' },
+          { label: 'Key input', detail: 'Enter the selected provider’s new key in the password field. It stays hidden and is not saved immediately. Erasing the draft leaves the saved key intact; use Clear and Save to remove it.' },
           { label: 'Status and clearing', detail: 'The status distinguishes loading, missing, recognized format, unrecognized format, unavailable Host state, and unsaved changes. A recognized prefix is not a connection check; use Broadcast Studio after saving. When a personal override exists, Clear removes it on Save and falls back to a base key if one exists.' },
         ],
       },
@@ -167,22 +185,22 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         items: [
           { label: 'Console header and arrow', detail: 'Click Mixing Console to expand or collapse detailed settings. Its summary shows volume, speed, read scope, model, voice, and strategy.' },
           { label: 'Voice volume slider', detail: 'Drag or use arrow keys to change voice volume; releasing the pointer or finishing a keyboard interaction previews that level. Restore default returns this field to its base value, but still requires Save.' },
-          { label: 'Playback speed slider', detail: 'Drag or use the keyboard to set 0.5×–2.0× speed; completing the interaction plays a cue at the selected rate. Streamed PCM changes pitch with playback speed.' },
-          { label: 'Model buttons', detail: 'Click between Preset voices (MiMo-TTS) and Voice design (MiMo-VoiceDesign). Preset mode shows the built-in voice picker; Voice Design shows preset/custom voice-description controls.' },
+          { label: 'Playback speed slider', detail: 'Drag or use the keyboard to set 0.5×–2.0× speed. Doubao applies speed during cloud synthesis and plays the result at 1×. Xiaomi PCM adjusts speed locally, which also changes pitch.' },
+          { label: 'Model buttons', detail: 'Xiaomi offers preset voices and Voice Design. Doubao offers Standard TTS (seed-tts-2.0) and Voice cloning (seed-icl-2.0). Voice controls change with the selected model.' },
           { label: 'Voice Design picker', detail: 'Open the picker and choose Custom or a preset. Custom enables the editable description. Edit the description directly and save the settings when it is ready.' },
           { label: 'Built-in / browser voice pickers', detail: 'Click a picker to open its list, then click a voice. Arrow keys, Home, End, and Escape also work. Browser voices show language and online/offline status; the browser voice picker is disabled when local speech is disabled.' },
           { label: 'Read-aloud scope radios', detail: 'Click Smart, Full, or First-segment mode. Smart chooses a range based on reply length; Full reads everything; First segment reads only the opening. The hint below updates with the selection.' },
-          { label: 'Speech strategy radios', detail: 'Click MiMo first, Local first, or Disable local speech. The first two choose the fallback order; disabling local speech uses MiMo only.' },
+          { label: 'Speech strategy radios', detail: 'Choose Cloud first, Local first, or Disable local speech. Cloud speech uses the selected Xiaomi or Doubao provider. The first two choose the fallback order; disabling local speech uses only the cloud provider.' },
           { label: 'Restore default buttons', detail: 'Fields marked Overridden expose Restore default. Clicking it clears that field’s user override and returns to its base value; it does not bypass Save or affect other fields.' },
         ],
       },
       {
         id: 'manual-broadcast',
         title: '05 · Broadcast Studio',
-        summary: 'Preview the current draft and see whether MiMo or browser-local speech is used.',
+        summary: 'Preview the current draft and see whether Xiaomi, Doubao, or browser speech is used.',
         items: [
           { label: 'Preview text field', detail: 'Click and replace the preview text, up to 100 characters. An empty field disables the Whale button. Model, voice, volume, and speed drafts apply immediately, but a new API key must be saved first.' },
-          { label: 'Play / stop Whale button', detail: 'Click Play preview to generate and play; click again while preparing or playing to stop. The bubble identifies MiMo or browser-local speech and distinguishes missing or rejected keys, rate limits, timeouts, unavailable local voices, and autoplay restrictions.' },
+          { label: 'Play / stop Whale button', detail: 'Click Play preview to generate and play; click again while preparing or playing to stop. The bubble identifies the speech source and distinguishes missing or rejected keys, rate limits, timeouts, unavailable local voices, and autoplay restrictions.' },
         ],
       },
       {
@@ -210,8 +228,25 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         ],
       },
       {
+        id: 'manual-doubao',
+        title: '08 · Doubao models and voices',
+        summary: 'Use one Doubao configuration for standard voices, personal voices, and streaming replies.',
+        links: [
+          { label: 'Create a voice', href: 'https://console.volcengine.com/speech/new/experience/clone?projectName=default' },
+          { label: 'Doubao bidirectional synthesis documentation', href: 'https://docs.volcengine.com/docs/DoubaoVoice/WebSocketBidirectionalStreaming-V3?lang=zh' },
+          { label: 'Doubao voice design documentation', href: 'https://docs.volcengine.com/docs/DoubaoVoice/SoundDesignAPI?lang=zh' },
+        ],
+        items: [
+          { label: 'Service and key', detail: 'Enable the required model service in the Volcano Engine Doubao console and obtain an API key. Select Doubao in settings, enter the key, and save. A saved key does not verify service permissions or voice availability; test it in Broadcast Studio.' },
+          { label: 'Standard TTS (seed-tts-2.0)', detail: 'Choose a built-in standard voice, or select Custom and enter another standard voice ID. Speech instructions describe emotion, tone, dialect, or delivery. Choose a preset or edit the instruction; leave it blank for default delivery. Results vary by voice.' },
+          { label: 'Voice cloning (seed-icl-2.0)', detail: 'Create a personal voice in the Doubao console, then paste its ID into Cloned voice ID. Recent IDs appear below the field. Standard and cloned voice selections are saved separately; an empty clone ID blocks saving and previewing. The plugin synthesizes with existing IDs; voice creation happens in the console.' },
+          { label: 'Streaming replies', detail: 'During automatic reading, reply text is appended to a Doubao bidirectional session and audio can play as it arrives. Stopping cancels the session. Switching providers or changing saved speech instructions stops the current reading; new settings apply to subsequent replies.' },
+          { label: 'Speed and history', detail: 'Doubao applies speed when synthesis starts. Saved recordings already contain that speed and replay at 1× to avoid applying it twice. Later settings changes do not alter the recording.' },
+        ],
+      },
+      {
         id: 'manual-preview-tools',
-        title: '08 · Preview toolbar',
+        title: '09 · Preview toolbar',
         summary: 'These controls belong to the local preview, not the plugin settings.',
         items: [
           { label: 'Language', detail: 'Choose 中文 or English to switch the guide and the real settings card. Switching language resets the local preview state.' },
@@ -337,6 +372,9 @@ export function UserManual({ locale, isOpen, onOpenChange, onFocusToggle }: {
               <dd>{item.detail}</dd>
             </div>)}
           </dl>
+          {section.links ? <ul>
+            {section.links.map(link => <li key={link.href}><a href={link.href} target="_blank" rel="noopener noreferrer">{link.label}</a></li>)}
+          </ul> : null}
         </section>)}
       </div>
       <div className="preview-manual-notes">

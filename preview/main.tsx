@@ -217,21 +217,6 @@ function PreviewApp() {
   return <div className="preview-shell">
     <PreviewBackground />
     <header ref={toolbarRef} className={`preview-toolbar${isToolbarCompact ? ' preview-toolbar-compact' : ''}`}>
-      <button
-        ref={manualToggleRef}
-        className="preview-manual-toggle"
-        type="button"
-        aria-expanded={isManualOpen}
-        aria-controls="preview-manual-panel"
-        aria-label={isManualOpen ? toolbar.closeManual : toolbar.openManual}
-        title={isManualOpen ? toolbar.closeManual : toolbar.openManual}
-        onClick={() => { setIsManualOpen((open) => !open) }}
-      >
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-          <path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H19v15H6.5A1.5 1.5 0 0 0 5 20.5v-15Z" />
-          <path d="M5 5.5v15M9 8h6M9 11h6M9 14h4" />
-        </svg>
-      </button>
       <div className="preview-brand">
         <strong>MiMo TTS UI Lab</strong>
         <span>{toolbar.subtitle}</span>
@@ -267,6 +252,21 @@ function PreviewApp() {
           />
         </label>
       </div>
+      <button
+        ref={manualToggleRef}
+        className="preview-manual-toggle"
+        type="button"
+        aria-expanded={isManualOpen}
+        aria-controls="preview-manual-panel"
+        aria-label={isManualOpen ? toolbar.closeManual : toolbar.openManual}
+        title={isManualOpen ? toolbar.closeManual : toolbar.openManual}
+        onClick={() => { setIsManualOpen((open) => !open) }}
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H19v15H6.5A1.5 1.5 0 0 0 5 20.5v-15Z" />
+          <path d="M5 5.5v15M9 8h6M9 11h6M9 14h4" />
+        </svg>
+      </button>
       <button
         ref={controlsToggleRef}
         className="preview-controls-toggle"

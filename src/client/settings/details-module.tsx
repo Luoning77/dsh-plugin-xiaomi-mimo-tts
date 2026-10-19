@@ -180,7 +180,7 @@ export function DetailsModule({ t, provider, doubaoModel, doubaoVoice, doubaoClo
       </div>
       <div className="xmimo-tts-model">
         <SettingFieldHeading label={t('settings.model')} overriddenLabel={t('settings.overridden')} resetLabel={t('settings.reset')} overridden={fieldOverridden(provider === 'doubao' ? 'doubaoModel' : 'model')} resettable disabled={!writable} onReset={() => { resetField(provider === 'doubao' ? 'doubaoModel' : 'model') }} />
-        {provider === 'doubao' ? <SegmentedControl id="xmimo-tts-doubao-model" value={doubaoModel} options={[{ value: 'seed-tts-2.0', label: t('settings.doubaoStandardModel') }, { value: 'seed-icl-2.0', label: t('settings.doubaoCloneModel') }]} label={t('settings.model')} disabled={!writable} onChange={onDoubaoModelChange} className="xmimo-tts-settings-segmented" /> : <ModelPicker
+        {provider === 'doubao' ? <SegmentedControl id="xmimo-tts-doubao-model" value={doubaoModel} options={[{ value: 'seed-tts-2.0', label: t('settings.doubaoStandardModel') }, { value: 'seed-icl-2.0', label: t('settings.doubaoCloneModel') }]} label={t('settings.model')} disabled={!writable} onChange={onDoubaoModelChange} className="xmimo-tts-settings-segmented xmimo-tts-doubao-models" /> : <ModelPicker
           value={model}
           disabled={!writable}
           label={t('settings.model')}
@@ -193,7 +193,7 @@ export function DetailsModule({ t, provider, doubaoModel, doubaoVoice, doubaoClo
       {provider === 'doubao' ? <div className={`xmimo-tts-voice xmimo-tts-doubao-voice${doubaoModel === 'seed-icl-2.0' ? ' xmimo-tts-cloned-voice' : ''}`}>
         <SettingFieldHeading
           label={t(doubaoModel === 'seed-icl-2.0' ? 'settings.doubaoClonedVoiceLabel' : 'settings.voice')}
-          suffix={<small className="xmimo-tts-doubao-voice-hint">{doubaoModel === 'seed-icl-2.0' ? <>{t('settings.doubaoCloneHint')} </> : null}<a href="https://console.volcengine.com/speech/new/voices?projectName=default" target="_blank" rel="noopener noreferrer">{t('settings.doubaoVoiceLibrary')}</a></small>}
+          suffix={<small className="xmimo-tts-doubao-voice-hint"><a href="https://console.volcengine.com/speech/new/experience/clone?projectName=default" target="_blank" rel="noopener noreferrer">{t('settings.doubaoVoiceLibrary')}</a>{doubaoModel === 'seed-icl-2.0' ? <> {t('settings.doubaoCloneHint')}</> : null}</small>}
           overriddenLabel={t('settings.overridden')}
           resetLabel={t('settings.reset')}
           overridden={fieldOverridden(doubaoModel === 'seed-icl-2.0' ? 'doubaoClonedVoice' : 'doubaoVoice')}

@@ -43,18 +43,7 @@ jobs:
         id: metadata
         env:
           RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          node --input-type=module <<'NODE'
-          import { appendFileSync, readFileSync } from 'node:fs'
-
-          const { name, version } = JSON.parse(readFileSync('package.json', 'utf8'))
-          if (process.env.RELEASE_TAG !== `v${version}`) {
-            throw new Error(`Tag ${process.env.RELEASE_TAG} must match package version v${version}`)
-          }
-          const npmTag = version.split('+')[0].includes('-') ? 'next' : 'latest'
-          appendFileSync(process.env.GITHUB_OUTPUT, `package_name=${name}\nversion=${version}\nnpm_tag=${npmTag}\n`)
-          console.log(`${name}@${version} -> ${npmTag}`)
-          NODE
+        run: node scripts/release-metadata.mjs
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

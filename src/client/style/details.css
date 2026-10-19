@@ -63,6 +63,13 @@
   min-width: 0;
 }
 
+.xmimo-tts-doubao-models button {
+  height: auto;
+  min-height: 28px;
+  white-space: normal;
+  overflow-wrap: anywhere
+}
+
 @media (max-width: 480px) {
   .xmimo-tts-details-body {
     grid-template-columns: minmax(0, 1fr)

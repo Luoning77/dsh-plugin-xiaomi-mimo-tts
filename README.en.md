@@ -11,7 +11,7 @@
   <a href="https://github.com/deepseek-ai/deepseek-harness"><img src="https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&amp;logo=deepseek&amp;logoColor=white" alt="deepseek-harness"></a>
 </p>
 
-<p align="center">Add Xiaomi MiMo TTS read-aloud, browser-local fallback speech, and optional UI sounds to DSH Web.</p>
+<p align="center">Add Xiaomi MiMo and Doubao read-aloud, browser-local fallback speech, and optional UI sounds to DSH Web.</p>
 
 <p align="center">
   <a href="README.md"><img src="https://img.shields.io/badge/简体中文-64748B?style=for-the-badge" alt="切换到简体中文"></a>
@@ -19,6 +19,8 @@
 </p>
 
 > MiMo TTS availability and pricing may change. Check the official Xiaomi MiMo platform for the current policy.
+
+> `4.0.0` uses the npm `next` channel. Install with `dsh plugin --profile web add dsh-xiaomi-tts@next`. Stable releases remain available through `@latest`.
 
 ## 🎨 Preview
 
@@ -52,10 +54,10 @@
 
 ## 📋 Requirements
 
-- `@deepseek-ai/dsh` `0.2.1-rc.1` (the current target; compatible with `0.1.7-rc.1` through `0.2.x` releases)
+- `@deepseek-ai/dsh` `0.2.1-rc.2` (the current target; compatible with `0.1.7-rc.1` through `0.2.x` releases)
 - Node.js 22+
 - An API key for the selected provider, with access to the selected speech resource.
-- Doubao continuous text input requires a DSH Web Host supporting WebSocket upgrade registration (current target: `0.2.0-rc.2`); reverse proxies must forward WebSocket Upgrade.
+- Doubao continuous text input requires a DSH Web Host supporting WebSocket upgrade registration; reverse proxies must forward WebSocket Upgrade.
 - [Official TTS API documentation](https://mimo.mi.com/models/zh-CN/mimo-v2.5-tts)
 
 ## 🚀 Installation
@@ -101,23 +103,18 @@ Recommended setup order:
 
 ### Providers and Doubao Voice
 
-In minimal mode, Doubao standard TTS shows only Custom voice ID, Vivi 2.0, Xiaohe 2.0, Yunzhou 2.0 and Xiaotian 2.0. Other selected voices retain their IDs through custom entry; normal mode keeps the full voice catalog.
-Speech instructions show only the first eight tags, with the text box and hint hidden. Existing custom instructions are retained and can be edited again in normal mode.
+Select Xiaomi MiMo or Doubao in the API key module, then save. Each provider retains its own key, model, and voice settings. Existing configurations default to Xiaomi.
 
-The standard voice picker offers 20 speech instruction tags (including Cantonese, Shanghai, Henan, Beijing, Tianjin, Sichuan, Shaanxi and Northeastern dialects), including gentle, cheerful, storytelling, argument, whisper, shy anticipation, world-weary, tearful and accent styles. Click to fill an editable instruction, or select Natural to clear it. Preview accepts the draft; saving applies it to subsequent speech. Presets are adapted from the [official examples](https://docs.volcengine.com/docs/DoubaoVoice/DoubaoTextToSpeech20CapabilityIntroduction?lang=zh), and results vary by voice. Cloned voices neither display nor send instructions.
+| Doubao model | Voice setup |
+| --- | --- |
+| Standard TTS (`seed-tts-2.0`) | Choose a built-in voice or enter a standard voice ID. |
+| Voice cloning (`seed-icl-2.0`) | [Create a voice](https://console.volcengine.com/speech/new/experience/clone?projectName=default), then paste its ID into the plugin. |
 
-Switching providers edits the settings draft until saved; Discard restores saved settings. Key drafts remain separate for each provider. Saved keys are never filled back into the browser. Clear removes only that provider's user override and retains any inherited base credential.
+Enable the corresponding Doubao model service and use an API key from the new console. Save the key, then test in Broadcast Studio. A cloned voice ID is required for voice cloning.
 
-- **Standard TTS 2.0**: `seed-tts-2.0`, default Vivi 2.0. A two-column card picker features 30 distinctive voices, with Custom voice ID first. Other standard voices and previously saved IDs outside the selection remain available through custom entry.
-- **Voice cloning 2.0**: `seed-icl-2.0`. Enter an existing cloned voice ID from the [voice library](https://console.volcengine.com/speech/new/voices?projectName=default). Upload and training are outside this feature; an empty ID blocks saving and preview.
-- Cloned voice IDs are remembered in this browser on blur or Enter. The 10 most recently used unique IDs appear as clickable tags for reuse; history does not indicate upstream validation.
-- Standard and cloned voice IDs are remembered separately. Configured key status does not verify network access; preview checks model and voice permissions.
-- Uses the new `X-Api-Key` authentication. Legacy App ID / Access Token authentication and advanced language, dialect and emotion controls are not included.
-- Doubao emits 24 kHz mono PCM16. The 0.5×–2.0× speech speed maps to upstream `speech_rate` (`-50`–`100`) starting with the next synthesis. Playback and newly saved audio history use 1× to avoid applying speed twice; volume remains local.
+Speed is applied during synthesis; changes take effect on the next request. Saved recordings retain their original synthesis speed.
 
-Existing settings default to Xiaomi. Doubao uses `provider: doubao`, `doubaoApiKey`, `doubaoModel`, `doubaoVoice`, and `doubaoClonedVoice`. Existing `apiKey`, `baseURL`, `model`, `voice`, and voice-design prompts remain Xiaomi settings. Xiaomi `sk-` / `tp-` keys and automatic Token Plan routing remain supported.
-
-See the [Doubao bidirectional API](https://docs.volcengine.com/docs/DoubaoVoice/bidirectional-streaming-text-to-speech-websocket?lang=zh) and [official voice catalog](https://docs.volcengine.com/docs/DoubaoVoice/Tonelist-1?lang=zh). Bundled entries were checked on 2026-10-19 and include bidirectional voices only; other IDs can be entered and checked by previewing.
+For more voices, see the [official voice catalog](https://docs.volcengine.com/docs/DoubaoVoice/Tonelist-1?lang=zh).
 
 ### Xiaomi official built-in voices
 
@@ -148,7 +145,7 @@ Browser voices come from the Web Speech API. Offline availability, language cove
 
 Xiaomi PCM requests and semantic segments accumulate complete sentences toward 160 spoken characters, with a preferred maximum of 240. An individual long sentence may exceed that maximum, and the final shorter tail is also played. PCM streaming can begin when unfinished prose reaches the target size, without repeating already queued text. History saves one WAV per synthesis slice, combining all PCM data chunks received by that request.
 
-Doubao submits complete sentences promptly through one continuous session per message and flushes the final tail before finishing input. Bounded read scopes can finish early. History stores one WAV per message. Failure after playback starts does not replay from the beginning or switch to another cloud provider. Pausing continues receiving bounded audio; overflow stops playback. Cumulative message text is limited by `maxTextLength`, and connection inactivity by `requestTimeoutMs`.
+Doubao plays audio as the reply is generated and saves one recording per message. Errors after playback starts do not replay the message or switch to another cloud provider.
 
 The settings panel supports keyboard navigation: use `Tab` to move focus, arrow keys to adjust sliders and options, and `Space` to activate buttons and switches.
 
@@ -234,7 +231,7 @@ pnpm pack:check
 On Windows, stop DSH Web before replacing a local development link with the npm package so the running Node process does not hold the Junction:
 
 ```powershell
-.\start\dsh-plugin-reinstall.bat 3.0.9
+.\start\dsh-plugin-reinstall.bat 4.0.0
 ```
 
 For a DSH Desktop profile, close Desktop and remove a stale local link with:
