@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type { SessionSnapshot } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
@@ -9,6 +9,8 @@ import { RealtimeSpeechSession } from '../playback/realtime-speech-session.js'
 import { useSettingsSnapshot } from '../settings/scope.js'
 import { assistantText, finalLiveMessage, latestAssistantMessageId } from './message-text.js'
 import { useApiKeySupported } from './api-key-status.js'
+import { unrestrictedAudioFocus } from '../playback/tab-audio-focus.js'
+import type { AudioFocus } from '../playback/tab-audio-focus.js'
 
 interface SessionPlaybackObserverProps {
   sessionId: string
@@ -19,10 +21,12 @@ interface SessionPlaybackObserverProps {
   live: LiveSpeechController
   local: LocalSpeechController
   settings: ConfigForm<TtsSettings>
+  audioFocus?: AudioFocus
 }
 
 /** Own the active-session boundary and feed its partial assistant output into realtime speech. */
-export function SessionPlaybackObserver({ sessionId, useSession, useChat, playback, live, local, settings }: SessionPlaybackObserverProps): null {
+export function SessionPlaybackObserver({ sessionId, useSession, useChat, playback, live, local, settings, audioFocus = unrestrictedAudioFocus }: SessionPlaybackObserverProps): null {
+  const ownsAudio = useSyncExternalStore(audioFocus.subscribe, audioFocus.canPlay, audioFocus.canPlay)
   const settingsSnapshot = useSettingsSnapshot(settings)
   const resolvedSettings = resolveTtsSettings(settingsSnapshot.value)
   const apiKeySupported = useApiKeySupported(resolvedSettings.localSpeechMode !== 'disabled', resolvedSettings.provider, settingsSnapshot.revision)
@@ -89,8 +93,8 @@ export function SessionPlaybackObserver({ sessionId, useSession, useChat, playba
 
     const localModel = supportsRealtimeTts(resolvedSettings)
     const realtimeSpeechEnabled = localModel
-    playback.observeSession(sessionId, runningSnapshot && runArmed.current, latestMessageId, attachedMidRun.current && realtimeSpeechEnabled)
-    if (!resolvedSettings.enabled || !resolvedSettings.autoPlay || !realtimeSpeechEnabled) {
+    playback.observeSession(sessionId, ownsAudio && audioFocus.canPlay() && runningSnapshot && runArmed.current, latestMessageId, attachedMidRun.current && realtimeSpeechEnabled)
+    if (!ownsAudio || !audioFocus.canPlay() || !resolvedSettings.enabled || !resolvedSettings.autoPlay || !realtimeSpeechEnabled) {
       speech.cancel()
       active.current = null
       if (runningSnapshot) runArmed.current = false
@@ -125,7 +129,7 @@ export function SessionPlaybackObserver({ sessionId, useSession, useChat, playba
       }
       active.current = null
     }
-  }, [selectionKey, apiKeySupported, legacy, latestMessageId, live, local, partial, partialText, playback, resolvedSettings.autoPlay, resolvedSettings.enabled, resolvedSettings.localSpeechMode, resolvedSettings.model, resolvedSettings.provider, resolvedSettings.doubaoModel, resolvedSettings.doubaoVoice, resolvedSettings.doubaoClonedVoice, resolvedSettings.readScope, runningSnapshot, sessionId, sessionSnapshot.openState, speech])
+  }, [audioFocus, ownsAudio, selectionKey, apiKeySupported, legacy, latestMessageId, live, local, partial, partialText, playback, resolvedSettings.autoPlay, resolvedSettings.enabled, resolvedSettings.localSpeechMode, resolvedSettings.model, resolvedSettings.provider, resolvedSettings.doubaoModel, resolvedSettings.doubaoVoice, resolvedSettings.doubaoClonedVoice, resolvedSettings.readScope, runningSnapshot, sessionId, sessionSnapshot.openState, speech])
 
   return null
 }

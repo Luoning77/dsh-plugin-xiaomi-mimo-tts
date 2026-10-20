@@ -17,7 +17,7 @@ interface SynthesizedAudio {
 
 export class PlaybackController {
   constructor(private readonly history?: AudioHistory) {}
-  readonly autoPlayArmedAt = Date.now()
+  autoPlayArmedAt = Date.now()
   private view: PlaybackView = { sessionId: null, messageId: null, source: null, status: 'idle', error: null }
   private readonly listeners = new Set<() => void>()
   private readonly automaticallyPlayed = new Set<string>()
@@ -140,6 +140,14 @@ export class PlaybackController {
       return
     }
     if (this.view.source !== 'complete') this.publish({ sessionId, messageId, source, status, error: status === 'error' ? (error ?? 'play-failed') : null })
+  }
+
+  resetAutomaticPlayback(): void {
+    this.autoPlayArmedAt = Date.now()
+    this.liveSessions.clear()
+    this.completedSessions.clear()
+    this.completedMessages.clear()
+    this.attachedMidRun.clear()
   }
 
   pauseSegmented(sessionId: string, messageId: string): void {

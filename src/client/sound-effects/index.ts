@@ -5,7 +5,7 @@ import type { Context } from '@deepseek-ai/cordis'
 
 const VALID_CUES = new Set<SoundCue>(['start', 'complete', 'success', 'error', 'notification', 'press', 'select', 'toggle-on', 'toggle-off', 'send', 'close', 'delete', 'open', 'stop', 'queued'])
 
-export function createSoundEffectsController(): SoundEffectsController {
+export function createSoundEffectsController(canPlay: () => boolean = () => true): SoundEffectsController {
   let settings: SoundEffectsSettings = { enabled: true, volume: 0.35, pack: 'zen', taskSounds: true, clickSounds: true }
   let player: ReturnType<typeof createUISFX> | null = null
 
@@ -16,11 +16,11 @@ export function createSoundEffectsController(): SoundEffectsController {
 
   return {
     play(cue, options) {
-      if (!settings.enabled || !VALID_CUES.has(cue)) return
+      if (!canPlay() || !settings.enabled || !VALID_CUES.has(cue)) return
       try { getPlayer().play(cue, options) } catch { /* AudioContext may be unavailable. */ }
     },
     preview(cue) {
-      if (!settings.enabled || !VALID_CUES.has(cue)) return
+      if (!canPlay() || !settings.enabled || !VALID_CUES.has(cue)) return
       try { getPlayer().play(cue) } catch { /* Preview is best effort. */ }
     },
     setVolume(value) {
@@ -28,7 +28,7 @@ export function createSoundEffectsController(): SoundEffectsController {
       if (player !== null) player.setVolume(settings.volume)
     },
     previewVolume() {
-      if (!settings.enabled) return
+      if (!canPlay() || !settings.enabled) return
       try { getPlayer().play('check', { retrigger: 'ignore' }) } catch { /* Preview is best effort. */ }
     },
     update(next) {

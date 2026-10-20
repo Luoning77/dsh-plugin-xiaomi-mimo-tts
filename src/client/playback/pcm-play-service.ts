@@ -26,6 +26,7 @@ export class XiaomiMimoTtsPcmService extends Service implements XiaomiMimoTtsSer
     private readonly settings: ConfigForm<TtsSettings>,
     private readonly interruptConversationPlayback: () => void,
     private readonly history?: AudioHistory,
+    private readonly canPlay: () => boolean = () => true,
   ) {
     super(ctx, 'xiaomiMimoTts')
     debugConsole?.info(this.logPrefix, '[初始化] xiaomiMimoTts 服务已注册')
@@ -34,7 +35,7 @@ export class XiaomiMimoTtsPcmService extends Service implements XiaomiMimoTtsSer
   play(text: string): void {
     try {
       debugConsole?.info(this.logPrefix, '[入口] play() 被调用', { disposed: this.disposed, textType: typeof text, text })
-      if (this.disposed || typeof text !== 'string') {
+      if (this.disposed || !this.canPlay() || typeof text !== 'string') {
         debugConsole?.warn(this.logPrefix, '[判定] 已跳过：服务已销毁或 text 不是字符串')
         return
       }

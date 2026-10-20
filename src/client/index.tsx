@@ -20,6 +20,7 @@ import { createSoundEffectsController, installClickSounds } from './sound-effect
 import { installTaskSoundWatcher } from './sound-effects/task-watcher.js'
 import { CLIENT_STYLES } from './style/index.js'
 import { AudioHistory } from './history/audio-history.js'
+import { TabAudioFocus } from './playback/tab-audio-focus.js'
 
 /** Client services required by this plugin. */
 export const inject = [
@@ -66,7 +67,8 @@ export function apply(ctx: Context): void {
   ctx.effect(() => locale.register(NS, { zh, en }), 'xiaomi-mimo-tts: dictionaries')
 
   const scope = ctx.configForms.get<TtsSettings>(TTS_SETTINGS_NAMESPACE)
-  const soundEffects = createSoundEffectsController()
+  const audioFocus = new TabAudioFocus()
+  const soundEffects = createSoundEffectsController(audioFocus.canPlay)
   const getSoundSettings = () => {
     const resolved = resolveTtsSettings(scope.getSnapshot().value)
     return {
@@ -93,7 +95,21 @@ export function apply(ctx: Context): void {
     live.interrupt()
     local.interrupt()
     playback.interrupt()
-  }, history)
+  }, history, audioFocus.canPlay)
+  ctx.effect(() => {
+    const off = audioFocus.subscribe(() => {
+      playback.resetAutomaticPlayback()
+      if (audioFocus.canPlay()) return
+      live.interrupt()
+      local.interrupt()
+      playback.interrupt()
+      pcmService.stop()
+      history.stopReplay()
+      void soundEffects.dispose()
+    })
+    const deactivate = audioFocus.activate()
+    return () => { deactivate(); off() }
+  }, 'xiaomi-mimo-tts: tab audio focus')
   let providerSelectionKey: string | null = null
   const updateProvider = () => {
     const settings = resolveTtsSettings(scope.getSnapshot().value)
@@ -144,7 +160,7 @@ export function apply(ctx: Context): void {
     name: 'conversation.input.dock',
     id: 'xiaomi-mimo-tts-session-playback-observer',
     order: 998,
-    inject: (_sessionId: string) => ({ playback, live, local, settings: scope }),
+    inject: (_sessionId: string) => ({ playback, live, local, settings: scope, audioFocus }),
   }, SessionPlaybackObserver))
 
   registerSlotContribution(ctx, 'conversation.chat.assistant-actions', () => ctx.slots.register({
@@ -152,14 +168,14 @@ export function apply(ctx: Context): void {
     id: 'xiaomi-mimo-tts',
     order: 20,
     locale: NS,
-    inject: (_sessionId: string) => ({ playback, live, local, settings: scope, t }),
+    inject: (_sessionId: string) => ({ playback, live, local, settings: scope, t, audioFocus }),
   }, ReadAloudAction))
 
   registerSlotContribution(ctx, 'plugins.bundle.config', () => ctx.slots.register({
     name: 'plugins.bundle.config',
     key: 'dsh-xiaomi-tts',
     locale: NS,
-    inject: () => ({ scope, t, controller: soundEffects, history, beforeHistoryPlayback: () => {
+    inject: () => ({ scope, t, controller: soundEffects, history, audioFocus, beforeHistoryPlayback: () => {
       pcmService.stop()
       live.interrupt()
       local.interrupt()

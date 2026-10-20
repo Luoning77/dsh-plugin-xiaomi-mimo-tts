@@ -33,6 +33,8 @@ import { hostRoute } from '../host-route.js'
 import type { DraftChange, DraftChanges, EditableSettingField, ResolvedSettings, SettingField, SettingsValues } from './types.js'
 import type { AudioHistory } from '../history/audio-history.js'
 import { AudioHistoryPage } from '../history/audio-history-page.js'
+import { unrestrictedAudioFocus } from '../playback/tab-audio-focus.js'
+import type { AudioFocus } from '../playback/tab-audio-focus.js'
 
 interface SettingsCardProps {
   view: 'summary' | 'page'
@@ -41,6 +43,7 @@ interface SettingsCardProps {
   controller: SoundEffectsController
   history?: AudioHistory | undefined
   beforeHistoryPlayback?: (() => void) | undefined
+  audioFocus?: AudioFocus | undefined
 }
 
 type DraftSettings = SettingsValues
@@ -71,10 +74,10 @@ function HistoryLink({ history, t, onOpen, buttonRef }: { history: AudioHistory;
 
 export function SettingsCard(props: SettingsCardProps): ReactElement | null {
   if (props.view === 'summary') return <>{props.t('settings.description')}</>
-  return <SettingsPage scope={props.scope} t={props.t} controller={props.controller} history={props.history} beforeHistoryPlayback={props.beforeHistoryPlayback} />
+  return <SettingsPage scope={props.scope} t={props.t} controller={props.controller} history={props.history} beforeHistoryPlayback={props.beforeHistoryPlayback} audioFocus={props.audioFocus} />
 }
 
-function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: Omit<SettingsCardProps, 'view'>): ReactElement | null {
+function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, audioFocus = unrestrictedAudioFocus }: Omit<SettingsCardProps, 'view'>): ReactElement | null {
   const snapshot = useSettingsSnapshot(scope)
   const value = snapshot.value
   const initial = resolveTtsSettings(value)
@@ -113,6 +116,11 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
   const [previewView, setPreviewView] = useState<PreviewView>({ status: 'idle', source: null, error: null })
   const [previewPlayer] = useState(() => new PreviewPlayer(setPreviewView, history))
   const [toggleSoundPlayer] = useState(() => new ToggleSoundPlayer())
+  useEffect(() => audioFocus.subscribe(() => {
+    if (audioFocus.canPlay()) return
+    previewPlayer.stop()
+    toggleSoundPlayer.dispose()
+  }), [audioFocus, previewPlayer, toggleSoundPlayer])
   const [apiKeyStatus, setApiKeyStatus] = useState<ApiKeyStatus>('loading')
   const [latestVersion, setLatestVersion] = useState<string | null>(null)
   const [minimalMode, setMinimalMode] = useState(readMinimalMode)
@@ -325,6 +333,8 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
   const previewBusy = previewView.status === 'loading' || previewView.status === 'playing'
 
   const togglePreview = (text: string): void => {
+    audioFocus.claim()
+    if (!audioFocus.canPlay()) return
     if (previewBusy) {
       previewPlayer.stop()
       return
@@ -409,6 +419,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
 
   if (historyOpen && history) return <AudioHistoryPage history={history} t={t} volume={voiceVolume} voiceRate={voiceRate} minimalMode={minimalMode}
     beforePlayback={() => {
+      audioFocus.claim()
       previewPlayer.stop()
       toggleSoundPlayer.dispose()
       beforeHistoryPlayback?.()

@@ -99,6 +99,8 @@ Recommended setup order:
 4. Test it in Broadcast Studio. Key drafts must be saved first; model and voice drafts can be previewed with the saved key.
 5. Enable automatic playback and UI sounds if wanted, then save again.
 
+When several DSH pages share the same origin in one browser, the most recently focused page owns audio. Focusing another DSH page stops speech, previews, and sounds in the previous page. Old replies are not replayed automatically; use the read-aloud button when needed. Switching to another website or app allows background playback to continue. Coordination does not span browsers, devices, or different domains / ports. When browser storage is blocked, only the focused page plays audio.
+
 ## ⚙️ Configuration
 
 ### Providers and Doubao Voice
