@@ -20,7 +20,7 @@
 
 > MiMo TTS availability and pricing may change. Check the official Xiaomi MiMo platform for the current policy.
 
-> `4.0.0` uses the npm `next` channel. Install with `dsh plugin --profile web add dsh-xiaomi-tts@next`. Stable releases remain available through `@latest`.
+> `4.0.1` is a stable release on the npm `latest` channel. Install with `dsh plugin --profile web add dsh-xiaomi-tts@latest`, or pin the version with `dsh-xiaomi-tts@4.0.1`.
 
 ## 🎨 Preview
 
@@ -237,7 +237,7 @@ pnpm pack:check
 On Windows, stop DSH Web before replacing a local development link with the npm package so the running Node process does not hold the Junction:
 
 ```powershell
-.\start\dsh-plugin-reinstall.bat 4.0.0
+.\start\dsh-plugin-reinstall.bat 4.0.1
 ```
 
 For a DSH Desktop profile, close Desktop and remove a stale local link with:
