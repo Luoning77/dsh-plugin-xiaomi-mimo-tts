@@ -5,12 +5,12 @@ import {
   TTS_ROUTE,
   TTS_STREAM_ROUTE,
   TTS_UPDATE_ROUTE,
-} from '../src/shared.js'
-import type { TtsSettings } from '../src/shared.js'
-import type { TtsProvider } from '../src/types/providers.js'
-import { TTS_DUPLEX_ROUTE } from '../src/constants.js'
+} from '../../src/shared.js'
+import type { TtsSettings } from '../../src/shared.js'
+import type { TtsProvider } from '../../src/types/providers.js'
+import { TTS_DUPLEX_ROUTE } from '../../src/constants.js'
 import type { ConfigForm, ConfigFormSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
-import { PcmRecording } from '../src/client/history/pcm-recording.js'
+import { PcmRecording } from '../../src/client/history/pcm-recording.js'
 
 export class PreviewSettingsScope implements ConfigForm<TtsSettings> {
   private readonly listeners = new Set<() => void>()

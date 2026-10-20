@@ -1,11 +1,7 @@
 import { TTS_STREAM_ROUTE } from './constants.js'
 import { hostRoute } from './client/host-route.js'
 import { parseSseRecords } from './utils/index.js'
-import { debugConsole } from './debug-console.js'
 import type { TtsSelection } from './types/providers.js'
-
-const STREAM_LOG = '[MiMoTTS Stream]'
-let nextStreamRequestId = 1
 
 export type PcmChunkConsumer = (pcmBase64: string) => void | Promise<void>
 
@@ -23,21 +19,16 @@ function pcmDeltaFromSse(data: string): string | null {
 
 /** Request one preset-model PCM16 stream and deliver each decoded SSE audio payload in order. */
 export async function streamPcmAudio(text: string, signal: AbortSignal, consume: PcmChunkConsumer, selection?: TtsSelection): Promise<void> {
-  const requestId = nextStreamRequestId++
   if (signal.aborted) {
-    debugConsole?.warn(STREAM_LOG, `[请求 ${requestId}] 发起前已取消`)
     return
   }
-  debugConsole?.info(STREAM_LOG, `[请求 ${requestId}] POST ${TTS_STREAM_ROUTE}`, { text, model: 'mimo-v2.5-tts' })
   const response = await fetch(hostRoute(TTS_STREAM_ROUTE), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ text, ...(selection ?? {}) }),
     signal,
   })
-  debugConsole?.info(STREAM_LOG, `[请求 ${requestId}] 收到 HTTP 响应`, { ok: response.ok, status: response.status, contentType: response.headers.get('content-type') })
   if (signal.aborted) {
-    debugConsole?.warn(STREAM_LOG, `[请求 ${requestId}] 收到响应后已取消`)
     return
   }
   if (!response.ok) throw new Error(`stream-request-${response.status}`)
@@ -47,16 +38,11 @@ export async function streamPcmAudio(text: string, signal: AbortSignal, consume:
   const decoder = new TextDecoder()
   let pending = ''
   let receivedPcm = false
-  let pcmChunks = 0
-  let pcmBase64Chars = 0
   const consumeEvents = async (events: string[]): Promise<void> => {
     for (const event of events) {
       if (signal.aborted) return
       const pcm = pcmDeltaFromSse(event)
       if (pcm === null) continue
-      pcmChunks += 1
-      pcmBase64Chars += pcm.length
-      debugConsole?.info(STREAM_LOG, `[请求 ${requestId}] 收到 PCM 块 #${pcmChunks}`, { base64Chars: pcm.length })
       await consume(pcm)
       receivedPcm = true
     }
@@ -77,9 +63,7 @@ export async function streamPcmAudio(text: string, signal: AbortSignal, consume:
     }
   } finally {
     reader.releaseLock()
-    debugConsole?.info(STREAM_LOG, `[请求 ${requestId}] 响应流读取结束`, { aborted: signal.aborted, pcmChunks, pcmBase64Chars })
   }
 
   if (!signal.aborted && !receivedPcm) throw new Error('stream-audio-empty')
-  if (!signal.aborted) debugConsole?.info(STREAM_LOG, `[请求 ${requestId}] 流式合成完成`, { pcmChunks, pcmBase64Chars })
 }

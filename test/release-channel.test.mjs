@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
-import { releaseMetadata } from '../scripts/release-metadata.mjs'
+import { releaseMetadata } from '../tools/scripts/release-metadata.mjs'
 
 const name = 'dsh-xiaomi-tts'
 
@@ -28,7 +28,7 @@ test('release metadata command exposes the selected channel to GitHub Actions', 
     const manifest = { name, version: '4.0.0', publishConfig: { tag: 'next' } }
     const output = path.join(directory, 'output')
     await writeFile(path.join(directory, 'package.json'), JSON.stringify(manifest))
-    execFileSync(process.execPath, [fileURLToPath(new URL('../scripts/release-metadata.mjs', import.meta.url))], {
+    execFileSync(process.execPath, [fileURLToPath(new URL('../tools/scripts/release-metadata.mjs', import.meta.url))], {
       cwd: directory,
       env: { ...process.env, RELEASE_TAG: 'v4.0.0', GITHUB_OUTPUT: output },
     })

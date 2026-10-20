@@ -42,9 +42,9 @@ function rawTextImports() {
   }
 }
 
-export function createClientConfig(debugLogs = false) {
+export function createClientConfig() {
   return defineConfig({
-    name: debugLogs ? `${PACKAGE_ID}/client-debug` : `${PACKAGE_ID}/client`,
+    name: `${PACKAGE_ID}/client`,
     entry: { client: 'src/client/index.tsx' },
     outDir: 'lib',
     format: 'cjs',
@@ -56,7 +56,6 @@ export function createClientConfig(debugLogs = false) {
     noExternal: (id: string) => (CLIENT_EXTERNALS.includes(id) ? undefined : true),
     define: {
       'process.env.NODE_ENV': JSON.stringify('production'),
-      'process.env.MIMO_TTS_DEBUG': JSON.stringify(String(debugLogs)),
       'import.meta.env.MODE': JSON.stringify('production'),
       'import.meta.env': JSON.stringify({ MODE: 'production' }),
     },
@@ -81,6 +80,21 @@ export function createClientConfig(debugLogs = false) {
   })
 }
 
-export const clientConfig = createClientConfig()
-
-export default clientConfig
+export default defineConfig([{
+  name: PACKAGE_ID,
+  entry: {
+    index: 'src/index.ts',
+    'whale-girl': 'src/whale-girl.ts',
+    'client-api': 'src/client-api.ts',
+    'pcm-stream': 'src/pcm-stream.ts',
+    shared: 'src/shared.ts',
+  },
+  outDir: 'lib',
+  format: ['esm'],
+  platform: 'node',
+  external: ['@deepseek-ai/dsh-agent-preset'],
+  target: 'es2024',
+  fixedExtension: false,
+  dts: false,
+  clean: true,
+}, createClientConfig()])

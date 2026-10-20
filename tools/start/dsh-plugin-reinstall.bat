@@ -70,7 +70,7 @@ if errorlevel 1 (
   goto :failed
 )
 
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$dshRoot = if ([string]::IsNullOrWhiteSpace($env:DSH_HOME)) { Join-Path $env:USERPROFILE '.dsh' } else { [IO.Path]::GetFullPath($env:DSH_HOME) }; $installed = Join-Path $dshRoot 'profiles\web\node_modules\dsh-xiaomi-tts'; $installedReal = (Get-Item -LiteralPath $installed -Force -ErrorAction Stop).Target; $checkout = (Resolve-Path (Join-Path '%~dp0' '..')).Path; if ($installedReal -and [IO.Path]::GetFullPath((@($installedReal)[0])).TrimEnd('\') -eq $checkout.TrimEnd('\')) { Write-Error 'The profile still points to the local checkout after reinstall.'; exit 1 }"
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$dshRoot = if ([string]::IsNullOrWhiteSpace($env:DSH_HOME)) { Join-Path $env:USERPROFILE '.dsh' } else { [IO.Path]::GetFullPath($env:DSH_HOME) }; $installed = Join-Path $dshRoot 'profiles\web\node_modules\dsh-xiaomi-tts'; $installedReal = (Get-Item -LiteralPath $installed -Force -ErrorAction Stop).Target; $checkout = (Resolve-Path (Join-Path '%~dp0' '..\..')).Path; if ($installedReal -and [IO.Path]::GetFullPath((@($installedReal)[0])).TrimEnd('\') -eq $checkout.TrimEnd('\')) { Write-Error 'The profile still points to the local checkout after reinstall.'; exit 1 }"
 if errorlevel 1 goto :failed
 
 echo Starting DSH Web...

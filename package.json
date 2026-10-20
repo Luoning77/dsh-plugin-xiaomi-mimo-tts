@@ -45,10 +45,9 @@
   "files": [
     "lib",
     "locale",
-    "scripts/prepare-package.mjs",
+    "tools/scripts/prepare-package.mjs",
     "cordis.patch.yml",
     "README.md",
-    "README.en.md",
     "skills",
     "assets",
     "LICENSE",
@@ -213,17 +212,16 @@
     "ws": "8.21.3"
   },
   "scripts": {
-    "dev": "vite --config preview/vite.config.ts",
-    "dev:build": "tsc -p preview/tsconfig.json && vite build --config preview/vite.config.ts",
-    "build": "tsdown -c tsdown.prepare.config.ts && tsc --emitDeclarationOnly",
-    "build:debug": "tsdown -c tsdown.debug.config.ts && tsc --emitDeclarationOnly",
+    "dev": "vite --config tools/preview/vite.config.ts",
+    "dev:build": "tsc -p tools/preview/tsconfig.json && vite build --config tools/preview/vite.config.ts",
+    "build": "tsdown -c tsdown.config.ts && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && node --test test/*.test.mjs",
-    "profile:check": "node scripts/dsh-profile-verify.mjs",
+    "profile:check": "node tools/scripts/dsh-profile-verify.mjs",
     "release:check": "pnpm run test",
-    "prepare": "node scripts/prepare-package.mjs",
-    "prepack": "pnpm run build && node scripts/pack-package.mjs",
-    "postpack": "node scripts/restore-package-scripts.mjs",
-    "pack:check": "node scripts/pack-check.mjs"
+    "prepare": "node tools/scripts/prepare-package.mjs",
+    "prepack": "pnpm run build && node tools/scripts/pack-package.mjs",
+    "postpack": "node tools/scripts/restore-package-scripts.mjs",
+    "pack:check": "node tools/scripts/pack-check.mjs"
   }
 }

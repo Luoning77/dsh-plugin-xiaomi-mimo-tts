@@ -8,7 +8,7 @@ on:
       - '.github/workflows/preview-pages.yml'
       - 'src/client/**'
       - 'src/shared.ts'
-      - 'preview/**'
+      - 'tools/preview/**'
       - 'assets/**'
       - 'package.json'
       - 'pnpm-lock.yaml'

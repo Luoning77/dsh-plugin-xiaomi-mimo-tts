@@ -4,8 +4,8 @@ import {
   TTS_API_KEY_WHALE_ASSET_ROUTE,
   TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE,
   TTS_TOGGLE_CHARACTER_ASSET_ROUTE,
-} from '../src/shared.js'
-import { hostRoute } from '../src/client/host-route.js'
+} from '../../src/shared.js'
+import { hostRoute } from '../../src/client/host-route.js'
 
 interface BackgroundIcon {
   route: string

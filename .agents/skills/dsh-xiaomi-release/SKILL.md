@@ -32,8 +32,8 @@ description: 为本仓库 dsh-xiaomi-tts 准备版本、创建或核对 Git tag�
 
 准备版本时检查这些维护点，按实际变更同步：
 
-- `package.json.version` 与 `src/shared.ts` 的 `TTS_VERSION`。
-- `scripts/dsh-profile-verify.mjs` 的预期安装版本，以及中英文 README 的版本化安装、重装示例。
+- `package.json.version` 与 `src/constants.ts` 的 `TTS_VERSION`。
+- `tools/scripts/dsh-profile-verify.mjs` 的预期安装版本，以及 README 的版本化安装、重装示例。
 - DSH 兼容声明取自 `package.json.engines.dsh` 和相关 peer dependencies；开发依赖与锁文件用于确认开发基线。声明兼容范围、开发基线、实际安装验证结果分别说明，不把其中一项当成另一项的证明。
 - 修改依赖时同步 `pnpm-lock.yaml`，不为单纯版本号调整无意义地重写锁文件。不编辑生成目录 `lib/`、`.preview-dist/`。
 

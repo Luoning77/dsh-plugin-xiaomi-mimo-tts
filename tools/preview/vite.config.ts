@@ -5,7 +5,7 @@ import { defineConfig } from 'vite'
 import type { Plugin } from 'vite'
 
 const previewRoot = fileURLToPath(new URL('.', import.meta.url))
-const repositoryRoot = path.resolve(previewRoot, '..')
+const repositoryRoot = path.resolve(previewRoot, '..', '..')
 const pluginRoute = '/plugins/xiaomi-mimo-tts/'
 const repositoryName = process.env.GITHUB_REPOSITORY?.split('/', 2)[1]
 const pagesBase = process.env.GITHUB_ACTIONS === 'true' && repositoryName !== undefined
@@ -86,7 +86,6 @@ export default defineConfig({
   plugins: [previewAssets()],
   define: {
     'process.env.NODE_ENV': JSON.stringify('development'),
-    'process.env.MIMO_TTS_DEBUG': JSON.stringify('false'),
   },
   server: {
     host: '127.0.0.1',

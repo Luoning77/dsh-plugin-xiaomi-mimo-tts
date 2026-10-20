@@ -2,8 +2,8 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
-const packagePath = fileURLToPath(new URL('../package.json', import.meta.url))
-const backupPath = fileURLToPath(new URL('../.package-scripts-backup.json', import.meta.url))
+const packagePath = fileURLToPath(new URL('../../package.json', import.meta.url))
+const backupPath = fileURLToPath(new URL('../../.package-scripts-backup.json', import.meta.url))
 const originalPackage = readFileSync(packagePath)
 const hadBackup = existsSync(backupPath)
 const originalBackup = hadBackup ? readFileSync(backupPath) : undefined

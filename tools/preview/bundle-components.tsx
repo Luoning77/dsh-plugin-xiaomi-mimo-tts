@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import pluginIcon from '../assets/plugin-icons/avatar.webp'
-import whaleGirlIcon from '../assets/plugin-icons/preset.webp'
+import pluginIcon from '../../assets/plugin-icons/avatar.webp'
+import whaleGirlIcon from '../../assets/plugin-icons/preset.webp'
 
 type PreviewLocale = 'zh' | 'en'
 

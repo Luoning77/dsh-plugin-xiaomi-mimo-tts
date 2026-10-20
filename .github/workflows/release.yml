@@ -43,7 +43,7 @@ jobs:
         id: metadata
         env:
           RELEASE_TAG: ${{ github.ref_name }}
-        run: node scripts/release-metadata.mjs
+        run: node tools/scripts/release-metadata.mjs
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

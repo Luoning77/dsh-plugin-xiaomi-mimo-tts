@@ -13,11 +13,6 @@
 
 <p align="center">为 DSH 添加 Xiaomi MiMo 与豆包语音朗读、浏览器本地语音兜底和可选 UI 音效。</p>
 
-<p align="center">
-  <a href="README.md"><img src="https://img.shields.io/badge/简体中文-4D6BFE?style=for-the-badge" alt="简体中文（当前语言）"></a>
-  <a href="README.en.md"><img src="https://img.shields.io/badge/English-64748B?style=for-the-badge" alt="Switch to English"></a>
-</p>
-
 > MiMo TTS 当前可能处于限时免费或调整计费阶段，请以 Xiaomi MiMo 官方平台的最新政策为准。
 
 > `4.1.0` 为正式版，使用 npm `latest` 渠道，安装命令：`dsh plugin --profile web add dsh-xiaomi-tts@latest`。需要固定版本时可指定 `dsh-xiaomi-tts@4.1.0`。
@@ -214,19 +209,18 @@ pnpm pack:check
 ```
 
 - `pnpm build`：正常构建。
-- `pnpm build:debug`：启用 PCM 链路调试日志的构建。
 - `pnpm profile:check`：验证本机 DSH Web profile 中的安装状态。
 
 Windows 从本地开发链接切换到 npm 包前，请先停止 DSH Web，避免运行中的 Node 进程占用 Junction：
 
 ```powershell
-.\start\dsh-plugin-reinstall.bat 4.1.0
+.\tools\start\dsh-plugin-reinstall.bat 4.1.0
 ```
 
 如果是 DSH Desktop profile，只需要卸载残留的本地链接，可在退出 Desktop 后运行：
 
 ```powershell
-.\start\dsh-plugin-uninstall-local-link.bat desktop
+.\tools\start\dsh-plugin-uninstall-local-link.bat desktop
 ```
 
 ## 🤝 推荐

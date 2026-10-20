@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { resolveTtsSettings } from '../src/shared.js'
+import { resolveTtsSettings } from '../../src/shared.js'
 import type { PreviewSettingsScope } from './mock-settings.js'
-import { AnimatedAudioLines } from '../src/client/conversation/animated-audio-lines.js'
+import { AnimatedAudioLines } from '../../src/client/conversation/animated-audio-lines.js'
 import { CopyIcon, DatabaseIcon, ShareIcon, ThumbsDownIcon, ThumbsUpIcon } from './action-icons.js'
 import { RiVoiceAiFill } from 'react-icons/ri'
 

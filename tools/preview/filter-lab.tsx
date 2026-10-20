@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { prepareTtsText } from '../src/shared.js'
+import { prepareTtsText } from '../../src/shared.js'
 
 type PreviewLocale = 'zh' | 'en'
 

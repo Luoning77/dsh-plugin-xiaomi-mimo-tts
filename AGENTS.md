@@ -6,9 +6,9 @@ This repository publishes `dsh-xiaomi-tts`, a DSH Web speech plugin.
 
 - `src/index.ts` implements host routes and configuration; `src/shared.ts` holds shared settings and text preparation.
 - `src/client/` contains React settings, conversation actions, playback controllers, sound effects, and CSS. `src/client-api.ts` exposes client contracts.
-- `preview/` provides the standalone Vite UI preview; `assets/` contains images and audio.
+- `tools/preview/` provides the standalone Vite UI preview; `assets/` contains images and audio.
 - `locale/` contains English and Chinese translations; `skills/` contains bundled agent presets.
-- `test/` contains regression tests and fixtures; `scripts/` handles packaging and profile verification.
+- `test/` contains regression tests and fixtures; `tools/scripts/` handles packaging and profile verification, and `tools/start/` contains Windows launch helpers.
 - `cordis.patch.yml` defines the DSH bundle. `lib/` and `.preview-dist/` are generated outputs; edit their sources.
 
 ## Build, Test, and Development Commands
@@ -44,4 +44,4 @@ History uses prefixes such as `feat:`, `fix:`, `chore(deps-dev):`, and `release:
 
 For version preparation, Git tags, and GitHub Releases, use the project skill at [`.agents/skills/dsh-xiaomi-release/SKILL.md`](.agents/skills/dsh-xiaomi-release/SKILL.md).
 
-PRs should explain the changed behavior, link relevant issues, and report validation. Include screenshots for settings or preview changes. Keep `README.md` and `README.en.md` aligned, and verify preview builds and package contents when affected. Never commit API keys or local profile credentials.
+PRs should explain the changed behavior, link relevant issues, and report validation. Include screenshots for settings or preview changes. Keep `README.md` current, and verify preview builds and package contents when affected. Never commit API keys or local profile credentials.

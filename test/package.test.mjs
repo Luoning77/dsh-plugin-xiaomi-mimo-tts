@@ -4,9 +4,8 @@ import test from 'node:test'
 
 const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
 const readmeZh = await readFile(new URL('../README.md', import.meta.url), 'utf8')
-const readmeEn = await readFile(new URL('../README.en.md', import.meta.url), 'utf8')
-const profileCleanupScript = await readFile(new URL('../start/dsh-profile-cleanup.ps1', import.meta.url), 'utf8')
-const unlinkScript = await readFile(new URL('../start/dsh-plugin-uninstall-local-link.bat', import.meta.url), 'utf8')
+const profileCleanupScript = await readFile(new URL('../tools/start/dsh-profile-cleanup.ps1', import.meta.url), 'utf8')
+const unlinkScript = await readFile(new URL('../tools/start/dsh-plugin-uninstall-local-link.bat', import.meta.url), 'utf8')
 const sharedModule = await import('../lib/shared.js')
 const {
   appendTtsSmartTruncationOutro,
@@ -57,17 +56,17 @@ function assertWebp(data, label) {
 test('package metadata exposes the DSH bundle and supported Web client entries', () => {
   assert.equal(packageJson.name, 'dsh-xiaomi-tts')
   assert.equal(TTS_VERSION, packageJson.version)
-  assert.equal(packageJson.scripts.prepare, 'node scripts/prepare-package.mjs')
-  assert.equal(packageJson.scripts.prepack, 'pnpm run build && node scripts/pack-package.mjs')
-  assert.equal(packageJson.scripts.postpack, 'node scripts/restore-package-scripts.mjs')
+  assert.equal(packageJson.scripts.prepare, 'node tools/scripts/prepare-package.mjs')
+  assert.equal(packageJson.scripts.prepack, 'pnpm run build && node tools/scripts/pack-package.mjs')
+  assert.equal(packageJson.scripts.postpack, 'node tools/scripts/restore-package-scripts.mjs')
   assert.equal(packageJson.scripts['release:check'], 'pnpm run test')
-  assert.equal(packageJson.scripts['profile:check'], 'node scripts/dsh-profile-verify.mjs')
-  assert.equal(packageJson.scripts.build, 'tsdown -c tsdown.prepare.config.ts && tsc --emitDeclarationOnly')
+  assert.equal(packageJson.scripts['profile:check'], 'node tools/scripts/dsh-profile-verify.mjs')
+  assert.equal(packageJson.scripts.build, 'tsdown -c tsdown.config.ts && tsc --emitDeclarationOnly')
   assert.equal(packageJson.scripts.typecheck, 'tsc --noEmit')
   assert.equal(packageJson.scripts.test, 'pnpm run build && node --test test/*.test.mjs')
-  assert.equal(packageJson.scripts['pack:check'], 'node scripts/pack-check.mjs')
+  assert.equal(packageJson.scripts['pack:check'], 'node tools/scripts/pack-check.mjs')
   assert.equal(packageJson.engines.dsh, '>=0.1.7-0 <0.3.0-0')
-  assert.ok(packageJson.files.includes('scripts/prepare-package.mjs'))
+  assert.ok(packageJson.files.includes('tools/scripts/prepare-package.mjs'))
   assert.ok(packageJson.files.includes('NOTICE'))
   assert.equal(packageJson.dsh.bundle.patch, './cordis.patch.yml')
   assert.equal(packageJson.dsh.client.platform, 'web')
@@ -100,25 +99,16 @@ test('Windows profile cleanup supports desktop and removes only profile-local li
   assert.match(unlinkScript, /plugin --profile "%PROFILE%" remove/u)
 })
 
-test('README files keep required structure and local targets valid', async () => {
-  await Promise.all([
-    assertLocalReadmeTargets(readmeZh, 'README.md'),
-    assertLocalReadmeTargets(readmeEn, 'README.en.md'),
-  ])
-  for (const [readme, label, privacyHeading, developmentHeading] of [
-    [readmeZh, 'README.md', '隐私与网络访问', '开发'],
-    [readmeEn, 'README.en.md', 'Privacy and network access', 'Development'],
-  ]) {
-    assert.match(readme, /https:\/\/ppy-web\.github\.io\/dsh-plugin-xiaomi-mimo-tts/u)
-    assert.match(readme, /src\/client\/settings\/card\.tsx/u)
-    assert.match(readme, /pnpm dev:build/u)
-    assert.match(readme, /Web Speech API/u)
-    assert.match(readme, new RegExp(`(?:^|\\r?\\n)##\\s+[^\\r\\n]*${privacyHeading}`, 'u'), `${label} should retain privacy guidance`)
-    assert.match(readme, new RegExp(`(?:^|\\r?\\n)##\\s+[^\\r\\n]*${developmentHeading}`, 'u'), `${label} should retain development guidance`)
-    assert.doesNotMatch(readme, /src\/client\/settings-card\.tsx/u)
-  }
+test('README keeps required structure and local targets valid', async () => {
+  await assertLocalReadmeTargets(readmeZh, 'README.md')
+  assert.match(readmeZh, /https:\/\/ppy-web\.github\.io\/dsh-plugin-xiaomi-mimo-tts/u)
+  assert.match(readmeZh, /src\/client\/settings\/card\.tsx/u)
+  assert.match(readmeZh, /pnpm dev:build/u)
+  assert.match(readmeZh, /Web Speech API/u)
+  assert.match(readmeZh, /(?:^|\r?\n)##\s+[^\r\n]*隐私与网络访问/u, 'README.md should retain privacy guidance')
+  assert.match(readmeZh, /(?:^|\r?\n)##\s+[^\r\n]*开发/u, 'README.md should retain development guidance')
+  assert.doesNotMatch(readmeZh, /src\/client\/settings-card\.tsx/u)
   assert.match(readmeZh, /自动播报[^\r\n。；]*关闭/u)
-  assert.match(readmeEn, /automatic playback[^\r\n.;]*disabled/iu)
 })
 
 test('Voice Design remains manual and has no AI-only dependency contract', () => {
