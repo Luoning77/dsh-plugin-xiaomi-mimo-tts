@@ -7,13 +7,12 @@ import {
   TTS_UPDATE_ROUTE,
   getSoundEffectsModeFlags,
   isSupportedTtsApiKey,
-  nextSoundEffectsMode,
-  resolveSoundEffectsMode,
+  resolveSoundEffectsScope,
   resolveTtsSettings,
 } from '../../shared.js'
 import { saveSettingsDraft, validateSettingsDraft, EDITABLE_SETTING_FIELDS } from './save-settings.js'
 import { invalidateApiKeyStatus } from '../conversation/api-key-status.js'
-import type { TtsSettings } from '../../shared.js'
+import type { TtsSettings, SoundEffectsScope } from '../../shared.js'
 import type { Translate } from '../localization.js'
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { PreviewPlayer } from '../playback/preview-player.js'
@@ -34,6 +33,8 @@ import type { DraftChange, DraftChanges, EditableSettingField, ResolvedSettings,
 import type { AudioHistory } from '../history/audio-history.js'
 import { AudioHistoryPage } from '../history/audio-history-page.js'
 import { unrestrictedAudioFocus } from '../playback/tab-audio-focus.js'
+import type { SpeechActivity } from '../announcements/speech-activity.js'
+import { isSpeechBusy } from '../announcements/speech-activity.js'
 import type { AudioFocus } from '../playback/tab-audio-focus.js'
 
 interface SettingsCardProps {
@@ -44,6 +45,7 @@ interface SettingsCardProps {
   history?: AudioHistory | undefined
   beforeHistoryPlayback?: (() => void) | undefined
   audioFocus?: AudioFocus | undefined
+  speechActivity?: SpeechActivity | undefined
 }
 
 type DraftSettings = SettingsValues
@@ -74,10 +76,10 @@ function HistoryLink({ history, t, onOpen, buttonRef }: { history: AudioHistory;
 
 export function SettingsCard(props: SettingsCardProps): ReactElement | null {
   if (props.view === 'summary') return <>{props.t('settings.description')}</>
-  return <SettingsPage scope={props.scope} t={props.t} controller={props.controller} history={props.history} beforeHistoryPlayback={props.beforeHistoryPlayback} audioFocus={props.audioFocus} />
+  return <SettingsPage scope={props.scope} t={props.t} controller={props.controller} history={props.history} beforeHistoryPlayback={props.beforeHistoryPlayback} audioFocus={props.audioFocus} speechActivity={props.speechActivity} />
 }
 
-function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, audioFocus = unrestrictedAudioFocus }: Omit<SettingsCardProps, 'view'>): ReactElement | null {
+function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, speechActivity, audioFocus = unrestrictedAudioFocus }: Omit<SettingsCardProps, 'view'>): ReactElement | null {
   const snapshot = useSettingsSnapshot(scope)
   const value = snapshot.value
   const initial = resolveTtsSettings(value)
@@ -91,6 +93,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
   const apiKey = apiKeys[provider]
   const apiKeyField = provider === 'doubao' ? 'doubaoApiKey' : 'apiKey'
   const setApiKey = (next: string): void => { setApiKeys(current => ({ ...current, [provider]: next })) }
+  const [announcementSources, setAnnouncementSources] = useState(initial.announcementSources)
   const [enabled, setEnabled] = useState(initial.enabled)
   const [autoPlay, setAutoPlay] = useState(initial.autoPlay)
   const [voiceVolume, setVoiceVolume] = useState(initial.voiceVolume)
@@ -109,12 +112,13 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
   const [clickSounds, setClickSounds] = useState(initial.clickSounds)
   const [changes, setChanges] = useState<DraftChanges>({})
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
-  const [detailsOpen, setDetailsOpen] = useState(false)
-  const [soundEffectsOpen, setSoundEffectsOpen] = useState(false)
+  const [openPanel, setOpenPanel] = useState<'mixer' | 'sound' | 'broadcast' | null>(null)
+  const togglePanel = (panel: 'mixer' | 'sound' | 'broadcast'): void => setOpenPanel(current => current === panel ? null : panel)
   const [previewDefaultText] = useState(() => t(PREVIEW_TEXT_KEYS[Math.floor(Math.random() * PREVIEW_TEXT_KEYS.length)]))
   const [previewText, setPreviewText] = useState(previewDefaultText)
   const [previewView, setPreviewView] = useState<PreviewView>({ status: 'idle', source: null, error: null })
   const [previewPlayer] = useState(() => new PreviewPlayer(setPreviewView, history))
+  useEffect(() => speechActivity?.register(() => isSpeechBusy(previewPlayer.getView().status)), [speechActivity, previewPlayer])
   const [toggleSoundPlayer] = useState(() => new ToggleSoundPlayer())
   useEffect(() => audioFocus.subscribe(() => {
     if (audioFocus.canPlay()) return
@@ -130,7 +134,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
 
   const accepted = resolveTtsSettings(value)
   const base = resolveTtsSettings(layerSettings(snapshot.base))
-  const draft: DraftSettings = { provider, doubaoModel, doubaoVoice, doubaoClonedVoice, doubaoInstruction, instruction, enabled, autoPlay: enabled && autoPlay, voiceVolume, voiceRate, readScope, model, localSpeechMode, localVoiceURI, voice, voiceDesignPrompt, voiceDesignCustomPrompt, soundEnabled, soundVolume, soundPack, taskSounds, clickSounds }
+  const draft: DraftSettings = { announcementSources, provider, doubaoModel, doubaoVoice, doubaoClonedVoice, doubaoInstruction, instruction, enabled, autoPlay: enabled && autoPlay, voiceVolume, voiceRate, readScope, model, localSpeechMode, localVoiceURI, voice, voiceDesignPrompt, voiceDesignCustomPrompt, soundEnabled, soundVolume, soundPack, taskSounds, clickSounds }
   const acceptedValue = (field: EditableSettingField): ResolvedSettings[typeof field] => {
     const raw = value?.[field]
     return (raw === undefined ? accepted[field] : raw) as ResolvedSettings[typeof field]
@@ -146,7 +150,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
     const change = changes[field]
     if (change === undefined) return false
     if (change.kind === 'clear') return hasOverride(field)
-    return !Object.is(draft[field], acceptedValue(field))
+    return field === 'announcementSources' ? JSON.stringify(draft[field]) !== JSON.stringify(acceptedValue(field)) : !Object.is(draft[field], acceptedValue(field))
   }
   const apiKeyDirty = (['apiKey', 'doubaoApiKey'] as const).some(field => changes[field]?.kind === 'clear' ? hasOverride(field) : changes[field]?.kind === 'set' && apiKeys[field === 'apiKey' ? 'xiaomi' : 'doubao'].trim().length > 0)
   const dirty = EDITABLE_SETTING_FIELDS.some(fieldDirty) || apiKeyDirty
@@ -213,6 +217,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
     setDoubaoClonedVoice(next.doubaoClonedVoice)
     setDoubaoInstruction(next.doubaoInstruction)
     setInstruction(next.instruction)
+    setAnnouncementSources(next.announcementSources)
     setEnabled(next.enabled)
     setAutoPlay(next.autoPlay)
     setVoiceVolume(next.voiceVolume)
@@ -262,6 +267,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
     if (field === 'doubaoClonedVoice') setDoubaoClonedVoice(base.doubaoClonedVoice)
     if (field === 'doubaoInstruction') setDoubaoInstruction(base.doubaoInstruction)
     if (field === 'instruction') setInstruction(base.instruction)
+    if (field === 'announcementSources') setAnnouncementSources(base.announcementSources)
     if (field === 'enabled') setEnabled(base.enabled)
     if (field === 'autoPlay') setAutoPlay(base.autoPlay)
     if (field === 'voiceVolume') setVoiceVolume(base.voiceVolume)
@@ -293,6 +299,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
     setDoubaoClonedVoice(next.doubaoClonedVoice)
     setDoubaoInstruction(next.doubaoInstruction)
     setInstruction(next.instruction)
+    setAnnouncementSources(next.announcementSources)
     setEnabled(next.enabled)
     setAutoPlay(next.autoPlay)
     setVoiceVolume(next.voiceVolume)
@@ -316,8 +323,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
   }
 
   const save = async (): Promise<void> => {
-    setDetailsOpen(false)
-    setSoundEffectsOpen(false)
+    setOpenPanel(null)
     setState('saving')
     try {
       await saveSettingsDraft(scope, draft, changes, apiKeys)
@@ -343,6 +349,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
       setPreviewView({ status: 'error', source: provider === 'doubao' ? 'doubao' : 'mimo', error: validationError !== null ? 'voice-required' : 'save-key-first' })
       return
     }
+    beforeHistoryPlayback?.()
     void previewPlayer.play(text, {
       provider, doubaoModel, doubaoVoice, doubaoClonedVoice, doubaoInstruction, instruction,
       model,
@@ -356,7 +363,6 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
   }
 
   const toggleSettingsPreview = (): void => { togglePreview(previewText) }
-  const toggleMixerPreview = (): void => { togglePreview(previewDefaultText) }
 
   const changeEnabled = (next: boolean): void => {
     if (minimalMode && soundEnabled && clickSounds) controller.play(next ? 'toggle-on' : 'toggle-off')
@@ -385,39 +391,37 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
     setState('idle')
   }
 
-  const applySoundEffectsMode = (mode: ReturnType<typeof resolveSoundEffectsMode>): void => {
-    const previousMode = resolveSoundEffectsMode(soundEnabled, taskSounds, clickSounds)
-    const flags = getSoundEffectsModeFlags(mode)
-    if (minimalMode && mode === 'off' && previousMode !== 'off' && soundEnabled && clickSounds) controller.play('toggle-off')
-    controller.update({ ...flags, volume: soundVolume, pack: soundPack })
-    if (minimalMode && previousMode !== mode && mode !== 'off' && flags.clickSounds) controller.play(previousMode === 'off' ? 'toggle-on' : 'select')
-    else if (!minimalMode && previousMode === 'off' && mode !== 'off') controller.play('toggle-on')
-    setSoundEnabled(flags.enabled)
+  const changeSoundScope = (scope: SoundEffectsScope): void => {
+    const flags = getSoundEffectsModeFlags(scope)
+    controller.update({ enabled: soundEnabled, taskSounds: flags.taskSounds, clickSounds: flags.clickSounds, volume: soundVolume, pack: soundPack })
     setTaskSounds(flags.taskSounds)
     setClickSounds(flags.clickSounds)
-    setChanges((current) => ({ ...current, soundEnabled: { kind: 'set' }, taskSounds: { kind: 'set' }, clickSounds: { kind: 'set' } }))
+    setChanges(current => ({ ...current, taskSounds: { kind: 'set' }, clickSounds: { kind: 'set' } }))
     setState('idle')
   }
 
   const changeSoundEnabled = (next: boolean): void => {
-    applySoundEffectsMode(next ? 'all' : 'off')
-  }
-
-  const cycleSoundEffectsMode = (): void => {
-    const currentMode = resolveSoundEffectsMode(soundEnabled, taskSounds, clickSounds)
-    applySoundEffectsMode(nextSoundEffectsMode(currentMode))
+    const flags = getSoundEffectsModeFlags(resolveSoundEffectsScope(taskSounds, clickSounds))
+    if (minimalMode && !next && soundEnabled && clickSounds) controller.play('toggle-off')
+    controller.update({ enabled: next, taskSounds: flags.taskSounds, clickSounds: flags.clickSounds, volume: soundVolume, pack: soundPack })
+    if (minimalMode && next && flags.clickSounds) controller.play('toggle-on')
+    else if (!minimalMode) toggleSoundPlayer.schedule(next ? 'on' : 'off')
+    setSoundEnabled(next)
+    setTaskSounds(flags.taskSounds)
+    setClickSounds(flags.clickSounds)
+    setChanges(current => ({ ...current, soundEnabled: { kind: 'set' }, taskSounds: { kind: 'set' }, clickSounds: { kind: 'set' } }))
+    setState('idle')
   }
 
   const toggleMinimalMode = (): void => {
     const next = !minimalMode
     setMinimalMode(next)
-    if (!next) setSoundEffectsOpen(false)
     writeMinimalMode(next)
     toggleSoundPlayer.setEnabled(!next)
     if (next) previewPlayer.stop()
   }
 
-  if (historyOpen && history) return <AudioHistoryPage history={history} t={t} volume={voiceVolume} voiceRate={voiceRate} minimalMode={minimalMode}
+  if (historyOpen && history) return <AudioHistoryPage history={history} t={t} volume={voiceVolume} voiceRate={voiceRate} minimalMode={minimalMode} speechActivity={speechActivity}
     beforePlayback={() => {
       audioFocus.claim()
       previewPlayer.stop()
@@ -467,9 +471,8 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
           onDoubaoModelChange={next => { previewPlayer.stop(); setDoubaoModel(next); markChange('doubaoModel') }}
           onDoubaoVoiceChange={next => { previewPlayer.stop(); setDoubaoVoice(next); markChange('doubaoVoice') }}
           onDoubaoClonedVoiceChange={next => { previewPlayer.stop(); setDoubaoClonedVoice(next); markChange('doubaoClonedVoice') }}
-          open={detailsOpen}
+          open={openPanel === 'mixer'}
           minimal={minimalMode}
-          previewing={previewBusy}
           writable={snapshot.writable}
           autoPlay={autoPlay}
           voiceVolume={voiceVolume}
@@ -483,8 +486,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
           voiceDesignCustomPrompt={voiceDesignCustomPrompt}
           fieldOverridden={fieldOverridden}
           resetField={resetField}
-          onToggle={() => { setDetailsOpen((current) => !current) }}
-          onPreview={toggleMixerPreview}
+          onToggle={() => togglePanel('mixer')}
           onVoiceVolumeChange={(next) => { previewPlayer.setVolume(next); toggleSoundPlayer.setPreviewVolume(next); setVoiceVolume(next); markChange('voiceVolume') }}
           onVoiceVolumeInteractionEnd={(next) => { if (minimalMode) controller.previewVolume(); else toggleSoundPlayer.previewVolume(next) }}
           onVoiceRateChange={(next) => { setVoiceRate(next); markChange('voiceRate') }}
@@ -501,17 +503,6 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
           onLocalVoiceURIChange={(next) => { setLocalVoiceURI(next); markChange('localVoiceURI') }}
           onLocalSpeechModeChange={(next) => { setLocalSpeechMode(next); markChange('localSpeechMode') }}
         /> : null}
-        {enabled && !minimalMode ? <PreviewModule
-          t={t}
-          enabled={enabled}
-          minimal={minimalMode}
-          status={previewView.status}
-          source={previewView.source}
-          error={previewView.error}
-          text={previewText}
-          onToggle={toggleSettingsPreview}
-          onTextChange={setPreviewText}
-        /> : null}
         <SoundEffectsPanel
           t={t}
           controller={controller}
@@ -522,11 +513,28 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, au
           clickSounds={clickSounds}
           writable={snapshot.writable}
           minimal={minimalMode}
-          open={soundEffectsOpen}
-          onToggle={() => { setSoundEffectsOpen((current) => !current) }}
-          onCycle={cycleSoundEffectsMode}
+          open={openPanel === 'sound'}
+          onToggle={() => togglePanel('sound')}
+          onScopeChange={changeSoundScope}
           onVolumeChange={(next) => { setSoundVolume(next); markChange('soundVolume') }}
           onPackChange={(next) => { setSoundPack(next); markChange('soundPack') }}
+        />
+        <PreviewModule
+          t={t}
+          enabled={enabled}
+          open={openPanel === 'broadcast'}
+          onToggleOpen={() => togglePanel('broadcast')}
+          status={previewView.status}
+          source={previewView.source}
+          error={previewView.error}
+          text={previewText}
+          onToggle={toggleSettingsPreview}
+          onTextChange={setPreviewText}
+          sources={announcementSources}
+          writable={snapshot.writable}
+          overridden={fieldOverridden('announcementSources')}
+          onReset={() => resetField('announcementSources')}
+          onChange={next => { setAnnouncementSources(next); markChange('announcementSources') }}
         />
         <div className="xmimo-tts-card-actions">
           {latestVersion !== null

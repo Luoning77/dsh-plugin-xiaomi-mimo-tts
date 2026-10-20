@@ -17,6 +17,11 @@
 }
 
 .xmimo-tts-api-key-whale {
+  top: auto;
+  right: 8px;
+  bottom: calc(100% - 6px);
+  width: 56px;
+  height: 56px;
   position: absolute;
   z-index: 2;
   display: block;

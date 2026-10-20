@@ -28,3 +28,42 @@
   padding-right: 70px;
   align-items: flex-start
 }
+
+/* Shared accordion frame for all three settings panels. */
+.xmimo-ui-accordion { padding: 0 !important; overflow-anchor: none; }
+.xmimo-ui-accordion-heading { margin: 0; font: inherit; }
+.xmimo-ui-accordion .xmimo-ui-module-toggle { align-items: center; gap: 12px; }
+.xmimo-ui-accordion .xmimo-ui-module-head { flex: 1; }
+.xmimo-ui-accordion-chevron {
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  flex: none;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+.xmimo-ui-accordion [aria-expanded="true"] .xmimo-ui-accordion-chevron { transform: rotate(225deg); }
+.xmimo-ui-accordion-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  overflow: hidden;
+  transition: grid-template-rows 220ms ease, opacity 160ms ease;
+}
+.xmimo-ui-accordion-collapse-open { grid-template-rows: 1fr; opacity: 1; }
+.xmimo-ui-accordion-content { min-height: 0; overflow: auto; overscroll-behavior-y: contain; }
+.xmimo-tts-card-minimal .xmimo-ui-accordion .xmimo-ui-module-head > strong {
+  display: block;
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+}
+.xmimo-tts-sound-scope { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.xmimo-tts-sound-scope button { white-space: normal; }
+@media (prefers-reduced-motion: reduce) {
+  .xmimo-ui-accordion-collapse { transition: none; }
+}

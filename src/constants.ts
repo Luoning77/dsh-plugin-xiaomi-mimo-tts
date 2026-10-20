@@ -37,20 +37,8 @@ export const TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts
 /** Same-origin route used by the Web client to load the API-key whale mascot sheet. */
 export const TTS_API_KEY_WHALE_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/api-key-whale.webp'
 
-/** Same-origin route used by the Web client to load the mixing-console whale mascot sheet. */
-export const TTS_MIXER_WHALE_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/mixer-whale.webp'
-
-/** Same-origin route used by the Web client to load the preview play/pause whale mascot sheet. */
-export const TTS_PREVIEW_WHALE_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/preview-whale.webp'
-
 /** Same-origin illustration for an empty audio history. */
 export const TTS_HISTORY_EMPTY_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/history-empty-whale.webp'
-
-/** Same-origin route used by the Web client to load the sound-effects header mascot. */
-export const TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/sound-effects-whale.webp'
-
-/** Same-origin route used by the Web client to load the five sound preview mascots. */
-export const TTS_SOUND_EFFECT_CUES_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/sound-effect-cues.webp'
 
 /** Same-origin prefix used by the Web client to load switch feedback sounds. */
 export const TTS_TOGGLE_AUDIO_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/audio'

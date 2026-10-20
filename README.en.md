@@ -96,10 +96,16 @@ Recommended setup order:
 1. Select Xiaomi MiMo or Doubao Voice in the API key module.
 2. [Create a Xiaomi key](https://platform.xiaomimimo.com/console/api-keys) or [a Doubao key](https://console.volcengine.com/speech/new/setting/apikeys?projectName=default), enter it, and click **Save**.
 3. Open Mixing Console and choose a model and voice for that provider.
-4. Test it in Broadcast Studio. Key drafts must be saved first; model and voice drafts can be previewed with the saved key.
+4. Test it in Broadcast Desk. Key drafts must be saved first; model and voice drafts can be previewed with the saved key.
 5. Enable automatic playback and UI sounds if wanted, then save again.
 
 When several DSH pages share the same origin in one browser, the most recently focused page owns audio. Focusing another DSH page stops speech, previews, and sounds in the previous page. Old replies are not replayed automatically; use the read-aloud button when needed. Switching to another website or app allows background playback to continue. Coordination does not span browsers, devices, or different domains / ports. When browser storage is blocked, only the focused page plays audio.
+
+Mixer, Sound Effects, and Broadcast Desk share a single-open accordion. The top switch controls sound playback; the three scope options inside Sound Effects do not change that switch, and its selected scope is retained when playback is disabled.
+
+The collapsible Broadcast Desk sits below Sound Effects and contains a standalone preview button and source switches. `dsh-pet` is off by default; `dsh-whale-musume` is on by default and gates the existing public speech API. Question card titles are enabled by default and also require autoplay. Only the current question title is read, with no replay on initial loading; changing questions, submitting, closing the card, or switching sessions cancels that speech. The source reuses remote synthesis and local speech fallback.
+
+Approval reminders and Background job results are off by default, independent of autoplay, and scoped to the current conversation. Answering or withdrawing an approval stops its speech. Jobs are announced on completion, failure or cancellation only after their running state has been observed; old records are not replayed. Both follow the speech master switch, page audio ownership and busy-skip policy. Collection is inactive when the required Host service is absent; job results require the DSH `jobs` service.
 
 ## ⚙️ Configuration
 
@@ -114,9 +120,9 @@ Select Xiaomi MiMo or Doubao in the API key module, then save. Each provider ret
 
 Xiaomi built-in voices, Xiaomi VoiceDesign and Doubao standard TTS share one speech instruction component with 20 tags below the voice picker (including Cantonese, Shanghai, Henan, Beijing, Tianjin, Sichuan, Shaanxi and Northeastern dialects), including gentle, cheerful, storytelling, argument, whisper, shy anticipation, world-weary, tearful and accent styles. Click to fill an editable instruction, or select Natural to clear it. Each provider saves its own instruction and retains it across provider switches. Preview accepts the draft; saving applies it to subsequent speech. Xiaomi VoiceDesign sends both the voice description and the speech instruction. Presets are adapted from the [official examples](https://docs.volcengine.com/docs/DoubaoVoice/DoubaoTextToSpeech20CapabilityIntroduction?lang=zh), and the information icon beside the title explains the limitations: results vary by model, voice and text; dialects, tears and whispers may not be reproduced accurately, and providers may differ. Browser speech does not apply instructions; Doubao cloned voices neither display nor send them. Playback speed uses the same tooltip style to explain the 0.5×–2.0× range, how each provider applies speed, and pitch changes in Xiaomi streaming.
 
-Enable the corresponding Doubao model service and use an API key from the new console. Save the key, then test in Broadcast Studio. A cloned voice ID is required for voice cloning.
+Enable the corresponding Doubao model service and use an API key from the new console. Save the key, then test in Broadcast Desk. A cloned voice ID is required for voice cloning.
 
-Selecting Custom voice ID in standard TTS offers the same history tags as voice cloning: blur the field or press Enter to remember an ID, then click a tag to reuse it. Each mode retains its own 10 most recent unique IDs, without an extra history heading. Switching between Doubao standard TTS and voice cloning also switches the mixing console mascot and speech bubble.
+Selecting Custom voice ID in standard TTS offers the same history tags as voice cloning: blur the field or press Enter to remember an ID, then click a tag to reuse it. Each mode retains its own 10 most recent unique IDs, without an extra history heading.
 
 Speed is applied during synthesis; changes take effect on the next request. Saved recordings retain their original synthesis speed.
 

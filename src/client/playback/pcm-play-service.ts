@@ -14,12 +14,27 @@ import { DuplexPcmStream } from './duplex-pcm.js'
 export class XiaomiMimoTtsPcmService extends Service implements XiaomiMimoTtsService {
   private readonly logPrefix = '[MiMoTTS Service]'
   private readonly audio = new PcmAudioQueue({
-    onBusyChange: () => {},
+    onBusyChange: (busy) => { this.audioBusy = busy },
     onPlaybackStart: () => {},
   })
   private request: AbortController | null = null
   private generation = 0
   private disposed = false
+  private audioBusy = false
+  private externalGeneration: number | null = null
+
+  isBusy = (): boolean => this.request !== null || this.audioBusy
+
+  /** Returns a generation-scoped stop handle; public play() keeps its interrupting behavior. */
+  tryPlay(text: string, isBusy: () => boolean): (() => void) | null {
+    if (this.isBusy() || isBusy()) return null
+    const previous = this.generation
+    // An idle collector must not mark a waiting conversation turn as stopped.
+    this.start(text, false)
+    if (this.generation === previous) return null
+    const generation = this.generation
+    return () => { if (this.generation === generation) this.stop() }
+  }
 
   constructor(
     ctx: Context,
@@ -33,6 +48,21 @@ export class XiaomiMimoTtsPcmService extends Service implements XiaomiMimoTtsSer
   }
 
   play(text: string): void {
+    try {
+      if (!resolveTtsSettings(this.settings.getSnapshot().value).announcementSources.includes('dsh-whale-musume')) return
+      const previous = this.generation
+      this.start(text)
+      if (previous !== this.generation) this.externalGeneration = this.generation
+    } catch (error) {
+      this.ctx.logger.warn(`xiaomi-mimo-tts: optional playback settings unavailable: ${String(error)}`)
+    }
+  }
+
+  stopExternal(): void {
+    if (this.externalGeneration === this.generation) this.stop()
+  }
+
+  private start(text: string, interruptConversation = true): void {
     try {
       debugConsole?.info(this.logPrefix, '[入口] play() 被调用', { disposed: this.disposed, textType: typeof text, text })
       if (this.disposed || !this.canPlay() || typeof text !== 'string') {
@@ -60,8 +90,8 @@ export class XiaomiMimoTtsPcmService extends Service implements XiaomiMimoTtsSer
       debugConsole?.info(this.logPrefix, '[准备] 即将停止旧播放并启动新流', { maxPausedPcmBytes: settings.maxPausedPcmBytes })
       this.stop()
       this.history?.stopReplay()
-      this.interruptConversationPlayback()
-      debugConsole?.info(this.logPrefix, '[准备] 已请求中断会话朗读')
+      if (interruptConversation) this.interruptConversationPlayback()
+      if (interruptConversation) debugConsole?.info(this.logPrefix, '[准备] 已请求中断会话朗读')
       this.audio.setMaxPausedPcmBytes(settings.maxPausedPcmBytes)
       this.audio.setVolume(settings.voiceVolume)
       this.audio.setPlaybackRate(settings.provider === 'doubao' ? 1 : settings.voiceRate)

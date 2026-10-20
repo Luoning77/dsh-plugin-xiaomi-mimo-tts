@@ -2,11 +2,7 @@ import type { CSSProperties, ReactElement } from 'react'
 import { useEffect, useState } from 'react'
 import {
   TTS_API_KEY_WHALE_ASSET_ROUTE,
-  TTS_MIXER_WHALE_ASSET_ROUTE,
-  TTS_PREVIEW_WHALE_ASSET_ROUTE,
-  TTS_SOUND_EFFECT_CUES_ASSET_ROUTE,
   TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE,
-  TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE,
   TTS_TOGGLE_CHARACTER_ASSET_ROUTE,
 } from '../src/shared.js'
 import { hostRoute } from '../src/client/host-route.js'
@@ -30,27 +26,14 @@ const BACKGROUND_ICONS: readonly BackgroundIcon[] = [
   { route: TTS_TOGGLE_CHARACTER_ASSET_ROUTE, columns: 2, rows: 2, index: 0, ratio: 153 / 140, x: 4, y: 10, size: 112, rotation: -28, opacity: .14 },
   { route: TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE, columns: 2, rows: 1, index: 1, ratio: 153 / 140, x: 90, y: 8, size: 110, rotation: 22, opacity: .13 },
   { route: TTS_API_KEY_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 0, ratio: 1, x: 47, y: 6, size: 68, rotation: -14, opacity: .1 },
-  { route: TTS_MIXER_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 1, ratio: 1, x: 94, y: 29, size: 82, rotation: 26, opacity: .11 },
-  { route: TTS_PREVIEW_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 0, ratio: 1, x: 7, y: 47, size: 78, rotation: 18, opacity: .11 },
-  { route: TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 1, ratio: 1, x: 78, y: 58, size: 88, rotation: -23, opacity: .1 },
-  { route: TTS_SOUND_EFFECT_CUES_ASSET_ROUTE, columns: 5, rows: 1, index: 2, ratio: 48 / 80, x: 35, y: 91, size: 118, rotation: -12, opacity: .07 },
   { route: TTS_TOGGLE_CHARACTER_ASSET_ROUTE, columns: 2, rows: 2, index: 3, ratio: 153 / 140, x: 57, y: 34, size: 92, rotation: 16, opacity: .07 },
   { route: TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE, columns: 2, rows: 1, index: 0, ratio: 153 / 140, x: 17, y: 32, size: 94, rotation: 28, opacity: .08 },
   { route: TTS_API_KEY_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 1, ratio: 1, x: 90, y: 82, size: 60, rotation: -31, opacity: .08 },
-  { route: TTS_MIXER_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 0, ratio: 1, x: 33, y: 19, size: 58, rotation: 27, opacity: .07 },
-  { route: TTS_PREVIEW_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 1, ratio: 1, x: 66, y: 13, size: 72, rotation: -25, opacity: .08 },
-  { route: TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 0, ratio: 1, x: 22, y: 78, size: 68, rotation: 12, opacity: .07 },
-  { route: TTS_SOUND_EFFECT_CUES_ASSET_ROUTE, columns: 5, rows: 1, index: 4, ratio: 48 / 80, x: 84, y: 43, size: 102, rotation: 9, opacity: .07 },
   { route: TTS_TOGGLE_CHARACTER_ASSET_ROUTE, columns: 2, rows: 2, index: 1, ratio: 153 / 140, x: 27, y: 6, size: 74, rotation: -19, opacity: .08 },
   { route: TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE, columns: 2, rows: 1, index: 1, ratio: 153 / 140, x: 53, y: 24, size: 70, rotation: 17, opacity: .07 },
   { route: TTS_TOGGLE_CHARACTER_ASSET_ROUTE, columns: 2, rows: 2, index: 2, ratio: 153 / 140, x: 75, y: 31, size: 80, rotation: -34, opacity: .06 },
   { route: TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE, columns: 2, rows: 1, index: 0, ratio: 153 / 140, x: 9, y: 84, size: 76, rotation: 23, opacity: .06 },
   { route: TTS_API_KEY_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 0, ratio: 1, x: 45, y: 53, size: 54, rotation: -29, opacity: .06 },
-  { route: TTS_MIXER_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 1, ratio: 1, x: 95, y: 92, size: 58, rotation: 18, opacity: .06 },
-  { route: TTS_PREVIEW_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 0, ratio: 1, x: 45, y: 77, size: 60, rotation: 32, opacity: .06 },
-  { route: TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE, columns: 2, rows: 1, index: 1, ratio: 1, x: 9, y: 23, size: 64, rotation: -17, opacity: .06 },
-  { route: TTS_SOUND_EFFECT_CUES_ASSET_ROUTE, columns: 5, rows: 1, index: 0, ratio: 48 / 80, x: 58, y: 88, size: 94, rotation: -21, opacity: .05 },
-  { route: TTS_SOUND_EFFECT_CUES_ASSET_ROUTE, columns: 5, rows: 1, index: 3, ratio: 48 / 80, x: 12, y: 61, size: 90, rotation: 14, opacity: .05 },
 ]
 
 const SCROLL_ROTATION_FACTOR = .22

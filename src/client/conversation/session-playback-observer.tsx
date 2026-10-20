@@ -11,6 +11,7 @@ import { assistantText, finalLiveMessage, latestAssistantMessageId } from './mes
 import { useApiKeySupported } from './api-key-status.js'
 import { unrestrictedAudioFocus } from '../playback/tab-audio-focus.js'
 import type { AudioFocus } from '../playback/tab-audio-focus.js'
+import type { QuestionTitleCollector } from '../announcements/question-titles.js'
 
 interface SessionPlaybackObserverProps {
   sessionId: string
@@ -22,10 +23,12 @@ interface SessionPlaybackObserverProps {
   local: LocalSpeechController
   settings: ConfigForm<TtsSettings>
   audioFocus?: AudioFocus
+  questions?: QuestionTitleCollector
 }
 
 /** Own the active-session boundary and feed its partial assistant output into realtime speech. */
-export function SessionPlaybackObserver({ sessionId, useSession, useChat, playback, live, local, settings, audioFocus = unrestrictedAudioFocus }: SessionPlaybackObserverProps): null {
+export function SessionPlaybackObserver({ sessionId, useSession, useChat, playback, live, local, settings, questions, audioFocus = unrestrictedAudioFocus }: SessionPlaybackObserverProps): null {
+  useEffect(() => questions?.activateSession(sessionId), [questions, sessionId])
   const ownsAudio = useSyncExternalStore(audioFocus.subscribe, audioFocus.canPlay, audioFocus.canPlay)
   const settingsSnapshot = useSettingsSnapshot(settings)
   const resolvedSettings = resolveTtsSettings(settingsSnapshot.value)

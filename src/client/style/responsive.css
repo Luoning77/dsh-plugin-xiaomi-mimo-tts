@@ -53,43 +53,18 @@
     min-height: 20px;
     padding-right: 0
   }
-  .xmimo-tts-details-toggle {
-    min-height: 66px
-  }
   .xmimo-tts-details-summary>span {
     max-width: 100px;
     padding-right: 6px;
     padding-left: 6px
-  }
-  .xmimo-tts-preview {
-    padding: 12px
-  }
-  .xmimo-tts-preview-title {
-    padding-right: 54px
   }
   .xmimo-tts-character-bubble {
     right: 58px;
     max-width: calc(100% - 72px);
     padding: 3px 6px;
   }
-
-  .xmimo-tts-sound-toggle {
-    min-height: 88px
-  }
-  .xmimo-tts-sound-heading>small {
-    padding-right: 64px
-  }
   .xmimo-tts-sound-summary {
     padding-right: 64px
-  }
-  .xmimo-tts-sound-whale-button,
-  .xmimo-tts-sound-whale {
-    width: 52px;
-    height: 52px
-  }
-  .xmimo-tts-sound-whale-button {
-    top: 7px;
-    right: 14px
   }
   .xmimo-tts-sound-summary>span {
     max-width: 94px;
@@ -119,9 +94,5 @@
     padding-right: 1px;
     padding-left: 1px;
     font-size: 9px
-  }
-  .xmimo-tts-sound-preview-character {
-    width: 36px;
-    height: 60px
   }
 }

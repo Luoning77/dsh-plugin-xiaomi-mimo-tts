@@ -1,17 +1,15 @@
 import type { ReactElement } from 'react'
 import { useCallback, useEffect, useState } from 'react'
-import { Button, SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives'
+import { SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives'
 import {
   TTS_LOCAL_SPEECH_MODES,
   DOUBAO_VOICE_PRESETS,
-  TTS_MIXER_WHALE_ASSET_ROUTE,
   TTS_MODELS,
   TTS_READ_SCOPES,
   TTS_VOICE_DESIGN_PRESETS,
 } from '../../shared.js'
 import type { TtsLocalSpeechMode, TtsModel, TtsReadScope } from '../../shared.js'
 import type { Translate } from '../localization.js'
-import { hostRoute } from '../host-route.js'
 import { BuiltInVoicePicker } from './controls/built-in-voice-picker.js'
 import { EnergyVolumeSlider } from './controls/energy-volume-slider.js'
 import { FieldInfo } from './controls/field-info.js'
@@ -90,7 +88,6 @@ export interface DetailsModuleProps {
   t: Translate
   open: boolean
   minimal: boolean
-  previewing: boolean
   writable: boolean
   autoPlay: boolean
   voiceVolume: number
@@ -105,7 +102,6 @@ export interface DetailsModuleProps {
   fieldOverridden: (field: SettingField) => boolean
   resetField: (field: EditableSettingField) => void
   onToggle: () => void
-  onPreview: () => void
   onVoiceVolumeChange: (value: number) => void
   onVoiceVolumeInteractionEnd: (value: number) => void
   onVoiceRateChange: (value: number) => void
@@ -118,7 +114,7 @@ export interface DetailsModuleProps {
   onLocalSpeechModeChange: (value: TtsLocalSpeechMode) => void
 }
 
-export function DetailsModule({ t, provider, doubaoModel, doubaoVoice, doubaoClonedVoice, speechInstruction, onSpeechInstructionChange, onDoubaoModelChange, onDoubaoVoiceChange, onDoubaoClonedVoiceChange, open, minimal, previewing, writable, autoPlay, voiceVolume, voiceRate, readScope, model, localSpeechMode, localVoiceURI, voice, voiceDesignPrompt, voiceDesignCustomPrompt, fieldOverridden, resetField, onToggle, onPreview, onVoiceVolumeChange, onVoiceVolumeInteractionEnd, onVoiceRateChange, onVoiceRateInteractionEnd, onReadScopeChange, onModelChange, onVoiceDesignPromptChange, onVoiceChange, onLocalVoiceURIChange, onLocalSpeechModeChange }: DetailsModuleProps): ReactElement {
+export function DetailsModule({ t, provider, doubaoModel, doubaoVoice, doubaoClonedVoice, speechInstruction, onSpeechInstructionChange, onDoubaoModelChange, onDoubaoVoiceChange, onDoubaoClonedVoiceChange, open, minimal, writable, autoPlay, voiceVolume, voiceRate, readScope, model, localSpeechMode, localVoiceURI, voice, voiceDesignPrompt, voiceDesignCustomPrompt, fieldOverridden, resetField, onToggle, onVoiceVolumeChange, onVoiceVolumeInteractionEnd, onVoiceRateChange, onVoiceRateInteractionEnd, onReadScopeChange, onModelChange, onVoiceDesignPromptChange, onVoiceChange, onLocalVoiceURIChange, onLocalSpeechModeChange }: DetailsModuleProps): ReactElement {
   const [localVoicesAvailable, setLocalVoicesAvailable] = useState<boolean | null>(null)
   const onLocalVoicesAvailabilityChange = useCallback((available: boolean): void => { setLocalVoicesAvailable(available) }, [])
   useEffect(() => {
@@ -134,42 +130,14 @@ export function DetailsModule({ t, provider, doubaoModel, doubaoVoice, doubaoClo
   const summaryVoiceVolume = `${Math.round(voiceVolume * 100)}%`
   const summaryVoiceRate = `${voiceRate.toFixed(1)}×`
   const instructionField = provider === 'doubao' ? 'doubaoInstruction' : 'instruction'
-  const customVoiceModel = provider === 'doubao' ? doubaoModel === 'seed-icl-2.0' : model === 'mimo-v2.5-tts-voicedesign'
-  const mixerFrameClass = customVoiceModel
-    ? 'xmimo-tts-mixer-whale-voicedesign'
-    : 'xmimo-tts-mixer-whale-preset'
-  const mixerCopy = provider === 'doubao' && customVoiceModel
-    ? 'settings.mixerCloneCopy'
-    : customVoiceModel ? 'settings.mixerVoiceDesignCopy' : 'settings.mixerPresetCopy'
-  const mixerDecoration = minimal ? undefined : <span className="xmimo-tts-mixer-decoration" aria-hidden="true">
-    <span className="xmimo-tts-mixer-bubble">{t(mixerCopy)}</span>
-    <span
-      className={`xmimo-tts-mixer-whale ${mixerFrameClass}`}
-      style={{ backgroundImage: `url(${hostRoute(TTS_MIXER_WHALE_ASSET_ROUTE)})` }}
-    />
-  </span>
-  const mixerPreviewAction = minimal ? <Button
-    type="button"
-    variant="outline"
-    size="sm"
-    className="xmimo-tts-mixer-preview-button"
-    aria-label={t(previewing ? 'settings.previewStop' : 'settings.previewPlay')}
-    onClick={onPreview}
-  >{t(previewing ? 'settings.previewStopShort' : 'settings.previewPlayShort')}</Button> : mixerDecoration
-
   return <CollapsibleModule
     className="xmimo-tts-settings-module xmimo-tts-details xmimo-ui-module"
-    toggleClassName="xmimo-tts-details-toggle"
-    headingClassName="xmimo-tts-details-heading"
-    collapseClassName="xmimo-tts-details-collapse"
-    collapseOpenClassName="xmimo-tts-details-collapse-open"
     title={t('settings.detailedVoiceConfig')}
     summary={<span className="xmimo-tts-details-summary xmimo-ui-summary">
       <span>{summaryVoiceVolume}</span><span>{summaryVoiceRate}</span><span>{summaryReadScope}</span><span>{summaryModel}</span><span>{summaryVoice}</span>{minimal ? null : <span>{summaryStrategy}</span>}
     </span>}
     open={open}
     onToggle={onToggle}
-    action={mixerPreviewAction}
   >
     <div className="xmimo-tts-grid xmimo-ui-grid xmimo-tts-details-body xmimo-ui-module-body">
       <div className="xmimo-tts-volume">

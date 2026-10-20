@@ -1,39 +1,36 @@
-import type { ReactElement, ReactNode } from 'react'
+import { useId, type ReactElement, type ReactNode } from 'react'
 import { ModuleShell } from './module-shell.js'
+import { useAccordionViewport } from './accordion-viewport.js'
 
 export interface CollapsibleModuleProps {
   className: string
-  toggleClassName: string
-  headingClassName: string
-  collapseClassName: string
-  collapseOpenClassName: string
   title: ReactNode
   summary?: ReactNode
   open: boolean
   onToggle: () => void
   ariaLabel?: string
-  action?: ReactNode
   children: ReactNode
 }
 
-export function CollapsibleModule({ className, toggleClassName, headingClassName, collapseClassName, collapseOpenClassName, title, summary, open, onToggle, ariaLabel, action, children }: CollapsibleModuleProps): ReactElement {
-  const inertProps: Record<string, string> = open ? {} : { inert: '' }
-  const collapseClass = open ? `${collapseClassName} ${collapseOpenClassName}` : collapseClassName
+export function CollapsibleModule({ className, title, summary, open, onToggle, ariaLabel, children }: CollapsibleModuleProps): ReactElement {
+  const id = useId()
+  const { panel, toggle } = useAccordionViewport(open, onToggle)
 
   return <ModuleShell
-    className={className}
+    className={`xmimo-ui-accordion ${className}`}
     title={title}
     summary={summary}
-    action={action}
     collapsible
     open={open}
-    onToggle={onToggle}
-    toggleClassName={toggleClassName}
-    headingClassName={headingClassName}
+    onToggle={toggle}
+    toggleId={`${id}-trigger`}
+    controlsId={`${id}-panel`}
     ariaLabel={ariaLabel}
   >
-    <div className={collapseClass} aria-hidden={!open} {...inertProps}>
-      {children}
+    <div id={`${id}-panel`} role="region" aria-labelledby={`${id}-trigger`}
+      className={`xmimo-ui-accordion-collapse${open ? ' xmimo-ui-accordion-collapse-open' : ''}`}
+      aria-hidden={!open} ref={element => { panel.current = element; if (element) element.inert = !open }}>
+      <div className="xmimo-ui-accordion-content">{children}</div>
     </div>
   </ModuleShell>
 }

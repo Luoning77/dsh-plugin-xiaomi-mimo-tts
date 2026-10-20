@@ -149,10 +149,6 @@ test('shared route and settings contracts are internally consistent', () => {
     sharedModule.TTS_VOICE_ASSET_ROUTE,
     sharedModule.TTS_TOGGLE_CHARACTER_ASSET_ROUTE,
     sharedModule.TTS_API_KEY_WHALE_ASSET_ROUTE,
-    sharedModule.TTS_MIXER_WHALE_ASSET_ROUTE,
-    sharedModule.TTS_PREVIEW_WHALE_ASSET_ROUTE,
-    sharedModule.TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE,
-    sharedModule.TTS_SOUND_EFFECT_CUES_ASSET_ROUTE,
     sharedModule.TTS_TOGGLE_AUDIO_ASSET_ROUTE,
   ]
   assert.ok(routes.every((route) => route.startsWith('/plugins/xiaomi-mimo-tts/')))
@@ -207,7 +203,7 @@ test('ships one valid WebP avatar for every built-in voice', async () => {
 
 test('ships the UI image and audio assets referenced by shared contracts', async () => {
   assertWebp(await readFile(new URL('../assets/ui/toggle-characters.webp', import.meta.url)), 'toggle characters')
-  for (const file of ['api-key-whale.webp', 'mixer-whale.webp', 'preview-whale.webp', 'history-empty-whale.webp', 'sound-effects-whale.webp', 'sound-effect-cues.webp']) {
+  for (const file of ['api-key-whale.webp', 'history-empty-whale.webp']) {
     assertWebp(await readFile(new URL(`../assets/ui/${file}`, import.meta.url)), file)
   }
   const audioFiles = (await readdir(new URL('../assets/audio/', import.meta.url))).sort()

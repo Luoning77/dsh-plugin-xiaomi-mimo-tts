@@ -36,6 +36,7 @@ interface CompletedStreamPlayback {
 }
 
 export class LiveSpeechController {
+  isBusy = (): boolean => this.requestBusy || this.audioBusy || ['loading', 'playing', 'paused'].includes(this.status)
   constructor(private readonly history?: AudioHistory) {}
   private readonly audio = new PcmAudioQueue({
     onBusyChange: (busy) => {

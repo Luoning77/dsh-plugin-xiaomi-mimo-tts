@@ -196,34 +196,10 @@
   outline: var(--xmimo-ui-focus);
   outline-offset: 1px;
 }
-
 /* ---------- Module-specific placement using shared dimensions ---------- */
-.xmimo-ui-module .xmimo-tts-api-key-whale,
-.xmimo-ui-module .xmimo-tts-preview-whale-button,
-.xmimo-ui-module .xmimo-tts-mixer-whale,
-.xmimo-ui-module .xmimo-tts-sound-whale {
+.xmimo-ui-module .xmimo-tts-api-key-whale {
   width: var(--xmimo-ui-mascot-size);
   height: var(--xmimo-ui-mascot-size);
-}
-
-.xmimo-ui-module .xmimo-tts-mixer-decoration {
-  top: -12px;
-  right: 16px;
-}
-
-.xmimo-ui-module .xmimo-tts-sound-whale-button {
-  top: -19px;
-  right: 16px;
-}
-
-
-.xmimo-ui-module .xmimo-tts-details-heading,
-.xmimo-ui-module .xmimo-tts-sound-heading {
-  gap: var(--xmimo-ui-space-1);
-}
-
-.xmimo-ui-module .xmimo-tts-sound-heading > small {
-  padding-right: calc(var(--xmimo-ui-mascot-size) + var(--xmimo-ui-space-3));
 }
 
 .xmimo-ui-module .xmimo-tts-details-body > * {

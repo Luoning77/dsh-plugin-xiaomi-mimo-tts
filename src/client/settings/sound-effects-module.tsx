@@ -1,12 +1,12 @@
+import { SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react'
-import { useEffect, useRef, useState } from 'react'
-import { resolveSoundEffectsMode, SOUND_PACKS, TTS_SOUND_EFFECT_CUES_ASSET_ROUTE, TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE } from '../../shared.js'
-import type { SoundEffectsMode, SoundPack } from '../../shared.js'
+import { useEffect, useRef } from 'react'
+import { resolveSoundEffectsMode, resolveSoundEffectsScope, SOUND_PACKS, SOUND_EFFECTS_SCOPES } from '../../shared.js'
+import type { SoundEffectsMode, SoundEffectsScope, SoundPack } from '../../shared.js'
 import type { Translate } from '../localization.js'
 import { EnergyVolumeSlider } from './controls/energy-volume-slider.js'
 import type { SoundEffectsController, SoundCue } from '../sound-effects/types.js'
 import { CollapsibleModule } from './collapsible-module.js'
-import { hostRoute } from '../host-route.js'
 
 interface SoundEffectsPanelProps {
   t: Translate
@@ -20,27 +20,14 @@ interface SoundEffectsPanelProps {
   minimal: boolean
   open: boolean
   onToggle: () => void
-  onCycle: () => void
+  onScopeChange: (scope: SoundEffectsScope) => void
   onVolumeChange: (volume: number) => void
   onPackChange: (pack: SoundPack) => void
 }
 
-const PREVIEW_CUES = [
-  { cue: 'start', position: '0%' },
-  { cue: 'complete', position: '25%' },
-  { cue: 'error', position: '50%' },
-  { cue: 'notification', position: '75%' },
-  { cue: 'press', position: '100%' },
-] as const satisfies readonly { cue: SoundCue, position: string }[]
+const PREVIEW_CUES = ['start', 'complete', 'error', 'notification', 'press'] as const satisfies readonly SoundCue[]
 
 type SoundPackTone = 'neutral' | 'calm' | 'cool' | 'bright'
-
-const SOUND_MODE_VIEWBOXES: Record<SoundEffectsMode, string> = {
-  all: '0 0 1 1',
-  off: '1 0 1 1',
-  click: '0 1 1 1',
-  task: '1 1 1 1',
-}
 
 const SOUND_PACK_TONES: Record<SoundPack, SoundPackTone> = {
   minimal: 'neutral',
@@ -57,9 +44,8 @@ const SOUND_PACK_TONES: Record<SoundPack, SoundPackTone> = {
   zen: 'neutral',
 }
 
-/** A settings module rendered directly below the Broadcast Studio preview. */
-export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSounds, clickSounds, writable, minimal, open, onToggle, onCycle, onVolumeChange, onPackChange }: SoundEffectsPanelProps): ReactElement {
-  const [previewingCue, setPreviewingCue] = useState<SoundCue | null>(null)
+/** Collapsible sound library, followed by the Broadcast Desk. */
+export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSounds, clickSounds, writable, minimal, open, onToggle, onScopeChange, onVolumeChange, onPackChange }: SoundEffectsPanelProps): ReactElement {
   const packOptionRefs = useRef<Array<HTMLButtonElement | null>>([])
   const mode: SoundEffectsMode = resolveSoundEffectsMode(enabled, taskSounds, clickSounds)
   const modeLabel = mode === 'all'
@@ -69,7 +55,7 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
       : mode === 'click'
         ? t('settings.soundEffectsClickOnly')
         : t('settings.soundEffectsTaskOnly')
-  const bubbleLabel = mode === 'all' ? t('settings.soundEffectsBubbleOn') : modeLabel
+  const scope = resolveSoundEffectsScope(taskSounds, clickSounds)
 
   useEffect(() => {
     controller.update({
@@ -114,41 +100,8 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
     }
   }
   const previewLabel = (cue: SoundCue): string => t(`settings.soundEffectsPreview.${cue}` as Parameters<Translate>[0])
-  const previewCue = (cue: SoundCue): void => {
-    controller.preview(cue)
-    setPreviewingCue(null)
-    requestAnimationFrame(() => { setPreviewingCue(cue) })
-  }
-
-  const whaleAction = <button
-    type="button"
-    className="xmimo-tts-sound-whale-button"
-    data-xmimo-sound-toggle="true"
-    aria-pressed={enabled}
-    aria-label={`${t('settings.soundEffectsCycle')}: ${modeLabel}`}
-    disabled={!writable}
-    onClick={onCycle}
-  >
-    {!minimal ? <svg
-      className="xmimo-tts-sound-whale"
-      viewBox={SOUND_MODE_VIEWBOXES[mode]}
-      preserveAspectRatio="xMidYMid slice"
-      focusable="false"
-      aria-hidden="true"
-    >
-      <image href={hostRoute(TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE)} width="2" height="2" />
-    </svg> : null}
-    <span className={minimal ? 'xmimo-tts-sound-mode-label' : 'xmimo-tts-sound-bubble'} aria-live="polite">
-      {bubbleLabel}
-    </span>
-  </button>
-
   return <CollapsibleModule
     className="xmimo-tts-settings-module xmimo-tts-sound-effects xmimo-ui-module"
-    toggleClassName="xmimo-tts-sound-toggle"
-    headingClassName="xmimo-tts-sound-heading"
-    collapseClassName="xmimo-tts-sound-collapse"
-    collapseOpenClassName="xmimo-tts-sound-collapse-open"
     title={t('settings.soundEffectsTitle')}
     summary={<span className="xmimo-tts-sound-summary xmimo-ui-summary">
       <span>{modeLabel}</span>
@@ -157,10 +110,17 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
     </span>}
     open={open}
     onToggle={onToggle}
-    ariaLabel={`${t(open ? 'settings.collapse' : 'settings.expand')}: ${t('settings.soundEffectsTitle')}`}
-    action={whaleAction}
   >
-    {enabled ? <div className="xmimo-tts-sound-body xmimo-ui-module-body">
+    <div className="xmimo-tts-sound-body xmimo-ui-module-body">
+      <SegmentedControl
+        id="xmimo-tts-sound-scope"
+        value={scope}
+        options={SOUND_EFFECTS_SCOPES.map(value => ({ value, label: t(value === 'all' ? 'settings.soundEffectsOn' : value === 'click' ? 'settings.soundEffectsClickOnly' : 'settings.soundEffectsTaskOnly') }))}
+        label={t('settings.soundEffectsScope')}
+        disabled={!writable}
+        onChange={onScopeChange}
+        className="xmimo-tts-settings-segmented xmimo-tts-sound-scope"
+      />
       <label className="xmimo-tts-sound-volume">
         <span>{t('settings.soundEffectsVolume')} {Math.round(volume * 100)}%</span>
         <EnergyVolumeSlider
@@ -200,20 +160,14 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
       <div className="xmimo-tts-sound-preview-section">
         <span id="xmimo-tts-sound-preview-label" className={minimal ? 'xmimo-tts-visually-hidden' : undefined}>{t('settings.soundEffectsPreviewLabel')}</span>
         <div className="xmimo-tts-sound-previews" role="group" aria-labelledby="xmimo-tts-sound-preview-label">
-          {PREVIEW_CUES.map(({ cue, position }) => <button
+          {PREVIEW_CUES.map(cue => <button
             key={cue}
             type="button"
             data-xmimo-sound-preview="true"
             disabled={!enabled}
             aria-label={previewLabel(cue)}
-            onClick={() => { previewCue(cue) }}
+            onClick={() => { controller.preview(cue) }}
           >
-            {!minimal ? <span
-              className={previewingCue === cue ? 'xmimo-tts-sound-preview-character xmimo-tts-sound-preview-character-bounce' : 'xmimo-tts-sound-preview-character'}
-              style={{ backgroundImage: `url(${hostRoute(TTS_SOUND_EFFECT_CUES_ASSET_ROUTE)})`, backgroundPosition: `${position} center` }}
-              onAnimationEnd={() => { setPreviewingCue((current) => current === cue ? null : current) }}
-              aria-hidden="true"
-            /> : null}
             <span>{previewLabel(cue)}</span>
           </button>)}
         </div>
@@ -221,6 +175,6 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
       {!minimal ? <small className="xmimo-tts-sound-description">{t('settings.soundEffectsDescription')}</small> : null}
       {!minimal ? <small className="xmimo-tts-sound-supported">{t('settings.soundEffectsSupported')}</small> : null}
       {!writable ? <small>{t('settings.readOnly')}</small> : null}
-    </div> : null}
+    </div>
   </CollapsibleModule>
 }

@@ -1,24 +1,24 @@
 import type { ReactElement } from 'react'
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
-import { TTS_PREVIEW_WHALE_ASSET_ROUTE } from '../../shared.js'
-import type { Translate } from '../localization.js'
 import type { PreviewError, PreviewSource, PreviewStatus } from '../playback/preview-player.js'
-import { hostRoute } from '../host-route.js'
-import { ModuleShell } from './module-shell.js'
+import { CollapsibleModule } from './collapsible-module.js'
+import { AnnouncementSettings, ANNOUNCEMENT_SOURCE_OPTIONS } from './announcement-settings.js'
+import type { AnnouncementSettingsProps } from './announcement-settings.js'
+import { PlaybackIcon } from '../playback/playback-icon.js'
 
-export interface PreviewModuleProps {
-  t: Translate
+export interface PreviewModuleProps extends AnnouncementSettingsProps {
   enabled: boolean
-  minimal: boolean
   status: PreviewStatus
   source: PreviewSource
   error: PreviewError | null
   text: string
   onToggle: () => void
   onTextChange: (value: string) => void
+  open: boolean
+  onToggleOpen: () => void
 }
 
-export function PreviewModule({ t, enabled, minimal, status, source, error, text, onToggle, onTextChange }: PreviewModuleProps): ReactElement {
+export function PreviewModule({ t, enabled, status, source, error, text, onToggle, onTextChange, open, onToggleOpen, ...settings }: PreviewModuleProps): ReactElement {
   const busy = status === 'loading' || status === 'playing'
   const errorKey = error === 'save-key-first' ? 'settings.previewSaveKeyFirst'
     : error === 'voice-required' ? 'settings.doubaoVoiceRequired'
@@ -50,33 +50,39 @@ export function PreviewModule({ t, enabled, minimal, status, source, error, text
             ? 'settings.previewCompletedMimo'
             : 'settings.previewHint'
 
-  return <ModuleShell className="xmimo-tts-settings-module xmimo-tts-preview xmimo-ui-module-padded" title={t('settings.previewTitle')} headingClassName="xmimo-tts-preview-title">
-    <div className="xmimo-tts-preview-input xmimo-ui-module-content">
-      <span className={`${status === 'error' ? 'xmimo-tts-character-bubble xmimo-tts-preview-status xmimo-tts-failed' : 'xmimo-tts-character-bubble xmimo-tts-preview-status'}${minimal ? ' xmimo-tts-visually-hidden' : ''}`} aria-live="polite">{t(messageKey)}</span>
-      {minimal ? <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="xmimo-tts-preview-simple-button"
-        aria-label={t(busy ? 'settings.previewStop' : 'settings.previewPlay')}
-        disabled={!enabled || text.trim().length === 0}
-        onClick={onToggle}
-      >{t(busy ? 'settings.previewStopShort' : 'settings.previewPlayShort')}</Button> : <button
-        type="button"
-        className={busy ? 'xmimo-tts-preview-whale-button xmimo-tts-preview-whale-button-active' : 'xmimo-tts-preview-whale-button'}
-        style={!minimal ? { backgroundImage: `url(${hostRoute(TTS_PREVIEW_WHALE_ASSET_ROUTE)})` } : undefined}
-        aria-label={t(busy ? 'settings.previewStop' : 'settings.previewPlay')}
-        disabled={!enabled || text.trim().length === 0}
-        onClick={onToggle}
-      />}
-      <textarea
-        value={text}
-        rows={2}
-        maxLength={100}
-        aria-label={t('settings.previewText')}
-        placeholder={t('settings.previewPlaceholder')}
-        onChange={(event) => { onTextChange(event.target.value) }}
-      />
+  return <CollapsibleModule className="xmimo-tts-settings-module xmimo-tts-broadcast"
+    title={t('settings.previewTitle')}
+    open={open} onToggle={onToggleOpen}
+    summary={<span className="xmimo-ui-summary">
+      {ANNOUNCEMENT_SOURCE_OPTIONS.filter(option => settings.sources.includes(option.id)).map(option => <span key={option.id}>{t(option.label)}</span>)}
+      {settings.sources.length === 0 ? <span>{t('settings.announcementsNone')}</span> : null}
+    </span>}>
+    <div className="xmimo-tts-broadcast-body">
+      <div className="xmimo-tts-format">
+        <div className="xmimo-tts-preview-input">
+          <textarea
+            value={text}
+            rows={2}
+            maxLength={100}
+            aria-label={t('settings.previewText')}
+            placeholder={t('settings.previewPlaceholder')}
+            onChange={(event) => { onTextChange(event.target.value) }}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="xmimo-tts-preview-toggle"
+            title={t(busy ? 'settings.previewStop' : 'settings.previewPlay')}
+            aria-label={t(busy ? 'settings.previewStop' : 'settings.previewPlay')}
+            disabled={!enabled || text.trim().length === 0}
+            onClick={onToggle}
+          ><PlaybackIcon state={busy ? 'stop' : 'play'} /></Button>
+        </div>
+        <small className={status === 'error' ? 'xmimo-tts-failed' : 'xmimo-tts-preview-status'} aria-live="polite">{t(messageKey)}</small>
+      </div>
+      <AnnouncementSettings t={t} sources={settings.sources} writable={settings.writable} overridden={settings.overridden}
+        onChange={settings.onChange} onReset={settings.onReset} />
     </div>
-  </ModuleShell>
+  </CollapsibleModule>
 }

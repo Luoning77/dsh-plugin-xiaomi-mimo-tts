@@ -4,6 +4,8 @@ export type SoundPack = typeof SOUND_PACKS[number]
 
 export const SOUND_EFFECTS_MODES = ['all', 'off', 'click', 'task'] as const
 export type SoundEffectsMode = typeof SOUND_EFFECTS_MODES[number]
+export const SOUND_EFFECTS_SCOPES = ['all', 'click', 'task'] as const
+export type SoundEffectsScope = typeof SOUND_EFFECTS_SCOPES[number]
 
 export interface SoundEffectsModeFlags {
   enabled: boolean
@@ -17,9 +19,9 @@ export function resolveSoundEffectsMode(enabled: boolean, taskSounds: boolean, c
   return taskSounds ? 'task' : 'click'
 }
 
-export function nextSoundEffectsMode(mode: SoundEffectsMode): SoundEffectsMode {
-  const index = SOUND_EFFECTS_MODES.indexOf(mode)
-  return SOUND_EFFECTS_MODES[(index + 1) % SOUND_EFFECTS_MODES.length]!
+export function resolveSoundEffectsScope(taskSounds: boolean, clickSounds: boolean): SoundEffectsScope {
+  if (taskSounds === clickSounds) return 'all'
+  return taskSounds ? 'task' : 'click'
 }
 
 export function getSoundEffectsModeFlags(mode: SoundEffectsMode): SoundEffectsModeFlags {

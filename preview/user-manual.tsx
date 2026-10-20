@@ -34,7 +34,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         summary: '先选择小米 MiMo 或豆包语音并保存密钥，再选择模型和音色试听。',
         items: [
           { label: '设置卡片标题按钮', detail: '点击“语音朗读 (Xiaomi MiMo)”标题栏可展开或收起全部设置。标题栏右侧的箭头和 aria 状态会同步变化；有未保存修改时，标题栏会显示“未保存”。' },
-          { label: '推荐操作顺序', detail: '依次选择语音服务商 → 填写该服务商的 API Key → 点击底部“保存” → 选择模型和音色 → 在“演播厅”试听 → 按需开启自动播报和音效。除 API Key 外，演播厅会即时使用当前草稿；新密钥必须先保存才能用于云端合成。' },
+          { label: '推荐操作顺序', detail: '依次选择语音服务商 → 填写该服务商的 API Key → 点击底部“保存” → 选择模型和音色 → 在“播报台”试听 → 按需开启自动播报和音效。除 API Key 外，播报台会即时使用当前草稿；新密钥必须先保存才能用于云端合成。' },
           { label: '只读状态', detail: '如果顶部勾选“只读”，所有输入、开关、滑块和选择器都会禁用；仍可阅读内容，但不能提交设置。' },
         ],
       },
@@ -43,9 +43,9 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         title: '02 · 基础开关',
         summary: '三个角色卡片控制插件、自动播放和音效。',
         items: [
-          { label: '语音播放', detail: '点击鲸鱼娘卡片或其中的复选框切换总开关。关闭后会隐藏调音台和演播厅，并同时关闭自动播放；正在播放的试听也会停止。再次打开后，语音相关设置会重新出现。' },
+          { label: '语音播放', detail: '点击鲸鱼娘卡片或其中的复选框切换总开关。关闭后会隐藏调音台，并同时关闭自动播放；播报台仍可配置来源，但试听禁用，正在播放的试听也会停止。' },
           { label: '自动播放', detail: '新安装默认关闭。点击第二张角色卡片切换自动朗读；打开后，助手回复会自动尝试朗读，浏览器仍可能因自动播放策略拒绝。打开它会自动打开“语音播放”，关闭它只关闭自动朗读。' },
-          { label: '音效', detail: '新安装默认关闭。点击第三张角色卡片切换音效总开关；开启时会同步打开任务音效和点击音效，关闭时两者也会一起关闭。详细的音效包和试听按钮在下方“音效库”中。' },
+          { label: '音效', detail: '新安装默认关闭。点击第三张角色卡片切换音效总开关；开启后按面板内选择的范围播放，关闭后保留范围。详细的音效包和试听按钮在下方“音效库”中。' },
         ],
       },
       {
@@ -55,7 +55,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         items: [
           { label: '服务商与获取 API Key', detail: '点击服务商名称可在小米 MiMo 与豆包语音之间切换。“获取 API Key”会打开当前服务商的密钥页面；豆包使用新版控制台的 API Key。两家的密钥、模型与音色分别保存，切换服务商不会覆盖另一家的配置。' },
           { label: '密钥输入框', detail: '在密码框中输入当前服务商的新 API Key。输入内容会被隐藏；输入后不会立即保存。清空输入草稿不会删除已保存密钥，需要删除时使用“清除”并保存。' },
-          { label: '状态与清除', detail: '提示会区分读取中、未配置、格式已识别、格式异常、Host 状态不可用和待保存。格式识别不等于连接已验证；保存后请用演播厅确认。已保存密钥时可点击“清除”；保存后会移除该密钥，若基础配置仍有密钥，会恢复继承。' },
+          { label: '状态与清除', detail: '提示会区分读取中、未配置、格式已识别、格式异常、Host 状态不可用和待保存。格式识别不等于连接已验证；保存后请用播报台确认。已保存密钥时可点击“清除”；保存后会移除该密钥，若基础配置仍有密钥，会恢复继承。' },
         ],
       },
       {
@@ -63,11 +63,11 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         title: '04 · 调音台',
         summary: '控制音量、速度、模型、声音来源和本地兜底策略。',
         items: [
-          { label: '调音台标题与箭头', detail: '点击“调音台”标题栏展开或收起详细设置。标题栏摘要会显示当前音量、倍速、朗读范围、模型、声音和策略。右上角鲸鱼精灵图会随当前模型切换，并显示对应台词。' },
+          { label: '调音台标题与箭头', detail: '点击“调音台”标题栏展开或收起详细设置。标题栏摘要会显示当前音量、倍速、朗读范围、模型、声音和策略。' },
           { label: '音量滑块', detail: '拖动或用键盘方向键调整语音音量；松开鼠标或完成键盘操作时会试听当前音量。旁边的“恢复默认”按钮会把该项恢复为基础配置，恢复动作仍需点击“保存”。' },
           { label: '播放速度滑块', detail: '拖动或用键盘调整 0.5×–2.0× 速度。豆包在云端合成时应用语速，播放时保持 1×；小米 PCM 在本地调整速度，音高会随速度改变。' },
           { label: '模型按钮', detail: '小米可选择预置音色或音色设计；豆包可选择标准合成（seed-tts-2.0）或声音复刻（seed-icl-2.0）。下方音色控件随所选模型切换。' },
-          { label: 'Voice Design 选择器与手动编辑', detail: '点击声音设计选择器，选择“自定义”或一个预设。选择自定义后可直接编辑音色描述文本框；右上角鲸鱼精灵图和台词会随模型切换。' },
+          { label: 'Voice Design 选择器与手动编辑', detail: '点击声音设计选择器，选择“自定义”或一个预设。选择自定义后可直接编辑音色描述文本框。' },
           { label: '内置声音 / 浏览器声音选择器', detail: '点击选择器打开列表，再点击一个声音完成选择；也可用方向键、Home、End 浏览，Esc 关闭。浏览器声音会显示语言及在线/离线状态；本地语音策略关闭时，浏览器声音选择器会禁用。' },
           { label: '朗读范围单选项', detail: '点击“智能模式”“完整模式”或“首段模式”之一。智能模式会根据回复长度决定范围；完整模式朗读全文；首段模式只朗读开头。选择后下方说明会同步更新。' },
           { label: '语音策略单选项', detail: '点击“云端优先”“本地优先”或“关闭本地语音”。云端使用当前选择的小米或豆包服务；前两项决定云端与浏览器语音的兜底顺序，关闭本地语音后只使用云端。' },
@@ -75,24 +75,25 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         ],
       },
       {
-        id: 'manual-broadcast',
-        title: '05 · 演播厅',
-        summary: '用当前草稿试听，并显示小米、豆包或浏览器本地语音来源。',
+        id: 'manual-sounds',
+        title: '05 · 音效库',
+        summary: '为 DSH 的任务和点击动作选择 UI 音效。',
         items: [
-          { label: '试听文本框', detail: '点击文本框输入或替换试听内容，最多 100 个字符。文本为空时，鲸鱼按钮会禁用；试听文本本身不会写入 DSH。模型、声音、音量和速度可直接使用草稿，但新 API Key 必须先保存。' },
-          { label: '播放 / 停止鲸鱼按钮', detail: '点击“播放试听”生成并播放；准备中或播放中再次点击可中断。气泡会显示当前语音来源，并针对未配置密钥、密钥被拒绝、限流、超时、本地音色不可用和自动播放限制给出对应提示。' },
+          { label: '音效库与范围选择', detail: '点击标题展开面板；调音台、音效库和播报台使用单开模式，展开一个会收起另外两个。面板内可横向选择全部开启、仅点击音效或仅任务音效；这只改变范围，总开关仍由顶部“音效库”控制。关闭再开启总开关会保留范围。' },
+          { label: '音效音量滑块', detail: '拖动或用键盘调整音效音量；完成操作时会试听当前音量。音效总开关关闭时滑块与试听禁用，范围仍可配置；重新开启后保留原来的音量和音效包。' },
+          { label: '音效包按钮', detail: '点击一个音效包卡片选择它；再次点击当前卡片会播放一次点击提示音。也可用方向键、Home、End 在 12 个音效包之间移动。当前选项会显示选中状态。' },
+          { label: '音效试听按钮', detail: '点击“开始”“完成”“失败”“提醒”或“点击”试听对应声音。每次点击都会播放一次，即使音效库当前折叠也不影响已开始的播放；总开关关闭时这些按钮禁用。' },
+          { label: '任务音效 / 点击音效', detail: '顶部开关只控制音效总开关，面板内三个选项只选择范围；关闭总开关会保留选择。修改后保存生效。' },
         ],
       },
       {
-        id: 'manual-sounds',
-        title: '06 · 音效库',
-        summary: '为 DSH 的任务和点击动作选择 UI 音效。',
+        id: 'manual-broadcast',
+        title: '06 · 播报台',
+        summary: '位于音效库下方的可折叠播报台，支持文字试听与来源设置。',
         items: [
-          { label: '音效库标题与鲸鱼按钮', detail: '点击“音效库”标题栏展开或收起内容；点击右侧鲸鱼按钮会按“音效总开关开（任务 / 点击同步开启）→ 音效总开关关（任务 / 点击同步关闭）→ 仅开启点击音效 → 仅开启任务音效”的顺序循环。总开关关闭时隐藏音效库内容，但鲸鱼按钮仍可点击切换；气泡会显示当前状态。' },
-          { label: '音效音量滑块', detail: '拖动或用键盘调整音效音量；完成操作时会试听当前音量。音效总开关关闭时音效库内容隐藏，重新开启后保留原来的音量和音效包。' },
-          { label: '音效包按钮', detail: '点击一个音效包卡片选择它；再次点击当前卡片会播放一次点击提示音。也可用方向键、Home、End 在 12 个音效包之间移动。当前选项会显示选中状态。' },
-          { label: '音效试听按钮', detail: '点击“开始”“完成”“失败”“提醒”或“点击”试听对应声音。每次点击都会播放一次，即使音效库当前折叠也不影响已开始的播放；总开关关闭时这些按钮禁用。' },
-          { label: '任务音效 / 点击音效', detail: '顶部“音效”角色卡片只负责总开关：开启总开关会同步开启两者，关闭总开关会同步关闭两者。音效库鲸鱼按钮可以进一步切换为仅开启点击音效或仅开启任务音效；最终状态在点击底部“保存”后写入 DSH。' },
+          { label: '播报来源', detail: 'dsh-pet 默认关闭；dsh-whale-musume 语音接口默认开启。提问卡片标题默认开启并跟随自动播报，只读当前题目标题；翻题、提交、关闭或切换会话时取消。首次开启不补播已有卡片，忙碌时跳过。审批提醒和后台任务结果默认关闭、独立于自动播报，只观察当前会话；审批处理或撤回后停止语音，后台任务仅播报观察到运行过程后的结束、失败或取消。宿主需提供相应服务。桌宠来源名称可跳转项目主页。' },
+          { label: '试听文本框', detail: '点击文本框输入或替换试听内容，最多 100 个字符。文本为空时，试听按钮会禁用；试听文本本身不会写入 DSH。模型、声音、音量和速度可直接使用草稿，但新 API Key 必须先保存。' },
+          { label: '播放 / 停止按钮', detail: '点击“播放试听”生成并播放；准备中或播放中再次点击可中断。状态提示会显示当前语音来源，并针对未配置密钥、密钥被拒绝、限流、超时、本地音色不可用和自动播放限制给出对应提示。' },
         ],
       },
       {
@@ -117,7 +118,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
           { label: '豆包音色设计文档', href: 'https://docs.volcengine.com/docs/DoubaoVoice/SoundDesignAPI?lang=zh' },
         ],
         items: [
-          { label: '开通与密钥', detail: '在火山引擎豆包语音控制台开通需要的模型服务，获取 API Key。回到设置切换到“豆包语音”，填写密钥并保存；密钥已保存不代表服务权限或音色已经可用，请用演播厅确认。' },
+          { label: '开通与密钥', detail: '在火山引擎豆包语音控制台开通需要的模型服务，获取 API Key。回到设置切换到“豆包语音”，填写密钥并保存；密钥已保存不代表服务权限或音色已经可用，请用播报台确认。' },
           { label: '标准合成（seed-tts-2.0）', detail: '选择内置标准音色，或通过自定义选项填写其他标准音色 ID。语音指令可描述情绪、语气、方言或表达风格；可以选用预设，也可以手动编辑，留空使用默认表达，效果随音色而异。' },
           { label: '声音复刻（seed-icl-2.0）', detail: '在豆包控制台创建专属音色后，将音色 ID 填入“复刻音色 ID”。输入框下会保留最近使用的 ID，标准音色与复刻音色分别保存；复刻 ID 为空时不能保存或试听。音色创建在控制台完成，插件使用已有 ID 进行合成。' },
           { label: '边生成边播放', detail: '自动播报时，同一条回复的文本会持续追加到豆包双向流式会话，音频生成后即可播放。停止朗读会取消当前会话；切换服务商或修改已保存的语音指令后，当前朗读会停止，新设置用于后续回复。' },
@@ -154,7 +155,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         summary: 'Choose Xiaomi MiMo or Doubao, save its key, then select a model and voice to preview.',
         items: [
           { label: 'Settings card header', detail: 'Click the “Text To Speech (Xiaomi MiMo)” header to expand or collapse all settings. The arrow and aria state update together; “Unsaved” appears while a draft is dirty.' },
-          { label: 'Recommended order', detail: 'Choose a speech provider → enter its API key → click Save → choose a model and voice → test it in Broadcast Studio → optionally enable autoplay and sounds. Most drafts apply to previews immediately, but a new key must be saved before cloud synthesis can use it.' },
+          { label: 'Recommended order', detail: 'Choose a speech provider → enter its API key → click Save → choose a model and voice → test it in Broadcast Desk → optionally enable autoplay and sounds. Most drafts apply to previews immediately, but a new key must be saved before cloud synthesis can use it.' },
           { label: 'Read-only state', detail: 'Check Read-only in the toolbar to disable inputs, switches, sliders, and pickers. You can still read the guide, but cannot submit settings.' },
         ],
       },
@@ -163,7 +164,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         title: '02 · Basic switches',
         summary: 'Three character cards control the plugin, autoplay, and sounds.',
         items: [
-          { label: 'Voice playback', detail: 'Click the Whale Maid card or its checkbox to toggle the main switch. Turning it off hides the console and studio and stops an active preview. Turn it on again to reveal voice settings.' },
+          { label: 'Voice playback', detail: 'Click the Whale Maid card or its checkbox to toggle the main switch. Turning it off hides the mixer, turns autoplay off and stops the preview. The Broadcast Desk stays available for source settings, with its preview button disabled.' },
           { label: 'Automatic playback', detail: 'New installs start with this off. Click the second character card to toggle automatic reading; the browser may still reject autoplay. Enabling it also enables Voice playback; disabling it only turns off automatic reading.' },
           { label: 'Sound effects', detail: 'New installs start with this off. Click the third character card to toggle the sound master switch. Turning it on synchronizes task and click sounds on; turning it off synchronizes both off. Detailed packs and previews are below.' },
         ],
@@ -175,7 +176,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         items: [
           { label: 'Provider and API key', detail: 'Click the provider name to switch between Xiaomi MiMo and Doubao. Get API Key opens the selected provider’s key page; Doubao uses an API key from the new console. Keys, models, and voices are saved separately for each provider.' },
           { label: 'Key input', detail: 'Enter the selected provider’s new key in the password field. It stays hidden and is not saved immediately. Erasing the draft leaves the saved key intact; use Clear and Save to remove it.' },
-          { label: 'Status and clearing', detail: 'The status distinguishes loading, missing, recognized format, unrecognized format, unavailable Host state, and unsaved changes. A recognized prefix is not a connection check; use Broadcast Studio after saving. When a personal override exists, Clear removes it on Save and falls back to a base key if one exists.' },
+          { label: 'Status and clearing', detail: 'The status distinguishes loading, missing, recognized format, unrecognized format, unavailable Host state, and unsaved changes. A recognized prefix is not a connection check; use Broadcast Desk after saving. When a personal override exists, Clear removes it on Save and falls back to a base key if one exists.' },
         ],
       },
       {
@@ -195,24 +196,25 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         ],
       },
       {
-        id: 'manual-broadcast',
-        title: '05 · Broadcast Studio',
-        summary: 'Preview the current draft and see whether Xiaomi, Doubao, or browser speech is used.',
+        id: 'manual-sounds',
+        title: '05 · Sound Effects',
+        summary: 'Choose UI sounds for DSH tasks and clicks.',
         items: [
-          { label: 'Preview text field', detail: 'Click and replace the preview text, up to 100 characters. An empty field disables the Whale button. Model, voice, volume, and speed drafts apply immediately, but a new API key must be saved first.' },
-          { label: 'Play / stop Whale button', detail: 'Click Play preview to generate and play; click again while preparing or playing to stop. The bubble identifies the speech source and distinguishes missing or rejected keys, rate limits, timeouts, unavailable local voices, and autoplay restrictions.' },
+          { label: 'Sound Effects and scope', detail: 'The Mixer, Sound Effects, and Broadcast Desk share a single-open accordion. Choose All sounds, Click sounds only, or Task sounds only inside Sound Effects. These choices do not change the master switch at the top, and switching it off and on retains the selected scope.' },
+          { label: 'Sound volume slider', detail: 'Drag or use arrow keys to change sound volume; finishing the interaction previews the level. Volume, pack selection, and previews are disabled while the master switch is off. The scope can still be configured, and all selections are preserved.' },
+          { label: 'Sound pack buttons', detail: 'Click a pack card to select it; clicking the current card again plays a click cue. Arrow keys, Home, and End move through all 12 packs. The selected card exposes its checked state.' },
+          { label: 'Sound preview buttons', detail: 'Click Start, Complete, Error, Notification, or Press to preview that cue once. The sound switch disables these buttons when off.' },
+          { label: 'Task / click sounds', detail: 'The top switch controls sound playback; the three options inside the panel select its scope. Save to apply the changes.' },
         ],
       },
       {
-        id: 'manual-sounds',
-        title: '06 · Sound Effects',
-        summary: 'Choose UI sounds for DSH tasks and clicks.',
+        id: 'manual-broadcast',
+        title: '06 · Broadcast Desk',
+        summary: 'A collapsible panel below Sound Effects for text previews and announcement sources.',
         items: [
-          { label: 'Sound Effects header and Whale button', detail: 'Click the Sound Effects header to expand or collapse its content. Click the Whale button on the right to cycle through master on (task / click synced on) → master off (task / click synced off) → click sounds only → task sounds only. When the master switch is off, the library content is hidden but the Whale button remains available; its bubble shows the current state.' },
-          { label: 'Sound volume slider', detail: 'Drag or use arrow keys to change sound volume; finishing the interaction previews the level. The library content is hidden while the master switch is off; the volume and pack are preserved when sounds are enabled again.' },
-          { label: 'Sound pack buttons', detail: 'Click a pack card to select it; clicking the current card again plays a click cue. Arrow keys, Home, and End move through all 12 packs. The selected card exposes its checked state.' },
-          { label: 'Sound preview buttons', detail: 'Click Start, Complete, Error, Notification, or Press to preview that cue once. The sound switch disables these buttons when off.' },
-          { label: 'Task / click sounds', detail: 'The Sound Effects character card controls the master switch: enabling it synchronizes both capabilities on, and disabling it synchronizes both off. The Whale button can then select click-only or task-only mode. The final state is persisted in DSH only after Save.' },
+          { label: 'Announcement sources', detail: 'dsh-pet is off by default; the dsh-whale-musume speech API is on. Question titles are enabled by default and follow autoplay. Only the current title is read; changing, submitting, closing, or switching sessions cancels speech. Existing cards are not replayed on activation, and busy speech is respected. Approval reminders and Background job results are off by default, independent of autoplay, and limited to the current conversation. Answered or withdrawn approvals stop speech. Jobs announce settlement only after their live state was observed. The corresponding Host services must be available. Pet source names link to their projects.' },
+          { label: 'Preview text field', detail: 'Click and replace the preview text, up to 100 characters. An empty field disables the preview button. Model, voice, volume, and speed drafts apply immediately, but a new API key must be saved first.' },
+          { label: 'Play / stop button', detail: 'Click Play preview to generate and play; click again while preparing or playing to stop. The status identifies the speech source and distinguishes missing or rejected keys, rate limits, timeouts, unavailable local voices, and autoplay restrictions.' },
         ],
       },
       {
@@ -237,7 +239,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
           { label: 'Doubao voice design documentation', href: 'https://docs.volcengine.com/docs/DoubaoVoice/SoundDesignAPI?lang=zh' },
         ],
         items: [
-          { label: 'Service and key', detail: 'Enable the required model service in the Volcano Engine Doubao console and obtain an API key. Select Doubao in settings, enter the key, and save. A saved key does not verify service permissions or voice availability; test it in Broadcast Studio.' },
+          { label: 'Service and key', detail: 'Enable the required model service in the Volcano Engine Doubao console and obtain an API key. Select Doubao in settings, enter the key, and save. A saved key does not verify service permissions or voice availability; test it in Broadcast Desk.' },
           { label: 'Standard TTS (seed-tts-2.0)', detail: 'Choose a built-in standard voice, or select Custom and enter another standard voice ID. Speech instructions describe emotion, tone, dialect, or delivery. Choose a preset or edit the instruction; leave it blank for default delivery. Results vary by voice.' },
           { label: 'Voice cloning (seed-icl-2.0)', detail: 'Create a personal voice in the Doubao console, then paste its ID into Cloned voice ID. Recent IDs appear below the field. Standard and cloned voice selections are saved separately; an empty clone ID blocks saving and previewing. The plugin synthesizes with existing IDs; voice creation happens in the console.' },
           { label: 'Streaming replies', detail: 'During automatic reading, reply text is appended to a Doubao bidirectional session and audio can play as it arrives. Stopping cancels the session. Switching providers or changing saved speech instructions stops the current reading; new settings apply to subsequent replies.' },

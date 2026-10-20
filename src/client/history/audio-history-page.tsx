@@ -7,7 +7,10 @@ import { filterAudioHistory, HistoryDownloads, historyFileSize, historyTime } fr
 import type { HistorySource } from './history-list.js'
 import { HistoryReplay } from './history-replay.js'
 import { TTS_HISTORY_EMPTY_ASSET_ROUTE } from '../../shared.js'
+import type { SpeechActivity } from '../announcements/speech-activity.js'
+import { isSpeechBusy } from '../announcements/speech-activity.js'
 import { hostRoute } from '../host-route.js'
+import { PlaybackIcon } from '../playback/playback-icon.js'
 
 export interface AudioHistoryPageProps {
   history: AudioHistory
@@ -15,19 +18,15 @@ export interface AudioHistoryPageProps {
   volume: number
   voiceRate: number
   minimalMode: boolean
+  speechActivity?: SpeechActivity | undefined
   beforePlayback: () => void
   onBack: () => void
 }
 
-function HistoryPlaybackIcon({ paused }: { paused: boolean }): ReactElement {
-  return <svg width={18} height={18} viewBox="0 0 18 18" aria-hidden="true" focusable="false" fill="currentColor">
-    {paused ? <path d="M6 3.8a.8.8 0 0 1 1.2-.7l7.3 5.2a.85.85 0 0 1 0 1.4l-7.3 5.2a.8.8 0 0 1-1.2-.7Z" /> : <><rect x="4" y="3" width="3.5" height="12" rx="1" /><rect x="10.5" y="3" width="3.5" height="12" rx="1" /></>}
-  </svg>
-}
-
-export function AudioHistoryPage({ history, t, volume, voiceRate, minimalMode, beforePlayback, onBack }: AudioHistoryPageProps): ReactElement {
+export function AudioHistoryPage({ history, t, volume, voiceRate, minimalMode, speechActivity, beforePlayback, onBack }: AudioHistoryPageProps): ReactElement {
   const view = useSyncExternalStore(history.subscribe, history.getSnapshot)
   const [replay] = useState(() => new HistoryReplay(history, beforePlayback))
+  useEffect(() => speechActivity?.register(() => isSpeechBusy(replay.getSnapshot().status)), [speechActivity, replay])
   const playback = useSyncExternalStore(replay.subscribe, replay.getSnapshot)
   const [downloads] = useState(() => new HistoryDownloads())
   const [query, setQuery] = useState('')
@@ -104,7 +103,7 @@ export function AudioHistoryPage({ history, t, volume, voiceRate, minimalMode, b
                 <Button type="button" variant="primary" className="xmimo-tts-history-player-toggle" title={entry.id === playback.entryId ? playbackLabel : t('history.listen')} aria-label={`${entry.id === playback.entryId ? playbackLabel : t('history.listen')}: ${title(entry).slice(0, 60)}`} onClick={() => {
                   if (entry.id === playback.entryId && busy) replay.pause()
                   else void replay.play(entry)
-                }}>{entry.id === playback.entryId && playback.status === 'error' ? <IconRefreshOutlineMedium size={16} aria-hidden="true" /> : <HistoryPlaybackIcon paused={entry.id !== playback.entryId || !busy} />}</Button>
+                }}>{entry.id === playback.entryId && playback.status === 'error' ? <IconRefreshOutlineMedium size={16} aria-hidden="true" /> : <PlaybackIcon state={entry.id !== playback.entryId || !busy ? 'play' : 'pause'} />}</Button>
                 <div className="xmimo-tts-history-copy">
                   <button type="button" className={`xmimo-tts-history-text${expanded === entry.id ? ' xmimo-tts-history-text-expanded' : ''}`} aria-expanded={expanded === entry.id} aria-label={`${t('history.expand')}: ${title(entry).slice(0, 60)}`} onClick={() => { setExpanded(expanded === entry.id ? null : entry.id) }}>{title(entry)}</button>
                   <div className="xmimo-tts-history-meta">

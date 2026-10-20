@@ -14,11 +14,7 @@ import {
   TTS_TOGGLE_CHARACTER_ASSET_ROUTE,
   TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE,
   TTS_API_KEY_WHALE_ASSET_ROUTE,
-  TTS_MIXER_WHALE_ASSET_ROUTE,
-  TTS_PREVIEW_WHALE_ASSET_ROUTE,
   TTS_HISTORY_EMPTY_ASSET_ROUTE,
-  TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE,
-  TTS_SOUND_EFFECT_CUES_ASSET_ROUTE,
   TTS_TOGGLE_AUDIO_ASSET_ROUTE,
   TTS_TOGGLE_SOUND_FILES,
   TTS_VOLUME_PREVIEW_FILES,
@@ -34,6 +30,7 @@ import {
   TTS_VOICE_DESIGN_PRESETS,
   SOUND_PACKS,
   DEFAULT_TTS_SETTINGS,
+  ANNOUNCEMENT_SOURCES,
   isSupportedTtsApiKey,
 } from './types/index.js'
 import { isNewerTtsVersion } from './text/index.js'
@@ -58,6 +55,7 @@ export const XIAOMI_MIMO_TTS_SETTINGS_NAMESPACE = TTS_SETTINGS_NAMESPACE
 
 /** Validated Host settings schema. */
 export const Config = z.object({
+  announcementSources: z.array(z.union(ANNOUNCEMENT_SOURCES)).default(DEFAULT_TTS_SETTINGS.announcementSources).volatile(),
   provider: z.union(TTS_PROVIDERS).default(DEFAULT_TTS_SETTINGS.provider).volatile(),
   doubaoApiKey: z.string().role('secret').default('').volatile(),
   doubaoModel: z.union(DOUBAO_TTS_MODELS).default(DEFAULT_TTS_SETTINGS.doubaoModel).volatile(),
@@ -139,11 +137,7 @@ export function apply(ctx: Context, config: Config): void {
   const toggleCharacterAsset = readFileSync(new URL('../assets/ui/toggle-characters.webp', import.meta.url))
   const soundEffectsCharacterAsset = readFileSync(new URL('../assets/ui/sound-effects-toggle-characters.webp', import.meta.url))
   const apiKeyWhaleAsset = readFileSync(new URL('../assets/ui/api-key-whale.webp', import.meta.url))
-  const mixerWhaleAsset = readFileSync(new URL('../assets/ui/mixer-whale.webp', import.meta.url))
-  const previewWhaleAsset = readFileSync(new URL('../assets/ui/preview-whale.webp', import.meta.url))
   const historyEmptyAsset = readFileSync(new URL('../assets/ui/history-empty-whale.webp', import.meta.url))
-  const soundEffectsWhaleAsset = readFileSync(new URL('../assets/ui/sound-effects-whale.webp', import.meta.url))
-  const soundEffectCuesAsset = readFileSync(new URL('../assets/ui/sound-effect-cues.webp', import.meta.url))
 
   ctx.inject(['settings'], (child) => {
     child.effect(() => child.settings.configure({ auto: false }, ctx.fiber), 'xiaomi-mimo-tts: custom settings page')
@@ -183,34 +177,6 @@ export function apply(ctx: Context, config: Config): void {
     data: apiKeyWhaleAsset,
     contentType: 'image/png',
     description: 'API key whale asset',
-  })
-
-  registerStaticAsset(ctx, {
-    path: TTS_MIXER_WHALE_ASSET_ROUTE,
-    data: mixerWhaleAsset,
-    contentType: 'image/png',
-    description: 'mixer whale asset',
-  })
-
-  registerStaticAsset(ctx, {
-    path: TTS_PREVIEW_WHALE_ASSET_ROUTE,
-    data: previewWhaleAsset,
-    contentType: 'image/png',
-    description: 'preview whale asset',
-  })
-
-  registerStaticAsset(ctx, {
-    path: TTS_SOUND_EFFECTS_WHALE_ASSET_ROUTE,
-    data: soundEffectsWhaleAsset,
-    contentType: 'image/png',
-    description: 'sound effects whale asset',
-  })
-
-  registerStaticAsset(ctx, {
-    path: TTS_SOUND_EFFECT_CUES_ASSET_ROUTE,
-    data: soundEffectCuesAsset,
-    contentType: 'image/png',
-    description: 'sound effect cue asset',
   })
 
   registerStaticAssetMap(ctx, {

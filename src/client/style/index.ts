@@ -24,7 +24,6 @@ import voice from './voice.css?raw'
 import cardActions from './card-actions.css?raw'
 import character from './character.css?raw'
 import details from './details.css?raw'
-import mixer from './mixer.css?raw'
 import preview from './preview.css?raw'
 import sections from './sections.css?raw'
 import sound from './sound.css?raw'
@@ -45,7 +44,6 @@ export const CLIENT_STYLES = [
   cardActions,
   character,
   details,
-  mixer,
   preview,
   sections,
   sound,

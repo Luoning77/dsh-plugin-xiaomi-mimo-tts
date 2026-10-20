@@ -11,8 +11,15 @@ function form(initial = {}, rejectField) {
   return {
     user, writes,
     getSnapshot: () => ({ user, value: resolveTtsSettings(user) }),
-    async set(field, value) { writes.push(['set', field, value]); if (field === rejectField) return false; user[field] = value; return true },
-    async unset(field) { writes.push(['unset', field]); if (field === rejectField) return false; delete user[field]; return true },
+    async mutate(ops) {
+      writes.push(ops)
+      if (ops.some(op => op.path[0] === rejectField)) return false
+      for (const op of ops) {
+        if (op.op === 'set') user[op.path[0]] = op.value
+        else delete user[op.path[0]]
+      }
+      return true
+    },
   }
 }
 
@@ -20,7 +27,8 @@ test('provider settings retain separate credentials, models and voices across sw
   const scope = form({ apiKey: 'sk-original', voice: '茉莉', model: 'mimo-v2.5-tts-voicedesign' })
   const draft = resolveTtsSettings({ ...scope.user, provider: 'doubao', doubaoVoice: 'my-standard' })
   await saveSettingsDraft(scope, draft, { provider: { kind: 'set' }, doubaoVoice: { kind: 'set' }, doubaoApiKey: { kind: 'set' } }, { xiaomi: '', doubao: 'new-doubao' })
-  assert.equal(scope.writes.at(-1)[1], 'provider')
+  assert.equal(scope.writes.length, 1)
+  assert.equal(scope.writes[0].length, 3)
   assert.equal(scope.user.apiKey, 'sk-original')
   assert.equal(scope.user.doubaoApiKey, 'new-doubao')
   assert.equal(ttsSelection(resolveTtsSettings(scope.user)).voice, 'my-standard')
@@ -34,7 +42,7 @@ test('provider settings retain separate credentials, models and voices across sw
 test('clearing one credential preserves the other and removes only the user override', async () => {
   const scope = form({ apiKey: 'sk-one', doubaoApiKey: 'two' })
   await saveSettingsDraft(scope, resolveTtsSettings(scope.user), { doubaoApiKey: { kind: 'clear' } }, { xiaomi: '', doubao: '' })
-  assert.deepEqual(scope.writes, [['unset', 'doubaoApiKey']])
+  assert.deepEqual(scope.writes, [[{ op: 'unset', path: ['doubaoApiKey'] }]])
   assert.equal(scope.user.apiKey, 'sk-one')
   assert.equal(Object.hasOwn(scope.user, 'doubaoApiKey'), false)
 })
@@ -46,7 +54,8 @@ test('rejected writes preserve the selected provider and leave caller-owned draf
   const changes = { provider: { kind: 'set' }, doubaoVoice: { kind: 'set' }, doubaoApiKey: { kind: 'set' } }
   await assert.rejects(saveSettingsDraft(scope, draft, changes, keys), /rejected/)
   assert.equal(scope.user.provider, 'xiaomi')
-  assert.equal(scope.writes.some(write => write[1] === 'provider'), false)
+  assert.deepEqual(scope.user, { provider: 'xiaomi' })
+  assert.equal(scope.writes.length, 1)
   assert.equal(keys.doubao, 'new-doubao')
   assert.equal(changes.doubaoApiKey.kind, 'set')
 })
@@ -92,5 +101,11 @@ test('erasing a key draft leaves the saved credential unchanged unless Clear was
   await saveSettingsDraft(scope, resolveTtsSettings({ ...scope.user, provider: 'doubao' }), { apiKey: { kind: 'set' }, doubaoApiKey: { kind: 'set' }, provider: { kind: 'set' } }, { xiaomi: '  ', doubao: '' })
   assert.equal(scope.user.apiKey, 'sk-saved')
   assert.equal(scope.user.doubaoApiKey, 'saved-doubao')
-  assert.deepEqual(scope.writes, [['set', 'provider', 'doubao']])
+  assert.deepEqual(scope.writes, [[{ op: 'set', path: ['provider'], value: 'doubao' }]])
+})
+
+test('unchanged settings and absent overrides do not submit a mutation', async () => {
+  const scope = form()
+  await saveSettingsDraft(scope, resolveTtsSettings(), { voiceVolume: { kind: 'set' }, instruction: { kind: 'clear' } }, { xiaomi: '', doubao: '' })
+  assert.deepEqual(scope.writes, [])
 })

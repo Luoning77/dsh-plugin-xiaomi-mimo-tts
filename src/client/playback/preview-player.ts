@@ -212,9 +212,10 @@ export class PreviewPlayer {
       URL.revokeObjectURL(this.audioUrl)
       this.audioUrl = null
     }
+    const utterance = this.utterance
     this.finishUtterance?.()
     this.finishUtterance = null
-    if (this.utterance !== null && typeof window !== 'undefined' && window.speechSynthesis !== undefined) {
+    if (utterance !== null && typeof window !== 'undefined' && window.speechSynthesis !== undefined) {
       window.speechSynthesis.cancel()
       this.utterance = null
     }

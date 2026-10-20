@@ -20,6 +20,7 @@ function chooseVoice(value: string): SpeechSynthesisVoice | undefined {
 }
 
 export class LocalSpeechController {
+  isBusy = (): boolean => ['loading', 'playing', 'paused'].includes(this.status)
   private queue = this.createQueue()
   private generation = 0
   private active: LiveSpeechCursor | null = null

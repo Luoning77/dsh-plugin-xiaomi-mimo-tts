@@ -1,4 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
+import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
@@ -21,6 +22,15 @@ import { installTaskSoundWatcher } from './sound-effects/task-watcher.js'
 import { CLIENT_STYLES } from './style/index.js'
 import { AudioHistory } from './history/audio-history.js'
 import { TabAudioFocus } from './playback/tab-audio-focus.js'
+import { SpeechActivity, isSpeechBusy } from './announcements/speech-activity.js'
+import { AnnouncementManager } from './announcements/manager.js'
+import { AnnouncementPlayback } from './announcements/playback.js'
+import { DshPetCollector } from './announcements/dsh-pet.js'
+import { QuestionTitleCollector } from './announcements/question-titles.js'
+import { QuestionTitlePlayback } from './announcements/question-playback.js'
+import { hostCollector } from './announcements/host-source.js'
+import { observeApprovals } from './announcements/approvals.js'
+import { observeJobs, type AnnouncementJobs } from './announcements/jobs.js'
 
 /** Client services required by this plugin. */
 export const inject = [
@@ -91,11 +101,41 @@ export function apply(ctx: Context): void {
   const playback = new PlaybackController(history)
   const live = new LiveSpeechController(history)
   const local = new LocalSpeechController()
+  const speechActivity = new SpeechActivity()
+  speechActivity.register(() => isSpeechBusy(playback.getSnapshot().status))
+  speechActivity.register(live.isBusy)
+  speechActivity.register(local.isBusy)
+  let questionPlayback: QuestionTitlePlayback | undefined
   const pcmService = new XiaomiMimoTtsPcmService(ctx, scope, () => {
+    questionPlayback?.stop()
     live.interrupt()
     local.interrupt()
     playback.interrupt()
   }, history, audioFocus.canPlay)
+  questionPlayback = new QuestionTitlePlayback(speechActivity, () => resolveTtsSettings(scope.getSnapshot().value), pcmService.isBusy)
+  const questions = new QuestionTitleCollector()
+  const announcements = new AnnouncementPlayback(pcmService, speechActivity, questionPlayback)
+  const collectors = new AnnouncementManager([
+    new DshPetCollector(), questions,
+    hostCollector(ctx, 'approvals', 'uiSession', (child, options) => observeApprovals(
+      (child as unknown as { sessions: ISessions }).sessions, child.uiSession, t, options)),
+    hostCollector(ctx, 'job-results', 'jobs', (child, options) => observeJobs((child as unknown as { sessions: ISessions }).sessions,
+      (child as unknown as { jobs: AnnouncementJobs }).jobs, t, options)),
+  ], announcements.play, announcements.stop)
+  ctx.effect(() => {
+    const update = () => {
+      const snapshot = scope.getSnapshot()
+      const settings = resolveTtsSettings(snapshot.value)
+      const sources = settings.announcementSources.filter(source => source !== 'question-titles' || settings.autoPlay)
+      collectors.update(sources, snapshot.status === 'ready' && settings.enabled && audioFocus.canPlay())
+      if (!settings.announcementSources.includes('dsh-whale-musume')) pcmService.stopExternal()
+      if (snapshot.status !== 'ready' || !settings.enabled) pcmService.stop()
+    }
+    const offSettings = scope.subscribe(update)
+    const offFocus = audioFocus.subscribe(update)
+    update()
+    return () => { offSettings(); offFocus(); collectors.dispose() }
+  }, 'xiaomi-mimo-tts: announcement collectors')
   ctx.effect(() => {
     const off = audioFocus.subscribe(() => {
       playback.resetAutomaticPlayback()
@@ -104,6 +144,7 @@ export function apply(ctx: Context): void {
       local.interrupt()
       playback.interrupt()
       pcmService.stop()
+      questionPlayback?.stop()
       history.stopReplay()
       void soundEffects.dispose()
     })
@@ -116,6 +157,7 @@ export function apply(ctx: Context): void {
     const key = JSON.stringify({ ...ttsSelection(settings), voiceRate: undefined })
     if (providerSelectionKey !== null && providerSelectionKey !== key) {
       live.interrupt(); playback.interrupt(); local.interrupt(); pcmService.stop()
+      questionPlayback?.stop()
     }
     providerSelectionKey = key
     live.configure(settings)
@@ -123,14 +165,14 @@ export function apply(ctx: Context): void {
   }
   updateProvider()
   ctx.effect(() => scope.subscribe(updateProvider), 'xiaomi-mimo-tts: provider selection')
-  ctx.effect(() => onTtsCredentialsSaved(() => { live.interrupt(); playback.interrupt(); local.interrupt(); pcmService.stop() }), 'xiaomi-mimo-tts: saved credentials')
-  const stopOptionalPcm = () => { pcmService.stop(); history.stopReplay() }
+  ctx.effect(() => onTtsCredentialsSaved(() => { live.interrupt(); playback.interrupt(); local.interrupt(); pcmService.stop(); questionPlayback?.stop() }), 'xiaomi-mimo-tts: saved credentials')
+  const stopOptionalPcm = () => { pcmService.stop(); questionPlayback?.stop(); history.stopReplay() }
   live.setBeforePlayback(stopOptionalPcm)
   local.setBeforePlayback(stopOptionalPcm)
   playback.setBeforePlayback(stopOptionalPcm)
   live.setStateChangeListener((sessionId, messageId, status, error) => playback.updateLivePlayback(sessionId, messageId, status, 'live', error))
   local.setStateChangeListener((sessionId, messageId, status, error) => playback.updateLivePlayback(sessionId, messageId, status, 'system', error))
-  const updateVoiceVolume = () => { const volume = resolveTtsSettings(scope.getSnapshot().value).voiceVolume; live.setVolume(volume); local.setVolume(volume); playback.setVolume(volume); pcmService.setVolume(volume) }
+  const updateVoiceVolume = () => { const volume = resolveTtsSettings(scope.getSnapshot().value).voiceVolume; live.setVolume(volume); local.setVolume(volume); playback.setVolume(volume); pcmService.setVolume(volume); questionPlayback?.setVolume(volume) }
   updateVoiceVolume()
   ctx.effect(() => scope.subscribe(updateVoiceVolume), 'xiaomi-mimo-tts: voice volume')
 
@@ -143,6 +185,7 @@ export function apply(ctx: Context): void {
     local.setBeforePlayback(null)
     playback.setBeforePlayback(null)
     await pcmService.dispose()
+    await questionPlayback?.dispose()
   }, 'xiaomi-mimo-tts: optional PCM service')
   ctx.effect(() => () => playback.dispose(), 'xiaomi-mimo-tts: playback')
   ctx.effect(() => () => live.dispose(), 'xiaomi-mimo-tts: live playback')
@@ -160,7 +203,7 @@ export function apply(ctx: Context): void {
     name: 'conversation.input.dock',
     id: 'xiaomi-mimo-tts-session-playback-observer',
     order: 998,
-    inject: (_sessionId: string) => ({ playback, live, local, settings: scope, audioFocus }),
+    inject: (_sessionId: string) => ({ playback, live, local, settings: scope, audioFocus, questions }),
   }, SessionPlaybackObserver))
 
   registerSlotContribution(ctx, 'conversation.chat.assistant-actions', () => ctx.slots.register({
@@ -175,8 +218,9 @@ export function apply(ctx: Context): void {
     name: 'plugins.bundle.config',
     key: 'dsh-xiaomi-tts',
     locale: NS,
-    inject: () => ({ scope, t, controller: soundEffects, history, audioFocus, beforeHistoryPlayback: () => {
+    inject: () => ({ scope, t, controller: soundEffects, history, audioFocus, speechActivity, beforeHistoryPlayback: () => {
       pcmService.stop()
+      questionPlayback?.stop()
       live.interrupt()
       local.interrupt()
       playback.interrupt()

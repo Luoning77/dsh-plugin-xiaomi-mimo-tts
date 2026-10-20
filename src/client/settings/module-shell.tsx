@@ -12,10 +12,12 @@ export interface ModuleShellProps {
   toggleClassName?: string
   headingClassName?: string
   ariaLabel?: string | undefined
+  toggleId?: string
+  controlsId?: string
 }
 
 /** Shared DOM frame for settings cards. Content modules only own their body. */
-export function ModuleShell({ className, title, summary, action, children, collapsible = false, open = false, onToggle, toggleClassName = '', headingClassName = '', ariaLabel }: ModuleShellProps): ReactElement {
+export function ModuleShell({ className, title, summary, action, children, collapsible = false, open = false, onToggle, toggleClassName = '', headingClassName = '', ariaLabel, toggleId, controlsId }: ModuleShellProps): ReactElement {
   const heading = <span className={`xmimo-ui-module-head xmimo-ui-module-heading ${headingClassName}`.trim()}>
     <strong>{title}</strong>
     {summary}
@@ -24,7 +26,11 @@ export function ModuleShell({ className, title, summary, action, children, colla
   return <section className={`xmimo-ui-module ${className}`.trim()}>
     <header className="xmimo-ui-module-header">
       {collapsible
-        ? <button type="button" className={`xmimo-ui-module-toggle ${toggleClassName}`.trim()} aria-expanded={open} aria-label={ariaLabel} onClick={onToggle}>{heading}</button>
+        ? <h3 className="xmimo-ui-accordion-heading"><button type="button" id={toggleId} aria-controls={controlsId}
+          className={`xmimo-ui-module-toggle ${toggleClassName}`.trim()} aria-expanded={open}
+          aria-label={ariaLabel ?? (typeof title === 'string' ? title : undefined)} onClick={onToggle}>
+          {heading}<span className="xmimo-ui-accordion-chevron" aria-hidden="true" />
+        </button></h3>
         : <div className="xmimo-ui-module-toggle xmimo-ui-module-toggle-static">{heading}</div>}
       {action ? <div className="xmimo-ui-module-decoration">{action}</div> : null}
     </header>
