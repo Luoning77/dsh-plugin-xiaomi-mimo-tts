@@ -5,6 +5,7 @@ export function classifyClick(target: EventTarget | null): SoundCue | null {
   if (target.closest('[data-xmimo-sound-toggle]') !== null) return null
   if (target.closest('[data-xmimo-sound-preview]') !== null) return null
   if (target.closest('[data-xmimo-sound-pack-option]') !== null) return null
+  if (target.closest('.dsh-pet-hit') !== null) return 'press'
   const selectOption = target.closest<HTMLElement>('[data-xmimo-select-option]')
   if (selectOption !== null) {
     const radio = selectOption.querySelector<HTMLInputElement>('input[type="radio"]')
