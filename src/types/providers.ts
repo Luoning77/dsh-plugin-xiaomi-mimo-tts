@@ -9,13 +9,13 @@ export type DoubaoTtsModel = typeof DOUBAO_TTS_MODELS[number]
 
 /** Public synthesis selection. Secrets and upstream addresses are Host-only. */
 export type TtsSelection =
-  | { provider: 'xiaomi'; model: TtsModel; voice: string; voiceDesignPrompt: string }
+  | { provider: 'xiaomi'; model: TtsModel; voice: string; voiceDesignPrompt: string; speechInstruction?: string }
   | { provider: 'doubao'; model: DoubaoTtsModel; voice: string; voiceRate?: number; speechInstruction?: string }
 
 export function ttsSelection(settings: ResolvedTtsSettings): TtsSelection {
   return settings.provider === 'doubao'
     ? { provider: 'doubao', model: settings.doubaoModel, voice: settings.doubaoModel === 'seed-icl-2.0' ? settings.doubaoClonedVoice : settings.doubaoVoice, voiceRate: normalizeVoiceRate(settings.voiceRate), ...(settings.doubaoModel === 'seed-tts-2.0' ? { speechInstruction: settings.doubaoInstruction.trim() } : {}) }
-    : { provider: 'xiaomi', model: settings.model, voice: settings.voice, voiceDesignPrompt: settings.voiceDesignPrompt }
+    : { provider: 'xiaomi', model: settings.model, voice: settings.voice, voiceDesignPrompt: settings.voiceDesignPrompt, speechInstruction: settings.instruction.trim() }
 }
 
 export function supportsRealtimeTts(settings: ResolvedTtsSettings): boolean {

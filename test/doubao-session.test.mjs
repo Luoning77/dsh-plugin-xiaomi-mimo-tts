@@ -87,9 +87,9 @@ test('instruction overrides support saved defaults, clearing and type validation
   for (const invalid of [null, 4, [], {}, true]) assert.throws(() => synthesisOptions(configured, { speechInstruction: invalid }), error => error.code === 'invalid-speech-instruction')
   assert.equal(configured.doubaoInstruction, 'saved instruction')
   assert.equal(ttsSelection(synthesisOptions(configured, { model: 'seed-icl-2.0', voice: 'clone', speechInstruction: 'ignored' })).speechInstruction, undefined)
-  const xiaomi = synthesisOptions(configured, { provider: 'xiaomi', speechInstruction: 'ignored' })
-  assert.equal(ttsSelection(xiaomi).speechInstruction, undefined)
-  assert.equal(xiaomi.instruction, 'Xiaomi instruction')
+  const xiaomi = synthesisOptions(configured, { provider: 'xiaomi', speechInstruction: 'Xiaomi draft' })
+  assert.equal(ttsSelection(xiaomi).speechInstruction, 'Xiaomi draft')
+  assert.equal(configured.instruction, 'Xiaomi instruction')
 })
 
 test('text limits cancel the upstream and already-aborted sessions settle without hanging', async () => {

@@ -84,6 +84,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
   const [doubaoVoice, setDoubaoVoice] = useState(initial.doubaoVoice)
   const [doubaoClonedVoice, setDoubaoClonedVoice] = useState(initial.doubaoClonedVoice)
   const [doubaoInstruction, setDoubaoInstruction] = useState(initial.doubaoInstruction)
+  const [instruction, setInstruction] = useState(initial.instruction)
   const apiKey = apiKeys[provider]
   const apiKeyField = provider === 'doubao' ? 'doubaoApiKey' : 'apiKey'
   const setApiKey = (next: string): void => { setApiKeys(current => ({ ...current, [provider]: next })) }
@@ -121,7 +122,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
 
   const accepted = resolveTtsSettings(value)
   const base = resolveTtsSettings(layerSettings(snapshot.base))
-  const draft: DraftSettings = { provider, doubaoModel, doubaoVoice, doubaoClonedVoice, doubaoInstruction, enabled, autoPlay: enabled && autoPlay, voiceVolume, voiceRate, readScope, model, localSpeechMode, localVoiceURI, voice, voiceDesignPrompt, voiceDesignCustomPrompt, soundEnabled, soundVolume, soundPack, taskSounds, clickSounds }
+  const draft: DraftSettings = { provider, doubaoModel, doubaoVoice, doubaoClonedVoice, doubaoInstruction, instruction, enabled, autoPlay: enabled && autoPlay, voiceVolume, voiceRate, readScope, model, localSpeechMode, localVoiceURI, voice, voiceDesignPrompt, voiceDesignCustomPrompt, soundEnabled, soundVolume, soundPack, taskSounds, clickSounds }
   const acceptedValue = (field: EditableSettingField): ResolvedSettings[typeof field] => {
     const raw = value?.[field]
     return (raw === undefined ? accepted[field] : raw) as ResolvedSettings[typeof field]
@@ -203,6 +204,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
     setDoubaoVoice(next.doubaoVoice)
     setDoubaoClonedVoice(next.doubaoClonedVoice)
     setDoubaoInstruction(next.doubaoInstruction)
+    setInstruction(next.instruction)
     setEnabled(next.enabled)
     setAutoPlay(next.autoPlay)
     setVoiceVolume(next.voiceVolume)
@@ -251,6 +253,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
     if (field === 'doubaoVoice') setDoubaoVoice(base.doubaoVoice)
     if (field === 'doubaoClonedVoice') setDoubaoClonedVoice(base.doubaoClonedVoice)
     if (field === 'doubaoInstruction') setDoubaoInstruction(base.doubaoInstruction)
+    if (field === 'instruction') setInstruction(base.instruction)
     if (field === 'enabled') setEnabled(base.enabled)
     if (field === 'autoPlay') setAutoPlay(base.autoPlay)
     if (field === 'voiceVolume') setVoiceVolume(base.voiceVolume)
@@ -281,6 +284,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
     setDoubaoVoice(next.doubaoVoice)
     setDoubaoClonedVoice(next.doubaoClonedVoice)
     setDoubaoInstruction(next.doubaoInstruction)
+    setInstruction(next.instruction)
     setEnabled(next.enabled)
     setAutoPlay(next.autoPlay)
     setVoiceVolume(next.voiceVolume)
@@ -330,7 +334,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
       return
     }
     void previewPlayer.play(text, {
-      provider, doubaoModel, doubaoVoice, doubaoClonedVoice, doubaoInstruction,
+      provider, doubaoModel, doubaoVoice, doubaoClonedVoice, doubaoInstruction, instruction,
       model,
       localSpeechMode,
       localVoiceURI,
@@ -443,8 +447,12 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback }: 
           doubaoModel={doubaoModel}
           doubaoVoice={doubaoVoice}
           doubaoClonedVoice={doubaoClonedVoice}
-          doubaoInstruction={doubaoInstruction}
-          onDoubaoInstructionChange={next => { previewPlayer.stop(); setDoubaoInstruction(next); markChange('doubaoInstruction') }}
+          speechInstruction={provider === 'doubao' ? doubaoInstruction : instruction}
+          onSpeechInstructionChange={next => {
+            previewPlayer.stop()
+            if (provider === 'doubao') { setDoubaoInstruction(next); markChange('doubaoInstruction') }
+            else { setInstruction(next); markChange('instruction') }
+          }}
           onDoubaoModelChange={next => { previewPlayer.stop(); setDoubaoModel(next); markChange('doubaoModel') }}
           onDoubaoVoiceChange={next => { previewPlayer.stop(); setDoubaoVoice(next); markChange('doubaoVoice') }}
           onDoubaoClonedVoiceChange={next => { previewPlayer.stop(); setDoubaoClonedVoice(next); markChange('doubaoClonedVoice') }}

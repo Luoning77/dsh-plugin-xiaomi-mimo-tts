@@ -209,12 +209,10 @@
 }
 
 .xmimo-tts-field-info-tooltip {
-  position: absolute;
-  z-index: 10;
-  top: calc(100% + 4px);
-  right: 0;
+  position: fixed;
+  z-index: 1000;
   box-sizing: border-box;
-  width: min(320px, calc(100vw - 48px));
+  width: min(320px, calc(100vw - 32px));
   border: 1px solid var(--xmimo-ui-border-soft);
   border-radius: 8px;
   padding: 8px 10px;
@@ -224,6 +222,6 @@
   font-size: 12px;
   font-weight: 400;
   line-height: 1.6;
-  white-space: normal;
+  white-space: pre-line;
   overflow-wrap: anywhere
 }

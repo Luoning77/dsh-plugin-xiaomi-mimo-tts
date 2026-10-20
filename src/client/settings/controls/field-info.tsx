@@ -1,11 +1,34 @@
 import type { ReactElement } from 'react'
-import { useId, useState } from 'react'
+import { useId, useLayoutEffect, useRef, useState } from 'react'
 
 export function FieldInfo({ label, text }: { label: string; text: string }): ReactElement {
   const id = useId()
   const [open, setOpen] = useState(false)
-  return <span className="xmimo-tts-field-info" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+  const button = useRef<HTMLButtonElement>(null)
+  const tooltip = useRef<HTMLSpanElement>(null)
+  const [position, setPosition] = useState({ left: 0, top: 0 })
+  useLayoutEffect(() => {
+    if (!open) return
+    const place = (): void => {
+      if (button.current === null || tooltip.current === null) return
+      const anchor = button.current.getBoundingClientRect()
+      const box = tooltip.current.getBoundingClientRect()
+      setPosition({
+        left: Math.max(16, Math.min(anchor.left, window.innerWidth - box.width - 16)),
+        top: anchor.bottom + box.height + 6 <= window.innerHeight - 16 ? anchor.bottom + 6 : Math.max(16, anchor.top - box.height - 6),
+      })
+    }
+    place()
+    window.addEventListener('resize', place)
+    window.addEventListener('scroll', place, true)
+    return () => {
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, true)
+    }
+  }, [open, text])
+  return <span className="xmimo-tts-field-info" onMouseEnter={() => setOpen(true)} onMouseLeave={() => { if (document.activeElement !== button.current) setOpen(false) }}>
     <button
+      ref={button}
       type="button"
       className="xmimo-tts-field-info-button"
       aria-label={label}
@@ -22,6 +45,6 @@ export function FieldInfo({ label, text }: { label: string; text: string }): Rea
         <path d="M12 11v6M12 7h.01" />
       </svg>
     </button>
-    {open ? <span id={id} role="tooltip" className="xmimo-tts-field-info-tooltip">{text}</span> : null}
+    {open ? <span ref={tooltip} id={id} role="tooltip" className="xmimo-tts-field-info-tooltip" style={position}>{text}</span> : null}
   </span>
 }

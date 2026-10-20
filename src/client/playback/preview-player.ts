@@ -32,6 +32,7 @@ export interface PreviewSettings {
   doubaoVoice?: string
   doubaoClonedVoice?: string
   doubaoInstruction?: string
+  instruction?: string
   model: TtsModel
   localSpeechMode: TtsLocalSpeechMode
   localVoiceURI: string
@@ -48,6 +49,7 @@ interface PreviewRequestBody {
   voice: string
   voiceDesignPrompt: string
   format?: 'mp3' | 'wav'
+  speechInstruction?: string
 }
 
 function browserVoice(value: string): SpeechSynthesisVoice | undefined {
@@ -231,6 +233,7 @@ export class PreviewPlayer {
       model: settings.model,
       voice: settings.voice,
       voiceDesignPrompt: settings.voiceDesignPrompt,
+      ...(settings.instruction === undefined ? {} : { speechInstruction: settings.instruction }),
       ...(format === undefined ? {} : { format }),
     }
   }

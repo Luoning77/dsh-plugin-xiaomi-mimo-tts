@@ -272,7 +272,7 @@
   white-space: nowrap
 }
 
-.xmimo-tts-cloned-voice-history,
+.xmimo-tts-voice-id-history,
 .xmimo-tts-instruction-presets {
   display: flex;
   min-width: 0;
@@ -281,7 +281,7 @@
   gap: 6px
 }
 
-.xmimo-tts-cloned-voice-tag,
+.xmimo-tts-voice-id-tag,
 .xmimo-tts-instruction-tag {
   max-width: 100%;
   overflow: hidden;
@@ -298,21 +298,21 @@
   cursor: pointer
 }
 
-.xmimo-tts-cloned-voice-tag:hover:not(:disabled),
-.xmimo-tts-cloned-voice-tag[aria-pressed=true],
+.xmimo-tts-voice-id-tag:hover:not(:disabled),
+.xmimo-tts-voice-id-tag[aria-pressed=true],
 .xmimo-tts-instruction-tag:hover:not(:disabled),
 .xmimo-tts-instruction-tag[aria-pressed=true] {
   color: var(--dsw-alias-brand-primary, #4f6ef7);
   border-color: currentColor
 }
 
-.xmimo-tts-cloned-voice-tag:focus-visible,
+.xmimo-tts-voice-id-tag:focus-visible,
 .xmimo-tts-instruction-tag:focus-visible {
   outline: 2px solid var(--dsw-alias-brand-primary, #4f6ef7);
   outline-offset: 2px
 }
 
-.xmimo-tts-cloned-voice-tag:disabled,
+.xmimo-tts-voice-id-tag:disabled,
 .xmimo-tts-instruction-tag:disabled {
   cursor: not-allowed;
   opacity: .55

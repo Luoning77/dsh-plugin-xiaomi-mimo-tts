@@ -110,7 +110,11 @@ Select Xiaomi MiMo or Doubao in the API key module, then save. Each provider ret
 | Standard TTS (`seed-tts-2.0`) | Choose a built-in voice or enter a standard voice ID. |
 | Voice cloning (`seed-icl-2.0`) | [Create a voice](https://console.volcengine.com/speech/new/experience/clone?projectName=default), then paste its ID into the plugin. |
 
+Xiaomi built-in voices, Xiaomi VoiceDesign and Doubao standard TTS share one speech instruction component with 20 tags below the voice picker (including Cantonese, Shanghai, Henan, Beijing, Tianjin, Sichuan, Shaanxi and Northeastern dialects), including gentle, cheerful, storytelling, argument, whisper, shy anticipation, world-weary, tearful and accent styles. Click to fill an editable instruction, or select Natural to clear it. Each provider saves its own instruction and retains it across provider switches. Preview accepts the draft; saving applies it to subsequent speech. Xiaomi VoiceDesign sends both the voice description and the speech instruction. Presets are adapted from the [official examples](https://docs.volcengine.com/docs/DoubaoVoice/DoubaoTextToSpeech20CapabilityIntroduction?lang=zh), and the information icon beside the title explains the limitations: results vary by model, voice and text; dialects, tears and whispers may not be reproduced accurately, and providers may differ. Browser speech does not apply instructions; Doubao cloned voices neither display nor send them. Playback speed uses the same tooltip style to explain the 0.5×–2.0× range, how each provider applies speed, and pitch changes in Xiaomi streaming.
+
 Enable the corresponding Doubao model service and use an API key from the new console. Save the key, then test in Broadcast Studio. A cloned voice ID is required for voice cloning.
+
+Selecting Custom voice ID in standard TTS offers the same history tags as voice cloning: blur the field or press Enter to remember an ID, then click a tag to reuse it. Each mode retains its own 10 most recent unique IDs, without an extra history heading. Switching between Doubao standard TTS and voice cloning also switches the mixing console mascot and speech bubble.
 
 Speed is applied during synthesis; changes take effect on the next request. Saved recordings retain their original synthesis speed.
 

@@ -4,6 +4,7 @@ import { DOUBAO_VOICE_PRESETS } from '../../../doubao-voices.js'
 import type { Translate } from '../../localization.js'
 import { VoicePresetPicker } from './built-in-voice-picker.js'
 import type { VoicePickerPreset } from './built-in-voice-picker.js'
+import { VoiceIdInput } from './voice-id-input.js'
 
 const CUSTOM_VOICE = '__custom__'
 const MINIMAL_VOICE_IDS = new Set([
@@ -36,6 +37,6 @@ export function DoubaoVoicePicker({ value, disabled, minimal = false, onChange, 
       if (next === CUSTOM_VOICE) setCustom(true)
       else { setCustom(false); onChange(next) }
     }} />
-    {custom || !known ? <input type="text" value={value} disabled={disabled} spellCheck={false} aria-label={t('settings.doubaoVoiceId')} placeholder={t('settings.doubaoVoiceId')} onChange={event => onChange(event.target.value)} /> : <small>{value}</small>}
+    {custom || !known ? <VoiceIdInput kind="standard" value={value} disabled={disabled} label={t('settings.doubaoVoiceId')} historyLabel={t('settings.doubaoStandardVoiceHistory')} rememberInitialValue={!DOUBAO_VOICE_PRESETS.some(voice => voice.value === value)} onChange={onChange} /> : <small>{value}</small>}
   </div>
 }

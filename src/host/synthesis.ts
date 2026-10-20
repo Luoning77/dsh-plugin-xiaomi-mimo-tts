@@ -9,7 +9,7 @@ export interface SynthesizeBody {
   model?: unknown
   voice?: unknown
   voiceDesignPrompt?: unknown
-  /** Optional Doubao standard-voice instruction. Empty string clears the saved value for this request. */
+  /** Optional speech instruction. Empty string clears the selected provider's saved value for this request. */
   speechInstruction?: unknown
   /** Optional Doubao synthesis speed in multiples of the original rate (0.5–2). */
   voiceRate?: unknown
@@ -37,9 +37,10 @@ export function apiErrorMessage(status: number, parsed: XiaomiAudioResponse | un
 }
 
 export function requestMessages(options: ResolvedTtsSettings, text: string): Array<{ role: 'user' | 'assistant'; content: string }> {
-  const context = options.model === 'mimo-v2.5-tts-voicedesign'
-    ? options.voiceDesignPrompt.trim()
-    : [options.presetStylePrompt.trim(), options.instruction.trim()].filter((item) => item.length > 0).join('\n')
+  const context = [
+    options.model === 'mimo-v2.5-tts-voicedesign' ? options.voiceDesignPrompt.trim() : options.presetStylePrompt.trim(),
+    options.instruction.trim(),
+  ].filter((item) => item.length > 0).join('\n')
   const messages: Array<{ role: 'user' | 'assistant'; content: string }> = []
   if (context.length > 0) messages.push({ role: 'user', content: context })
   messages.push({ role: 'assistant', content: text })

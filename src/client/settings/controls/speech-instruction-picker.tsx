@@ -10,21 +10,21 @@ const PRESETS = [
   'Cantonese', 'Shanghai', 'Henan', 'Beijing', 'Tianjin', 'Sichuan', 'Shaanxi', 'Dongbei',
 ] as const
 
-export function DoubaoInstructionPicker({ value, disabled, minimal = false, onChange, t }: { value: string; disabled: boolean; minimal?: boolean; onChange: (value: string) => void; t: Translate }): ReactElement {
+export function SpeechInstructionPicker({ value, disabled, minimal = false, onChange, t }: { value: string; disabled: boolean; minimal?: boolean; onChange: (value: string) => void; t: Translate }): ReactElement {
   const presets = minimal ? PRESETS.slice(0, 8) : PRESETS
   return <>
-    <div className="xmimo-tts-instruction-presets" role="group" aria-label={t('settings.doubaoInstructionPresets')}>
+    <div className="xmimo-tts-instruction-presets" role="group" aria-label={t('settings.speechInstructionPresets')}>
       {presets.map(preset => {
-        const prompt = preset === 'Natural' ? '' : t(`settings.doubaoInstruction${preset}Prompt`)
+        const prompt = preset === 'Natural' ? '' : t(`settings.speechInstruction${preset}Prompt`)
         return <button
           key={preset}
           type="button"
           className="xmimo-tts-instruction-tag"
           disabled={disabled}
           aria-pressed={value.trim() === prompt}
-          title={prompt || t('settings.doubaoInstructionHint')}
+          title={prompt || t('settings.speechInstructionHint')}
           onClick={() => onChange(prompt)}
-        >{t(`settings.doubaoInstruction${preset}`)}</button>
+        >{t(`settings.speechInstruction${preset}`)}</button>
       })}
     </div>
     {minimal ? null : <>
@@ -32,11 +32,11 @@ export function DoubaoInstructionPicker({ value, disabled, minimal = false, onCh
         value={value}
         rows={3}
         disabled={disabled}
-        aria-label={t('settings.doubaoInstruction')}
-        placeholder={t('settings.doubaoInstructionPlaceholder')}
+        aria-label={t('settings.speechInstruction')}
+        placeholder={t('settings.speechInstructionPlaceholder')}
         onChange={event => onChange(event.target.value)}
       />
-      <small>{t('settings.doubaoInstructionHint')}</small>
+      <small>{t('settings.speechInstructionHint')}</small>
     </>}
   </>
 }

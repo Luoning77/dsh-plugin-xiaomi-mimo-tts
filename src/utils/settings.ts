@@ -25,6 +25,7 @@ export function resolveTtsSettings(value: TtsSettings | undefined): ResolvedTtsS
   return {
     ...resolved,
     provider: resolved.provider === 'doubao' ? 'doubao' : 'xiaomi',
+    instruction: typeof resolved.instruction === 'string' ? resolved.instruction : DEFAULT_TTS_SETTINGS.instruction,
     doubaoInstruction: typeof resolved.doubaoInstruction === 'string' ? resolved.doubaoInstruction : '',
     doubaoModel: DOUBAO_TTS_MODELS.includes(resolved.doubaoModel) ? resolved.doubaoModel : 'seed-tts-2.0',
     model,

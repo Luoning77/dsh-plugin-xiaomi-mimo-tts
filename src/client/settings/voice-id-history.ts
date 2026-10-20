@@ -1,5 +1,9 @@
-const STORAGE_KEY = 'dsh-xiaomi-mimo-tts:cloned-voice-history'
+const STORAGE_KEYS = {
+  standard: 'dsh-xiaomi-mimo-tts:standard-voice-history',
+  cloned: 'dsh-xiaomi-mimo-tts:cloned-voice-history',
+} as const
 const HISTORY_LIMIT = 10
+export type VoiceIdHistoryKind = keyof typeof STORAGE_KEYS
 type HistoryStorage = Pick<Storage, 'getItem' | 'setItem'>
 
 function browserStorage(): HistoryStorage | undefined {
@@ -15,21 +19,21 @@ function normalizeHistory(values: unknown): string[] {
   return [...new Set(values.filter((value): value is string => typeof value === 'string').map(value => value.trim()).filter(Boolean))].slice(0, HISTORY_LIMIT)
 }
 
-export function readClonedVoiceHistory(storage = browserStorage()): string[] {
+export function readVoiceIdHistory(kind: VoiceIdHistoryKind, storage = browserStorage()): string[] {
   try {
-    return normalizeHistory(JSON.parse(storage?.getItem(STORAGE_KEY) ?? '[]'))
+    return normalizeHistory(JSON.parse(storage?.getItem(STORAGE_KEYS[kind]) ?? '[]'))
   } catch {
     return []
   }
 }
 
-export function rememberClonedVoice(history: string[], value: string): string[] {
+export function rememberVoiceId(history: string[], value: string): string[] {
   return normalizeHistory([value, ...history])
 }
 
-export function writeClonedVoiceHistory(history: string[], storage = browserStorage()): void {
+export function writeVoiceIdHistory(kind: VoiceIdHistoryKind, history: string[], storage = browserStorage()): void {
   try {
-    storage?.setItem(STORAGE_KEY, JSON.stringify(normalizeHistory(history)))
+    storage?.setItem(STORAGE_KEYS[kind], JSON.stringify(normalizeHistory(history)))
   } catch {
     // Keep the in-memory history usable when browser storage is unavailable.
   }
