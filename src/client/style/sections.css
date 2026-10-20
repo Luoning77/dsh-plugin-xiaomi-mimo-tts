@@ -52,7 +52,7 @@
   transition: grid-template-rows 220ms ease, opacity 160ms ease;
 }
 .xmimo-ui-accordion-collapse-open { grid-template-rows: 1fr; opacity: 1; }
-.xmimo-ui-accordion-content { min-height: 0; overflow: auto; overscroll-behavior-y: contain; }
+.xmimo-ui-accordion-content { min-height: 0; overflow: auto; overscroll-behavior-y: auto; }
 .xmimo-tts-card-minimal .xmimo-ui-accordion .xmimo-ui-module-head > strong {
   display: block;
   position: static;
