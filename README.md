@@ -20,7 +20,7 @@
 
 > MiMo TTS 当前可能处于限时免费或调整计费阶段，请以 Xiaomi MiMo 官方平台的最新政策为准。
 
-> `4.0.1` 为正式版，使用 npm `latest` 渠道，安装命令：`dsh plugin --profile web add dsh-xiaomi-tts@latest`。需要固定版本时可指定 `dsh-xiaomi-tts@4.0.1`。
+> `4.1.0` 为正式版，使用 npm `latest` 渠道，安装命令：`dsh plugin --profile web add dsh-xiaomi-tts@latest`。需要固定版本时可指定 `dsh-xiaomi-tts@4.1.0`。
 
 ## 🎨 预览
 
@@ -220,7 +220,7 @@ pnpm pack:check
 Windows 从本地开发链接切换到 npm 包前，请先停止 DSH Web，避免运行中的 Node 进程占用 Junction：
 
 ```powershell
-.\start\dsh-plugin-reinstall.bat 4.0.1
+.\start\dsh-plugin-reinstall.bat 4.1.0
 ```
 
 如果是 DSH Desktop profile，只需要卸载残留的本地链接，可在退出 Desktop 后运行：
