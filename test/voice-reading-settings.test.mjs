@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   DOUBAO_VOICE_PRESETS,
+  TTS_READ_SCOPES,
   TTS_VOICE_DESIGN_PRESETS,
   TTS_VOICE_PRESETS,
   resolveTtsSettings,
@@ -12,8 +13,12 @@ const {
   buildVoiceReadingVoiceSource,
   voiceChoiceWriteOps,
   autoPlayWriteOps,
+  readScopeLabelKey,
+  readScopeHintKey,
+  readScopeWriteOps,
   soundWriteOps,
 } = await loadClientModule('src/client/settings/voice-reading-options.ts')
+const { zh, en } = await loadClientModule('src/client/localization.ts')
 
 /** Index write operations by their dotted path so order is not incidental. */
 function operationsByPath(ops) {
@@ -215,4 +220,22 @@ test('resolved settings always yield a voice change that satisfies the write con
     const paths = ops.map(op => op.path.join('.'))
     assert.equal(new Set(paths).size, paths.length, 'duplicate write paths')
   }
+})
+
+test('every read scope maps to a distinct localized label and hint in both locales', () => {
+  assert.deepEqual([...TTS_READ_SCOPES].sort(), ['first-segment', 'full', 'smart'])
+  const labels = TTS_READ_SCOPES.map(scope => readScopeLabelKey(scope))
+  const hints = TTS_READ_SCOPES.map(scope => readScopeHintKey(scope))
+  assert.equal(new Set(labels).size, labels.length, 'read scope labels must be distinct')
+  assert.equal(new Set(hints).size, hints.length, 'read scope hints must be distinct')
+  for (const key of [...labels, ...hints]) {
+    assert.equal(typeof zh[key], 'string', `missing zh copy for ${key}`)
+    assert.ok(zh[key].length > 0, `empty zh copy for ${key}`)
+    assert.equal(typeof en[key], 'string', `missing en copy for ${key}`)
+    assert.ok(en[key].length > 0, `empty en copy for ${key}`)
+  }
+})
+
+for (const scope of TTS_READ_SCOPES) test(`selecting the ${scope} read scope writes only readScope`, () => {
+  assert.deepEqual(readScopeWriteOps(scope), [{ op: 'set', path: ['readScope'], value: scope }])
 })

@@ -7,7 +7,7 @@
  */
 
 import { DOUBAO_VOICE_PRESETS, TTS_VOICE_DESIGN_PRESETS, TTS_VOICE_PRESETS } from '../../shared.js'
-import type { ResolvedTtsSettings } from '../../shared.js'
+import type { ResolvedTtsSettings, TtsReadScope } from '../../shared.js'
 import type { LocaleKey } from '../localization.js'
 
 export type VoiceReadingField = 'voice' | 'voiceDesignPrompt' | 'doubaoVoice' | 'doubaoClonedVoice'
@@ -98,6 +98,32 @@ export function autoPlayWriteOps(next: boolean, current: ResolvedTtsSettings): V
   }
   ops.push({ op: 'set', path: ['autoPlay'], value: true })
   return ops
+}
+
+const READ_SCOPE_LABELS: Record<TtsReadScope, LocaleKey> = {
+  smart: 'settings.readScopeSmart',
+  full: 'settings.readScopeFull',
+  'first-segment': 'settings.readScopeFirstSegment',
+}
+
+const READ_SCOPE_HINTS: Record<TtsReadScope, LocaleKey> = {
+  smart: 'settings.readScopeSmartHint',
+  full: 'settings.readScopeFullHint',
+  'first-segment': 'settings.readScopeFirstSegmentHint',
+}
+
+/** Localized label for one read-aloud range option. */
+export function readScopeLabelKey(scope: TtsReadScope): LocaleKey {
+  return READ_SCOPE_LABELS[scope]
+}
+
+/** Localized description of the selected read-aloud range. */
+export function readScopeHintKey(scope: TtsReadScope): LocaleKey {
+  return READ_SCOPE_HINTS[scope]
+}
+
+export function readScopeWriteOps(scope: TtsReadScope): VoiceReadingWriteOp[] {
+  return [{ op: 'set', path: ['readScope'], value: scope }]
 }
 
 export function soundWriteOps(next: boolean, current: ResolvedTtsSettings): VoiceReadingWriteOp[] {

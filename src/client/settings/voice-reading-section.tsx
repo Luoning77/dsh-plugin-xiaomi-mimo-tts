@@ -1,8 +1,8 @@
 import type { ReactElement } from 'react'
 import { useMemo, useState } from 'react'
 import { Switch } from '@deepseek-ai/dsh-client-ui-primitives'
-import { resolveTtsSettings } from '../../shared.js'
-import type { TtsSettings } from '../../shared.js'
+import { resolveTtsSettings, TTS_READ_SCOPES } from '../../shared.js'
+import type { TtsReadScope, TtsSettings } from '../../shared.js'
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { Translate } from '../localization.js'
@@ -10,6 +10,9 @@ import { readVoiceIdHistory } from './voice-id-history.js'
 import {
   autoPlayWriteOps,
   buildVoiceReadingVoiceSource,
+  readScopeHintKey,
+  readScopeLabelKey,
+  readScopeWriteOps,
   soundWriteOps,
   voiceChoiceWriteOps,
 } from './voice-reading-options.js'
@@ -95,6 +98,23 @@ function VoiceReadingPage({ scope, t }: VoiceReadingPageProps): ReactElement | n
           {source.choices.map((choice) => <option key={choice.value} value={choice.value}>
             {choice.detail ? `${choice.label} · ${choice.detail}` : choice.label}
           </option>)}
+        </select>
+      </div>
+      <div className="xmimo-voice-reading-row">
+        <div className="xmimo-voice-reading-copy">
+          <div className="xmimo-voice-reading-row-title">{t('settings.readScope')}</div>
+          <div className="xmimo-voice-reading-row-hint">{t(readScopeHintKey(settings.readScope))}</div>
+        </div>
+        <select
+          className="xmimo-voice-reading-select"
+          aria-label={t('settings.readScope')}
+          value={settings.readScope}
+          disabled={disabled}
+          onChange={(event) => {
+            write(readScopeWriteOps(event.currentTarget.value as TtsReadScope))
+          }}
+        >
+          {TTS_READ_SCOPES.map((scope) => <option key={scope} value={scope}>{t(readScopeLabelKey(scope))}</option>)}
         </select>
       </div>
       <div className="xmimo-voice-reading-row">
