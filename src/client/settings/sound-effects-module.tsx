@@ -1,5 +1,5 @@
 import { SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react'
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react'
 import { useEffect, useRef } from 'react'
 import { resolveSoundEffectsMode, resolveSoundEffectsScope, SOUND_PACKS, SOUND_EFFECTS_SCOPES } from '../../shared.js'
 import type { SoundEffectsMode, SoundEffectsScope, SoundPack } from '../../shared.js'
@@ -28,21 +28,19 @@ interface SoundEffectsPanelProps {
 
 const PREVIEW_CUES = ['start', 'complete', 'success', 'error', 'notification', 'press', 'select', 'toggle-on', 'toggle-off', 'send', 'open', 'close', 'delete', 'stop', 'queued'] as const satisfies readonly SoundCue[]
 
-type SoundPackTone = 'neutral' | 'calm' | 'cool' | 'bright'
-
-const SOUND_PACK_TONES: Record<SoundPack, SoundPackTone> = {
-  minimal: 'neutral',
-  soft: 'calm',
-  glass: 'cool',
-  arcade: 'bright',
-  mechanical: 'bright',
-  organic: 'calm',
-  dreamy: 'calm',
-  scifi: 'cool',
-  rubber: 'bright',
-  cinematic: 'cool',
-  studio: 'neutral',
-  zen: 'neutral',
+const SOUND_PACK_COLORS: Record<SoundPack, string> = {
+  minimal: '#8793a6',
+  soft: '#4fb7a5',
+  glass: '#6c8de7',
+  arcade: '#e58d4f',
+  mechanical: '#c97465',
+  organic: '#72ad61',
+  dreamy: '#b27fd0',
+  scifi: '#5d9bd4',
+  rubber: '#d2a044',
+  cinematic: '#7c77c6',
+  studio: '#71808e',
+  zen: '#58a6b0',
 }
 
 /** Collapsible sound library, followed by the Broadcast Desk. */
@@ -142,7 +140,7 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
             type="button"
             role="radio"
             data-xmimo-sound-pack-option="true"
-            data-tone={SOUND_PACK_TONES[option]}
+            style={{ '--xmimo-sound-pack-accent': SOUND_PACK_COLORS[option] } as CSSProperties}
             aria-checked={pack === option}
             tabIndex={pack === option ? 0 : -1}
             className={[
@@ -153,6 +151,10 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
             onClick={() => { selectPack(option) }}
             onKeyDown={(event) => { handlePackKeyDown(event, index) }}
           >
+            <span className="xmimo-tts-sound-pack-gift" aria-hidden="true">
+              <span className="xmimo-tts-sound-pack-gift-lid" />
+              <span className="xmimo-tts-sound-pack-gift-ribbon" />
+            </span>
             <span className="xmimo-tts-sound-pack-name">{option}</span>
             <span className="xmimo-tts-sound-pack-wave" aria-hidden="true"><i /><i /><i /></span>
           </button>)}
