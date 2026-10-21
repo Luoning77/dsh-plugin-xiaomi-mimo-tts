@@ -19,6 +19,16 @@
   .xmimo-tts-history-row { grid-template-columns: 44px minmax(0, 1fr); }
   .xmimo-tts-history-actions { grid-column: 2; justify-content: flex-end; }
   .xmimo-tts-history-page .xmimo-tts-history-player-toggle { width: 44px; height: 44px; min-width: 44px; }
+
+  .xmimo-tts-sound-previews button {
+    min-height: 54px;
+    padding: 12px 5px 10px;
+    gap: 6px
+  }
+  .xmimo-tts-sound-previews button>svg {
+    width: 20px;
+    height: 20px
+  }
 }
 
 @media (max-width: 480px) {
@@ -86,13 +96,16 @@
     font-size: 10px
   }
   .xmimo-tts-sound-previews {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
     gap: 2px;
     overflow: visible
   }
   .xmimo-tts-sound-previews button {
-    padding-right: 1px;
-    padding-left: 1px;
+    padding: 8px 1px 7px;
     font-size: 9px
+  }
+  .xmimo-tts-sound-previews button>svg {
+    width: 16px;
+    height: 16px
   }
 }

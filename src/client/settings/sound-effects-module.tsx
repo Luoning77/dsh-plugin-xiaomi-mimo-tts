@@ -7,6 +7,7 @@ import type { Translate } from '../localization.js'
 import { EnergyVolumeSlider } from './controls/energy-volume-slider.js'
 import type { SoundEffectsController, SoundCue } from '../sound-effects/types.js'
 import { CollapsibleModule } from './collapsible-module.js'
+import { SoundEffectIcon } from '../sound-effects/sound-effect-icon.js'
 
 interface SoundEffectsPanelProps {
   t: Translate
@@ -25,7 +26,7 @@ interface SoundEffectsPanelProps {
   onPackChange: (pack: SoundPack) => void
 }
 
-const PREVIEW_CUES = ['start', 'complete', 'error', 'notification', 'press'] as const satisfies readonly SoundCue[]
+const PREVIEW_CUES = ['start', 'complete', 'success', 'error', 'notification', 'press', 'select', 'toggle-on', 'toggle-off', 'send', 'open', 'close', 'delete', 'stop', 'queued'] as const satisfies readonly SoundCue[]
 
 type SoundPackTone = 'neutral' | 'calm' | 'cool' | 'bright'
 
@@ -168,12 +169,11 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
             aria-label={previewLabel(cue)}
             onClick={() => { controller.preview(cue) }}
           >
+            <SoundEffectIcon cue={cue} />
             <span>{previewLabel(cue)}</span>
           </button>)}
         </div>
       </div>
-      {!minimal ? <small className="xmimo-tts-sound-description">{t('settings.soundEffectsDescription')}</small> : null}
-      {!minimal ? <small className="xmimo-tts-sound-supported">{t('settings.soundEffectsSupported')}</small> : null}
       {!writable ? <small>{t('settings.readOnly')}</small> : null}
     </div>
   </CollapsibleModule>

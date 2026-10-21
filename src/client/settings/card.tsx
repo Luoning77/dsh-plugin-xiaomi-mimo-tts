@@ -402,10 +402,9 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
 
   const changeSoundEnabled = (next: boolean): void => {
     const flags = getSoundEffectsModeFlags(resolveSoundEffectsScope(taskSounds, clickSounds))
-    if (minimalMode && !next && soundEnabled && clickSounds) controller.play('toggle-off')
+    if (!next && soundEnabled && clickSounds) controller.play('toggle-off')
     controller.update({ enabled: next, taskSounds: flags.taskSounds, clickSounds: flags.clickSounds, volume: soundVolume, pack: soundPack })
-    if (minimalMode && next && flags.clickSounds) controller.play('toggle-on')
-    else if (!minimalMode) toggleSoundPlayer.schedule(next ? 'on' : 'off')
+    if (next && flags.clickSounds) controller.play('toggle-on')
     setSoundEnabled(next)
     setTaskSounds(flags.taskSounds)
     setClickSounds(flags.clickSounds)
