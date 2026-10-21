@@ -6,7 +6,7 @@
  * tsdown.config.ts; Vite preview supports ?raw natively) and concatenated
  * below, so CASCADE ORDER == the order of this list:
  *
- *   1. component modules (action → volume),
+ *   1. component modules (action → volume, voice-reading, history),
  *   2. responsive.css (max-width) then motion.css (prefers-reduced-motion)
  *      last — they intentionally override the base modules,
  *   3. global.css at the very end: design tokens + shared module chrome
@@ -28,6 +28,7 @@ import preview from './preview.css?raw'
 import sections from './sections.css?raw'
 import sound from './sound.css?raw'
 import volume from './volume.css?raw'
+import voiceReading from './voice-reading.css?raw'
 import responsive from './responsive.css?raw'
 import motion from './motion.css?raw'
 import global from './global.css?raw'
@@ -48,6 +49,7 @@ export const CLIENT_STYLES = [
   sections,
   sound,
   volume,
+  voiceReading,
   history,
   responsive,
   motion,

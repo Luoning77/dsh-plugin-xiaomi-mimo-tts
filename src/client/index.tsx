@@ -17,6 +17,9 @@ import { LiveSpeechController, LocalSpeechController, PlaybackController } from 
 import { XiaomiMimoTtsPcmService } from './playback/pcm-play-service.js'
 import { onTtsCredentialsSaved } from './conversation/api-key-status.js'
 import { SettingsCard } from './settings/card.js'
+import { installVoiceReadingNavIcon } from './settings/nav-icon.js'
+import { VoiceReadingSection } from './settings/voice-reading-section.js'
+import type { VoiceReadingSectionInjected } from './settings/voice-reading-section.js'
 import { createSoundEffectsController, installClickSounds } from './sound-effects/index.js'
 import { installTaskSoundWatcher } from './sound-effects/task-watcher.js'
 import { CLIENT_STYLES } from './style/index.js'
@@ -47,7 +50,7 @@ function formatStartupError(error: unknown): string {
 
 function registerSlotContribution(
   ctx: Context,
-  name: 'conversation.input.dock' | 'conversation.chat.assistant-actions' | 'plugins.bundle.config',
+  name: 'conversation.input.dock' | 'conversation.chat.assistant-actions' | 'plugins.bundle.config' | 'settings.section',
   register: () => (() => void) | Iterable<() => void>,
 ): void {
   ctx.effect(() => {
@@ -67,7 +70,7 @@ function registerSlotContribution(
   }, `xiaomi-mimo-tts: ${name}`)
 }
 
-/** Register the Web action, settings card, locale dictionaries, and styles. */
+/** Register the Web action, settings card, Voice reading section, locale dictionaries, and styles. */
 export function apply(ctx: Context): void {
   const locale = ctx.locale as unknown as {
     bind(namespace: string): Translate
@@ -199,6 +202,10 @@ export function apply(ctx: Context): void {
     return () => style.remove()
   }, 'xiaomi-mimo-tts: styles')
 
+  // The host shell hardcodes settings-nav glyphs by section id, so the plugin
+  // marks its own nav cell for the stylesheet's speaker glyph.
+  ctx.effect(() => installVoiceReadingNavIcon(), 'xiaomi-mimo-tts: settings nav icon')
+
   registerSlotContribution(ctx, 'conversation.input.dock', () => ctx.slots.register({
     name: 'conversation.input.dock',
     id: 'xiaomi-mimo-tts-session-playback-observer',
@@ -226,4 +233,12 @@ export function apply(ctx: Context): void {
       playback.interrupt()
     } }),
   }, SettingsCard))
+
+  registerSlotContribution(ctx, 'settings.section', () => ctx.slots.register({
+    name: 'settings.section',
+    id: 'voice-reading',
+    order: 20,
+    label: () => t('settings.voiceReadingNav'),
+    inject: (): VoiceReadingSectionInjected => ({ scope, t }),
+  }, VoiceReadingSection))
 }

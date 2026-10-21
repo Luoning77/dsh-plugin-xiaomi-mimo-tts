@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "语音播报 (MiMo TTS)",
-    "description": "为 DSH 添加 Xiaomi MiMo 与豆包语音朗读，支持豆包标准合成 2.0、声音复刻 2.0 和流式播放，并提供音频历史与下载、浏览器本地语音兜底和可选 UI 音效。"
+    "description": "为 DSH 接入 Xiaomi MiMo 与豆包语音朗读，提供流畅的播报体验，并支持音频历史与下载、浏览器本地语音兜底和可选 UI 音效。"
   }
 }

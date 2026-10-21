@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Xiaomi MiMo TTS",
-    "description": "Add Xiaomi MiMo and Doubao text-to-speech to DSH, with Doubao Standard Synthesis 2.0, Voice Cloning 2.0, streaming playback, audio history and downloads, browser speech fallback, and optional UI sound effects."
+    "description": "Add Xiaomi MiMo and Doubao text-to-speech to DSH, audio history and downloads, browser speech fallback, and optional UI sound effects."
   }
 }

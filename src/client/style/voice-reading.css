@@ -1,0 +1,153 @@
+/**
+ * Voice reading settings section — standalone page registered through the host
+ * `settings.section` slot. All selectors are prefixed `xmimo-voice-reading`;
+ * tokens mirror the host settings chrome with literal fallbacks.
+ */
+
+.xmimo-voice-reading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+.xmimo-voice-reading-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.xmimo-voice-reading-intro {
+  margin: 0;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--dsw-alias-label-tertiary, #66707d);
+}
+
+.xmimo-voice-reading-notice {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary, #66707d);
+}
+
+.xmimo-voice-reading-failure {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-state-error-primary, #c23f4a);
+}
+
+.xmimo-voice-reading-card {
+  border: 0.5px solid var(--dsw-alias-settings-card-stroke, var(--dsw-alias-border-l2, #d7dbe2));
+  background: var(--dsw-alias-settings-card-fill, var(--dsw-alias-bg-layer-1, #fff));
+  border-radius: var(--dsw-radius-xl, 12px);
+  padding: 0 16px;
+}
+
+.xmimo-voice-reading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2, #d7dbe2);
+}
+
+.xmimo-voice-reading-row:last-child {
+  border-bottom: 0;
+}
+
+.xmimo-voice-reading-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xmimo-voice-reading-row-title {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+.xmimo-voice-reading-row-hint {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-secondary, #5f6875);
+}
+
+.xmimo-voice-reading-select {
+  flex: none;
+  width: 220px;
+  max-width: 100%;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 32px 0 10px;
+  border: 0.5px solid var(--dsw-alias-border-l4, var(--dsw-alias-border-l3, #c2c7d0));
+  border-radius: var(--dsw-radius-md, 9px);
+  font: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  background: var(--dsw-alias-bg-layer-1, #fff);
+  color: var(--dsw-alias-label-primary, #1f2328);
+  appearance: none;
+  text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2381858C' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+}
+
+.xmimo-voice-reading-select:focus {
+  outline: none;
+  border-color: var(--dsw-alias-state-business-primary, var(--dsw-alias-brand-primary, #4f6ef7));
+}
+
+.xmimo-voice-reading-select:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (max-width: 460px) {
+  .xmimo-voice-reading-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .xmimo-voice-reading-select {
+    width: 100%;
+  }
+}
+
+/**
+ * Settings nav glyph: the plugin's own voice icon, RiVoiceAiFill from
+ * `react-icons/ri`. The host shell hardcodes the nav glyph per section id and
+ * the `settings.section` registration has no icon field (0.2.1-rc.2), so a
+ * third-party section always paints the settings gear. settings/nav-icon.ts
+ * marks only our own nav cell; these rules paint the plugin icon over that cell
+ * (masked so it follows the host's currentColor) while every other entry keeps
+ * its host glyph. test/voice-reading-nav-icon.test.mjs pins the path data below
+ * to the RiVoiceAiFill source shipped by react-icons.
+ */
+[data-xmimo-voice-reading-nav] > svg {
+  display: none;
+}
+
+[data-xmimo-voice-reading-nav]::before {
+  content: '';
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M20.7134 7.12811L20.4668 7.69379C20.2864 8.10792 19.7136 8.10792 19.5331 7.69379L19.2866 7.12811C18.8471 6.11947 18.0555 5.31641 17.0677 4.87708L16.308 4.53922C15.8973 4.35653 15.8973 3.75881 16.308 3.57612L17.0252 3.25714C18.0384 2.80651 18.8442 1.97373 19.2761 0.930828L19.5293 0.319534C19.7058 -0.106511 20.2942 -0.106511 20.4706 0.319534L20.7238 0.930828C21.1558 1.97373 21.9616 2.80651 22.9748 3.25714L23.6919 3.57612C24.1027 3.75881 24.1027 4.35653 23.6919 4.53922L22.9323 4.87708C21.9445 5.31641 21.1529 6.11947 20.7134 7.12811ZM8.5 6H6.5V18H8.5V6ZM4 10H2V14H4V10ZM13 2H11V22H13V2ZM17.5 8H15.5V18H17.5V8ZM22 10H20V14H22V10Z'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 16px 16px;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M20.7134 7.12811L20.4668 7.69379C20.2864 8.10792 19.7136 8.10792 19.5331 7.69379L19.2866 7.12811C18.8471 6.11947 18.0555 5.31641 17.0677 4.87708L16.308 4.53922C15.8973 4.35653 15.8973 3.75881 16.308 3.57612L17.0252 3.25714C18.0384 2.80651 18.8442 1.97373 19.2761 0.930828L19.5293 0.319534C19.7058 -0.106511 20.2942 -0.106511 20.4706 0.319534L20.7238 0.930828C21.1558 1.97373 21.9616 2.80651 22.9748 3.25714L23.6919 3.57612C24.1027 3.75881 24.1027 4.35653 23.6919 4.53922L22.9323 4.87708C21.9445 5.31641 21.1529 6.11947 20.7134 7.12811ZM8.5 6H6.5V18H8.5V6ZM4 10H2V14H4V10ZM13 2H11V22H13V2ZM17.5 8H15.5V18H17.5V8ZM22 10H20V14H22V10Z'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 16px 16px;
+}

@@ -216,6 +216,8 @@ button, input, select, textarea { font: inherit; }
 .preview-settings-pane { min-width: 0; }
 .preview-settings-list { margin: 0; padding: 0; list-style: none; }
 
+.preview-voice-reading { margin-top: 26px; }
+
 .preview-bundle { margin-top: 26px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 12px; background: var(--dsw-alias-bg-layer-1); }
 .preview-bundle-heading { display: flex; align-items: baseline; gap: 9px; padding: 14px 16px 8px; }
 .preview-bundle-heading h2 { margin: 0; color: var(--dsw-alias-label-primary); font-size: 15px; font-weight: 700; }

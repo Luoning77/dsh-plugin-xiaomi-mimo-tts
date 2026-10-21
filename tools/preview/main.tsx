@@ -17,6 +17,7 @@ import zhPluginLocale from '../../locale/zh.json'
 import './preview.css'
 import { AudioHistory } from '../../src/client/history/audio-history.js'
 import { ConversationPreview } from './conversation-preview.js'
+import { VoiceReadingPreview } from './voice-reading-preview.js'
 
 type PreviewLocale = 'zh' | 'en'
 type PreviewTheme = 'light' | 'dark'
@@ -280,6 +281,9 @@ function PreviewApp() {
           <ul className="preview-settings-list" ref={listRef} key={instance}>
              <SettingsCard view="page" scope={scope} t={t} controller={soundEffects} history={history} />
           </ul>
+          <div className="preview-voice-reading">
+            <VoiceReadingPreview scope={scope} t={t} />
+          </div>
           <BundleComponents locale={locale} />
           <ConversationPreview scope={scope} />
         </section>
