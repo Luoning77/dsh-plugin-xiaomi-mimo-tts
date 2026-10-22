@@ -17,6 +17,12 @@ const {
   readScopeHintKey,
   readScopeWriteOps,
   soundWriteOps,
+  volumeWriteOps,
+  rateWriteOps,
+  formatVoiceVolume,
+  formatVoiceRate,
+  VOICE_VOLUME_STEPS,
+  VOICE_RATE_STEPS,
 } = await loadClientModule('src/client/settings/voice-reading-options.ts')
 const { zh, en } = await loadClientModule('src/client/localization.ts')
 
@@ -238,4 +244,35 @@ test('every read scope maps to a distinct localized label and hint in both local
 
 for (const scope of TTS_READ_SCOPES) test(`selecting the ${scope} read scope writes only readScope`, () => {
   assert.deepEqual(readScopeWriteOps(scope), [{ op: 'set', path: ['readScope'], value: scope }])
+})
+
+test('volume steps run 0 %–100 % in 20-point steps and label as percentages', () => {
+  assert.deepEqual([...VOICE_VOLUME_STEPS], [0, 0.2, 0.4, 0.6, 0.8, 1])
+  assert.deepEqual(VOICE_VOLUME_STEPS.map(formatVoiceVolume), ['0%', '20%', '40%', '60%', '80%', '100%'])
+  // Every step is a legal value for the host config schema (min 0, max 1).
+  for (const step of VOICE_VOLUME_STEPS) assert.ok(step >= 0 && step <= 1)
+  // A stored value between the steps still labels honestly instead of blanking.
+  assert.equal(formatVoiceVolume(0.55), '55%')
+})
+
+test('speed steps are the six requested multipliers and label with ×', () => {
+  assert.deepEqual([...VOICE_RATE_STEPS], [0.5, 0.8, 1, 1.2, 1.5, 1.8])
+  assert.deepEqual(VOICE_RATE_STEPS.map(formatVoiceRate), ['0.5×', '0.8×', '1.0×', '1.2×', '1.5×', '1.8×'])
+  // Every step is a legal value for the host config schema (min 0.5, max 2).
+  for (const step of VOICE_RATE_STEPS) assert.ok(step >= 0.5 && step <= 2)
+  // A stored value between the steps still labels honestly instead of blanking.
+  assert.equal(formatVoiceRate(1.7), '1.7×')
+})
+
+test('volume and speed selections write exactly their own setting', () => {
+  assert.deepEqual(volumeWriteOps(0.6), [{ op: 'set', path: ['voiceVolume'], value: 0.6 }])
+  assert.deepEqual(volumeWriteOps(0), [{ op: 'set', path: ['voiceVolume'], value: 0 }])
+  assert.deepEqual(rateWriteOps(1.2), [{ op: 'set', path: ['voiceRate'], value: 1.2 }])
+  assert.deepEqual(rateWriteOps(0.5), [{ op: 'set', path: ['voiceRate'], value: 0.5 }])
+})
+
+test('both volume and speed defaults are offered in their option lists', () => {
+  const defaults = resolveTtsSettings({})
+  assert.ok(VOICE_VOLUME_STEPS.includes(defaults.voiceVolume), 'default volume missing from the steps')
+  assert.ok(VOICE_RATE_STEPS.includes(defaults.voiceRate), 'default speed missing from the steps')
 })

@@ -126,6 +126,30 @@ export function readScopeWriteOps(scope: TtsReadScope): VoiceReadingWriteOp[] {
   return [{ op: 'set', path: ['readScope'], value: scope }]
 }
 
+/** Volume steps offered by the page (0 %–100 % in 20-point steps). */
+export const VOICE_VOLUME_STEPS = [0, 0.2, 0.4, 0.6, 0.8, 1] as const
+
+/** Playback speeds offered by the page. */
+export const VOICE_RATE_STEPS = [0.5, 0.8, 1, 1.2, 1.5, 1.8] as const
+
+/** `0.8` → `80%`, the same reading the settings card shows. */
+export function formatVoiceVolume(volume: number): string {
+  return `${Math.round(volume * 100)}%`
+}
+
+/** `1.2` → `1.2×`, the same reading the settings card shows. */
+export function formatVoiceRate(rate: number): string {
+  return `${rate.toFixed(1)}×`
+}
+
+export function volumeWriteOps(volume: number): VoiceReadingWriteOp[] {
+  return [{ op: 'set', path: ['voiceVolume'], value: volume }]
+}
+
+export function rateWriteOps(rate: number): VoiceReadingWriteOp[] {
+  return [{ op: 'set', path: ['voiceRate'], value: rate }]
+}
+
 export function soundWriteOps(next: boolean, current: ResolvedTtsSettings): VoiceReadingWriteOp[] {
   if (!next) {
     return [{ op: 'set', path: ['soundEnabled'], value: false }]

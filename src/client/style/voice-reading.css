@@ -13,9 +13,9 @@
 
 .xmimo-voice-reading-title {
   margin: 0;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 500;
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
 }
 
 .xmimo-voice-reading-intro {
@@ -39,11 +39,15 @@
   color: var(--dsw-alias-state-error-primary, #c23f4a);
 }
 
+/**
+ * Row stack. The page already sits inside the Host's settings panel, so the
+ * card carries no border, radius, or padding of its own: the rows alone draw
+ * the Host's hairline separators (same as the Host settings sections).
+ */
 .xmimo-voice-reading-card {
-  border: 0.5px solid var(--dsw-alias-settings-card-stroke, var(--dsw-alias-border-l2, #d7dbe2));
-  background: var(--dsw-alias-settings-card-fill, var(--dsw-alias-bg-layer-1, #fff));
-  border-radius: var(--dsw-radius-xl, 12px);
-  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
 }
 
 .xmimo-voice-reading-row {
@@ -78,36 +82,63 @@
   color: var(--dsw-alias-label-secondary, #5f6875);
 }
 
-.xmimo-voice-reading-select {
+/**
+ * Keep the Host's viewport margins below the 300px cap; Menu handles inner
+ * scrolling. Repeat the class to override the Host rule in either CSS order.
+ */
+.xmimo-voice-reading-menu.xmimo-voice-reading-menu {
+  max-height: min(300px, calc(100vh - 12px - max(12px, var(--dsh-frame-overlay-top, 12px))));
+}
+
+/**
+ * Capsule selector pill — mirrors the Host settings rows (harness source:
+ * packages/client/ui-chat/src/client/settings/PreferenceRow.module.css .selector
+ * and packages/client/locale/src/client/LanguageRow.module.css .selector): a
+ * borderless 36px pill on the module surface whose chevron sits 12px from the
+ * label. The dropdown itself is the Host primitive `Menu`, so the list already
+ * matches every other Host menu; only the trigger is ours to style.
+ */
+.xmimo-voice-reading-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   flex: none;
-  width: 220px;
-  max-width: 100%;
-  box-sizing: border-box;
-  height: 32px;
-  padding: 0 32px 0 10px;
-  border: 0.5px solid var(--dsw-alias-border-l4, var(--dsw-alias-border-l3, #c2c7d0));
-  border-radius: var(--dsw-radius-md, 9px);
+  max-width: 260px;
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--dsw-radius-md, 12px);
+  background: var(--dsw-alias-bg-module-platform, #eef0f3);
   font: inherit;
   font-size: 14px;
   line-height: 22px;
-  background: var(--dsw-alias-bg-layer-1, #fff);
   color: var(--dsw-alias-label-primary, #1f2328);
-  appearance: none;
-  text-overflow: ellipsis;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2381858C' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 12px 12px;
+  cursor: pointer;
 }
 
-.xmimo-voice-reading-select:focus {
-  outline: none;
-  border-color: var(--dsw-alias-state-business-primary, var(--dsw-alias-brand-primary, #4f6ef7));
+.xmimo-voice-reading-selector:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover, #e4e7eb);
 }
 
-.xmimo-voice-reading-select:disabled {
-  opacity: 0.6;
+.xmimo-voice-reading-selector:focus-visible {
+  outline: var(--dsw-focus-ring-width, 2px) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary, #4f6ef7));
+  outline-offset: 1px;
+}
+
+.xmimo-voice-reading-selector:disabled {
+  color: var(--dsw-alias-label-tertiary, #66707d);
   cursor: default;
+}
+
+.xmimo-voice-reading-selector-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xmimo-voice-reading-chevron {
+  flex: none;
 }
 
 @media (max-width: 460px) {
@@ -117,8 +148,9 @@
     gap: 12px;
   }
 
-  .xmimo-voice-reading-select {
-    width: 100%;
+  .xmimo-voice-reading-selector {
+    align-self: flex-start;
+    max-width: 100%;
   }
 }
 
