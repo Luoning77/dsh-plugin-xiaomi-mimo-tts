@@ -84,22 +84,24 @@
 }
 
 .xmimo-tts-card-actions .xmimo-tts-update {
-  border-color: var(--xmimo-ui-brand);
   color: var(--xmimo-ui-brand)
 }
 
-.xmimo-tts-card-actions .xmimo-tts-star {
+.xmimo-tts-card-actions :is(.xmimo-tts-update, .xmimo-tts-star) {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--xmimo-ui-brand) 30%, var(--xmimo-ui-border));
-  color: var(--xmimo-ui-brand);
-  background: transparent;
-  font-weight: 600;
   transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, transform 180ms ease
 }
 
-.xmimo-tts-card-actions .xmimo-tts-star::before {
+.xmimo-tts-card-actions .xmimo-tts-star {
+  border: 1px solid color-mix(in srgb, var(--xmimo-ui-brand) 30%, var(--xmimo-ui-border));
+  color: var(--xmimo-ui-brand);
+  background: transparent;
+  font-weight: 600
+}
+
+.xmimo-tts-card-actions :is(.xmimo-tts-update, .xmimo-tts-star)::before {
   position: absolute;
   z-index: -1;
   inset: 0;
@@ -110,7 +112,7 @@
   transform: translateX(-110%)
 }
 
-.xmimo-tts-card-actions .xmimo-tts-star:is(:hover, :focus-visible) {
+.xmimo-tts-card-actions :is(.xmimo-tts-update, .xmimo-tts-star):is(:hover, :focus-visible) {
   border-color: var(--xmimo-ui-brand);
   background: color-mix(in srgb, var(--xmimo-ui-brand) 6%, transparent);
   box-shadow: 0 3px 10px color-mix(in srgb, var(--xmimo-ui-brand) 16%, transparent);
@@ -118,17 +120,17 @@
   transform: translateY(-1px)
 }
 
-.xmimo-tts-card-actions .xmimo-tts-star:is(:hover, :focus-visible)::before {
+.xmimo-tts-card-actions :is(.xmimo-tts-update, .xmimo-tts-star):is(:hover, :focus-visible)::before {
   opacity: 1;
   animation: xmimo-tts-star-shine 1s ease-in-out infinite
 }
 
-.xmimo-tts-card-actions .xmimo-tts-star:focus-visible {
+.xmimo-tts-card-actions :is(.xmimo-tts-update, .xmimo-tts-star):focus-visible {
   outline: var(--xmimo-ui-focus);
   outline-offset: 3px
 }
 
-.xmimo-tts-card-actions .xmimo-tts-star:active {
+.xmimo-tts-card-actions :is(.xmimo-tts-update, .xmimo-tts-star):active {
   box-shadow: none;
   transform: translateY(0)
 }

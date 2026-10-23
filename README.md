@@ -21,7 +21,7 @@
   <a href="https://ppy-web.github.io/dsh-plugin-xiaomi-mimo-tts"><img src="assets/preview-button-zh.svg" alt="在线预览设置页面" width="300" height="64"></a>
 </p>
 
-<p align="center">QQ 交流群：<code>1104616387</code> · 扫描海报二维码加群</p>
+<p align="center">QQ 群 交流·建议：<code>1104616387</code> · 扫描海报二维码</p>
 
 <table width="100%">
   <tr>

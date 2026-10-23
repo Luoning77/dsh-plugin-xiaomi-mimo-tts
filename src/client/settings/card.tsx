@@ -1,6 +1,7 @@
 import type { ReactElement, RefObject } from 'react'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
+import { AiFillGithub, AiOutlineGift } from 'react-icons/ai'
 import {
   TTS_API_KEY_STATUS_ROUTE,
   TTS_MIMO_LOGO_ASSET_ROUTE,
@@ -537,7 +538,10 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
         />
         <div className="xmimo-tts-card-actions">
           {latestVersion !== null
-            ? <a className="xmimo-tts-update" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">{t('settings.updateAvailable')}</a>
+            ? <a className="xmimo-tts-update" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">
+              <AiOutlineGift size={14} aria-hidden="true" focusable="false" />
+              {t('settings.updateAvailable')}
+            </a>
             : null}
           <div className="xmimo-tts-card-action-links">
             <a
@@ -546,6 +550,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
               target="_blank"
               rel="noopener noreferrer"
             >
+              <AiFillGithub size={14} aria-hidden="true" focusable="false" />
               {t('settings.source')}
             </a>
             {history ? <HistoryLink history={history} t={t} buttonRef={historyLinkRef} onOpen={() => {
