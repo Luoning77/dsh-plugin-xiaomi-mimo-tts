@@ -138,7 +138,7 @@ export function apply(ctx: Context, config: Config): void {
   const toggleCharacterAsset = readFileSync(new URL('../assets/ui/toggle-characters.webp', import.meta.url))
   const soundEffectsCharacterAsset = readFileSync(new URL('../assets/ui/sound-effects-toggle-characters.webp', import.meta.url))
   const apiKeyWhaleAsset = readFileSync(new URL('../assets/ui/api-key-whale.webp', import.meta.url))
-  const historyEmptyAsset = readFileSync(new URL('../assets/ui/history-empty-whale.webp', import.meta.url))
+  const historyEmptyAsset = readFileSync(new URL('../assets/plugin-icons/avatar.webp', import.meta.url))
 
   ctx.inject(['settings'], (child) => {
     child.effect(() => child.settings.configure({ auto: false }, ctx.fiber), 'xiaomi-mimo-tts: custom settings page')

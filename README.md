@@ -43,7 +43,7 @@
 
 - DSH `0.1.7-x` 至 `0.2.x`，当前目标版本为 `0.2.1-rc.2`；Node.js 22.13+。
 - 云端语音需要对应 API Key；豆包还需开通所选语音资源。
-- 豆包持续文本输入要求 DSH Web Host 支持 WebSocket upgrade 注册，反向代理需转发 Upgrade。
+- 豆包持续文本输入要求 DSH Host 支持 WebSocket upgrade 注册；桌面端使用 DSH 提供的 Host 流连接地址，Web 端使用页面部署地址，反向代理需转发 Upgrade。
 
 ## 🚀 安装
 
@@ -126,8 +126,6 @@ dsh plugin --profile web remove dsh-xiaomi-tts
 
 ## 🔌 三方插件联动
 
-![whale-girls](assets/whale-girls.webp)
-
 通过可选服务调用当前服务商的语音：
 
 ```ts
@@ -175,7 +173,7 @@ pnpm pack:check
 Windows 本地开发链接切换为 npm 包：先停止 DSH Web，再运行：
 
 ```powershell
-.\tools\start\dsh-plugin-reinstall.bat 4.2.1
+.\tools\start\dsh-plugin-reinstall.bat 4.2.2
 ```
 
 清理 Desktop 残留的本地链接：退出 Desktop 后运行：

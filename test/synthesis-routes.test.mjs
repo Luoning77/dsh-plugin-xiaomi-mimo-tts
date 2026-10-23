@@ -106,12 +106,18 @@ test('HTTP rejects invalid provider, model, missing clone ID and oversized audio
   }, connect))
 })
 
-test('browser duplex route proxies streaming text and binary audio through the real Host state machine', async () => {
+for (const desktop of [false, true]) test(`${desktop ? 'desktop' : 'browser'} duplex route proxies streaming text and binary audio through the real Host state machine`, async () => {
   await withDoubaoServer(async ({ connect, frames }) => withRoutes(async ({ base, change }) => {
-    const originalSocket = globalThis.WebSocket
-    const originalLocation = globalThis.location
-    globalThis.location = { href: base + '/' }
-    globalThis.WebSocket = class extends WebSocket { constructor(url) { super(url, { origin: base }) } }
+    const names = ['WebSocket', 'document', 'location', '__DSH_TRANSPORT__']
+    const originals = names.map(name => Object.getOwnPropertyDescriptor(globalThis, name))
+    const values = [
+      // DSH desktop rewrites the renderer's Origin and adds its Host cookie for this URL.
+      class extends WebSocket { constructor(url) { super(url, { origin: base }) } },
+      { baseURI: desktop ? 'dsh-app://app/' : base + '/' },
+      { href: desktop ? 'dsh-app://app/chat/session' : base + '/' },
+      desktop ? { streamBaseUrl: base } : undefined,
+    ]
+    for (const [index, name] of names.entries()) Object.defineProperty(globalThis, name, { configurable: true, writable: true, value: values[index] })
     try {
       let received
       const first = new Promise(resolve => { received = resolve })
@@ -128,7 +134,12 @@ test('browser duplex route proxies streaming text and binary audio through the r
       assert.equal(frames.find(frame => frame.event === 100).payload.req_params.speaker, 'test-voice')
       assert.equal(frames.find(frame => frame.event === 100).payload.req_params.audio_params.speech_rate, 40)
       assert.deepEqual(JSON.parse(frames.find(frame => frame.event === 100).payload.req_params.additions), { context_texts: ['原始指令'] })
-    } finally { globalThis.WebSocket = originalSocket; globalThis.location = originalLocation }
+    } finally {
+      for (const [index, name] of names.entries()) {
+        if (originals[index]) Object.defineProperty(globalThis, name, originals[index])
+        else delete globalThis[name]
+      }
+    }
   }, connect))
 })
 

@@ -1,6 +1,6 @@
 {
   "name": "dsh-xiaomi-tts",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "为 DSH 添加 Xiaomi MiMo 与豆包语音朗读、浏览器本地语音兜底和可选 UI 音效。",
   "icon": "./assets/plugin-icons/avatar.webp",
   "license": "MIT",
@@ -44,6 +44,7 @@
   },
   "files": [
     "lib",
+    "!lib/client.js.map",
     "locale",
     "tools/scripts/prepare-package.mjs",
     "cordis.patch.yml",

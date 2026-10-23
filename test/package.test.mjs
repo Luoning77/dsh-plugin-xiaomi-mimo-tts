@@ -193,9 +193,8 @@ test('ships one valid WebP avatar for every built-in voice', async () => {
 
 test('ships the UI image and audio assets referenced by shared contracts', async () => {
   assertWebp(await readFile(new URL('../assets/ui/toggle-characters.webp', import.meta.url)), 'toggle characters')
-  for (const file of ['api-key-whale.webp', 'history-empty-whale.webp']) {
-    assertWebp(await readFile(new URL(`../assets/ui/${file}`, import.meta.url)), file)
-  }
+  assertWebp(await readFile(new URL('../assets/ui/api-key-whale.webp', import.meta.url)), 'API key whale')
+  assertWebp(await readFile(new URL('../assets/plugin-icons/avatar.webp', import.meta.url)), 'shared plugin and history icon')
   for (const route of Object.values(sharedModule.TTS_PROVIDER_CHARACTER_ASSET_ROUTES)) {
     const file = route.slice(route.lastIndexOf('/') + 1)
     assertWebp(await readFile(new URL(`../assets/ui/${file}`, import.meta.url)), file)

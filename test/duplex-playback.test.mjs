@@ -27,6 +27,37 @@ test('duplex consumer queues text before ready and joins split PCM samples witho
   }, { handle(socket, command) { if (command.type === 'text') { socket.audio([1, 2, 3]); return true } } })
 })
 
+test('duplex connects to the desktop Host or the browser document deployment base', async () => {
+  const names = ['document', 'location', '__DSH_TRANSPORT__']
+  const originals = names.map(name => Object.getOwnPropertyDescriptor(globalThis, name))
+  try {
+    for (const [baseURI, href, transport, expected] of [
+      [undefined, undefined, undefined, 'ws://localhost/plugins/xiaomi-mimo-tts/synthesize-duplex'],
+      ['https://example.test/', 'https://example.test/chat', undefined, 'wss://example.test/plugins/xiaomi-mimo-tts/synthesize-duplex'],
+      ['https://example.test/tools/dsh/', 'https://example.test/tools/dsh/chat/session', undefined, 'wss://example.test/tools/dsh/plugins/xiaomi-mimo-tts/synthesize-duplex'],
+      ['dsh-app://app/', 'dsh-app://app/', { streamBaseUrl: 'http://127.0.0.1:54321' }, 'ws://127.0.0.1:54321/plugins/xiaomi-mimo-tts/synthesize-duplex'],
+      ['dsh-app://app/', 'dsh-app://app/chat/session', { streamBaseUrl: 'https://127.0.0.1:54321' }, 'wss://127.0.0.1:54321/plugins/xiaomi-mimo-tts/synthesize-duplex'],
+    ]) {
+      for (const [index, value] of [baseURI && { baseURI }, href && { href }, transport].entries()) {
+        Object.defineProperty(globalThis, names[index], { configurable: true, writable: true, value })
+      }
+      await withDuplexBrowser(async sockets => {
+        const chunks = []
+        const stream = new DuplexPcmStream(selection, new AbortController().signal, bytes => chunks.push(...bytes))
+        stream.append('桌面语音测试。')
+        await stream.finish()
+        assert.equal(sockets[0].url, expected)
+        assert.deepEqual(chunks, [0, 0, 1, 0])
+      })
+    }
+  } finally {
+    for (const [index, name] of names.entries()) {
+      if (originals[index]) Object.defineProperty(globalThis, name, originals[index])
+      else delete globalThis[name]
+    }
+  }
+})
+
 test('duplex rejects odd terminal PCM samples and unexpected close', async () => {
   await withDuplexBrowser(async () => {
     const stream = new DuplexPcmStream(selection, new AbortController().signal, () => {})
