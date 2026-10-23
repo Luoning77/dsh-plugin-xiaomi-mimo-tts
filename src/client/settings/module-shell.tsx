@@ -29,7 +29,7 @@ export function ModuleShell({ className, title, summary, action, children, colla
         ? <h3 className="xmimo-ui-accordion-heading"><button type="button" id={toggleId} aria-controls={controlsId}
           className={`xmimo-ui-module-toggle ${toggleClassName}`.trim()} aria-expanded={open}
           aria-label={ariaLabel ?? (typeof title === 'string' ? title : undefined)} onClick={onToggle}>
-          {heading}<span className="xmimo-ui-accordion-chevron" aria-hidden="true" />
+          {heading}
         </button></h3>
         : <div className="xmimo-ui-module-toggle xmimo-ui-module-toggle-static">{heading}</div>}
       {action ? <div className="xmimo-ui-module-decoration">{action}</div> : null}

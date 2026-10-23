@@ -196,6 +196,10 @@ test('ships the UI image and audio assets referenced by shared contracts', async
   for (const file of ['api-key-whale.webp', 'history-empty-whale.webp']) {
     assertWebp(await readFile(new URL(`../assets/ui/${file}`, import.meta.url)), file)
   }
+  for (const route of Object.values(sharedModule.TTS_PROVIDER_CHARACTER_ASSET_ROUTES)) {
+    const file = route.slice(route.lastIndexOf('/') + 1)
+    assertWebp(await readFile(new URL(`../assets/ui/${file}`, import.meta.url)), file)
+  }
   const audioFiles = (await readdir(new URL('../assets/audio/', import.meta.url))).sort()
   const expected = [...new Set([...Object.values(sharedModule.TTS_TOGGLE_SOUND_FILES).flat(), ...sharedModule.TTS_VOLUME_PREVIEW_FILES])].sort()
   assert.deepEqual(audioFiles, expected)

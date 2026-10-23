@@ -67,7 +67,7 @@ dsh plugin --profile web remove dsh-xiaomi-tts
 
 安装后可直接用浏览器语音朗读，**自动播报和 UI 音效默认关闭**。启用云端语音：
 
-1. 在 API Key 模块选择服务商，填写[小米 Key](https://platform.xiaomimimo.com/console/api-keys) 或[豆包 Key](https://console.volcengine.com/speech/new/setting/apikeys?projectName=default)并保存。
+1. 点击顶部开关区的服务商按钮切换小米 MiMo／豆包，填写对应的[小米 Key](https://platform.xiaomimimo.com/console/api-keys) 或[豆包 Key](https://console.volcengine.com/speech/new/setting/apikeys?projectName=default)并保存。
 2. 在“调音台”选择模型、音色，在“播报台”试听。密钥须先保存，模型和音色可用草稿试听。
 3. 按需开启自动播报和音效，保存配置。
 
@@ -108,7 +108,7 @@ dsh plugin --profile web remove dsh-xiaomi-tts
 
 ### 设置入口与播报来源
 
-在「设置 → 语音朗读」调整音色、朗读音量、朗读语速、朗读范围、自动播报和音效，与插件设置卡片共用配置，选择器样式与宿主一致。音效总开关关闭后仍保留点击、任务音效的范围选择。
+在「设置 → 语音朗读」调整音色、朗读音量、朗读语速、朗读范围、自动播报和音效，与插件设置卡片共用配置。
 
 “播报台”提供文字试听和来源开关：
 
@@ -175,7 +175,7 @@ pnpm pack:check
 Windows 本地开发链接切换为 npm 包：先停止 DSH Web，再运行：
 
 ```powershell
-.\tools\start\dsh-plugin-reinstall.bat 4.2.0
+.\tools\start\dsh-plugin-reinstall.bat 4.2.1
 ```
 
 清理 Desktop 残留的本地链接：退出 Desktop 后运行：

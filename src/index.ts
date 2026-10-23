@@ -13,6 +13,7 @@ import {
   TTS_VOICE_ASSET_ROUTE,
   TTS_TOGGLE_CHARACTER_ASSET_ROUTE,
   TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE,
+  TTS_PROVIDER_CHARACTER_ASSET_ROUTES,
   TTS_API_KEY_WHALE_ASSET_ROUTE,
   TTS_HISTORY_EMPTY_ASSET_ROUTE,
   TTS_TOGGLE_AUDIO_ASSET_ROUTE,
@@ -144,6 +145,15 @@ export function apply(ctx: Context, config: Config): void {
   })
 
   // Register all static assets using helper functions
+  for (const [provider, path] of Object.entries(TTS_PROVIDER_CHARACTER_ASSET_ROUTES)) {
+    registerStaticAsset(ctx, {
+      path,
+      data: readFileSync(new URL(`../assets/ui/provider-${provider === 'xiaomi' ? 'mimo' : 'doubao'}.webp`, import.meta.url)),
+      contentType: 'image/webp',
+      description: `${provider} provider character asset`,
+    })
+  }
+
   registerStaticAsset(ctx, {
     path: TTS_HISTORY_EMPTY_ASSET_ROUTE,
     data: historyEmptyAsset,

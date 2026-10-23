@@ -245,6 +245,10 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
 
   useEffect(() => { toggleSoundPlayer.setEnabled(!minimalMode) }, [minimalMode, toggleSoundPlayer])
 
+  useEffect(() => {
+    controller.update({ enabled: soundEnabled, volume: soundVolume, pack: soundPack, taskSounds, clickSounds })
+  }, [clickSounds, controller, soundEnabled, soundPack, soundVolume, taskSounds])
+
   useEffect(() => { previewPlayer.setVolume(voiceVolume); toggleSoundPlayer.setVolume(voiceVolume) }, [previewPlayer, toggleSoundPlayer, voiceVolume])
 
   useEffect(() => {
@@ -392,6 +396,13 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
     setState('idle')
   }
 
+  const changeProvider = (next: typeof provider): void => {
+    if (soundEnabled && clickSounds) controller.play('select')
+    previewPlayer.stop()
+    setProvider(next)
+    markChange('provider')
+  }
+
   const changeSoundScope = (scope: SoundEffectsScope): void => {
     const flags = getSoundEffectsModeFlags(scope)
     controller.update({ enabled: soundEnabled, taskSounds: flags.taskSounds, clickSounds: flags.clickSounds, volume: soundVolume, pack: soundPack })
@@ -434,11 +445,13 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
       <div className="xmimo-tts-card-body xmimo-ui-stack">
         <SwitchModule
           t={t}
+          provider={provider}
           enabled={enabled}
           autoPlay={autoPlay}
           soundEnabled={soundEnabled}
           minimal={minimalMode}
           writable={snapshot.writable}
+          onProviderChange={changeProvider}
           onEnabledChange={changeEnabled}
           onAutoPlayChange={changeAutoPlay}
           onSoundEnabledChange={changeSoundEnabled}
@@ -446,7 +459,6 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
         <ApiKeyModule
           t={t}
           provider={provider}
-          onProviderChange={next => { previewPlayer.stop(); setProvider(next); markChange('provider') }}
           value={apiKey}
           message={apiKeyMessage}
           invalid={apiKeyInvalid}
@@ -503,7 +515,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
           onLocalVoiceURIChange={(next) => { setLocalVoiceURI(next); markChange('localVoiceURI') }}
           onLocalSpeechModeChange={(next) => { setLocalSpeechMode(next); markChange('localSpeechMode') }}
         /> : null}
-        <SoundEffectsPanel
+        {soundEnabled ? <SoundEffectsPanel
           t={t}
           controller={controller}
           enabled={soundEnabled}
@@ -518,8 +530,8 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
           onScopeChange={changeSoundScope}
           onVolumeChange={(next) => { setSoundVolume(next); markChange('soundVolume') }}
           onPackChange={(next) => { setSoundPack(next); markChange('soundPack') }}
-        />
-        <PreviewModule
+        /> : null}
+        {enabled ? <PreviewModule
           t={t}
           enabled={enabled}
           open={openPanel === 'broadcast'}
@@ -535,7 +547,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
           overridden={fieldOverridden('announcementSources')}
           onReset={() => resetField('announcementSources')}
           onChange={next => { setAnnouncementSources(next); markChange('announcementSources') }}
-        />
+        /> : null}
         <div className="xmimo-tts-card-actions">
           {latestVersion !== null
             ? <a className="xmimo-tts-update" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">

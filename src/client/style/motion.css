@@ -19,6 +19,7 @@
 @media (prefers-reduced-motion: reduce) {
   .xmimo-tts-character-control,
   .xmimo-tts-character-portrait,
+  .xmimo-tts-provider-flipper,
   .xmimo-tts-api-key-whale {
     transition: none !important
   }

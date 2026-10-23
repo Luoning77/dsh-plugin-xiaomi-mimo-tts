@@ -43,9 +43,9 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         title: '02 · 基础开关',
         summary: '三个角色卡片控制插件、自动播放和音效。',
         items: [
-          { label: '语音播放', detail: '点击鲸鱼娘卡片或其中的复选框切换总开关。关闭后会隐藏调音台，并同时关闭自动播放；播报台仍可配置来源，但试听禁用，正在播放的试听也会停止。' },
+          { label: '语音播放', detail: '点击鲸鱼娘卡片或其中的复选框切换总开关。关闭后会隐藏调音台和播报台，并同时关闭自动播放、停止试听；重新开启后保留原有语音和播报来源配置。' },
           { label: '自动播放', detail: '新安装默认关闭。点击第二张角色卡片切换自动朗读；打开后，助手回复会自动尝试朗读，浏览器仍可能因自动播放策略拒绝。打开它会自动打开“语音播放”，关闭它只关闭自动朗读。' },
-          { label: '音效', detail: '新安装默认关闭。点击第三张角色卡片切换音效总开关；开启后按面板内选择的范围播放，关闭后保留范围。详细的音效包和试听按钮在下方“音效库”中。' },
+          { label: '音效', detail: '新安装默认关闭。点击第三张角色卡片切换音效总开关；开启后显示下方“音效库”，按面板内选择的范围播放，关闭后隐藏模块并保留配置。' },
         ],
       },
       {
@@ -63,7 +63,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         title: '04 · 调音台',
         summary: '控制音量、速度、模型、声音来源和本地兜底策略。',
         items: [
-          { label: '调音台标题与箭头', detail: '点击“调音台”标题栏展开或收起详细设置。标题栏摘要会显示当前音量、倍速、朗读范围、模型、声音和策略。' },
+          { label: '调音台标题', detail: '点击“调音台”标题栏展开或收起详细设置。标题栏摘要会显示当前音量、倍速、朗读范围、模型、声音和策略。' },
           { label: '音量滑块', detail: '拖动或用键盘方向键调整语音音量；松开鼠标或完成键盘操作时会试听当前音量。旁边的“恢复默认”按钮会把该项恢复为基础配置，恢复动作仍需点击“保存”。' },
           { label: '播放速度滑块', detail: '拖动或用键盘调整 0.5×–2.0× 速度。豆包在云端合成时应用语速，播放时保持 1×；小米 PCM 在本地调整速度，音高会随速度改变。' },
           { label: '模型按钮', detail: '小米可选择预置音色或音色设计；豆包可选择标准合成（seed-tts-2.0）或声音复刻（seed-icl-2.0）。下方音色控件随所选模型切换。' },
@@ -80,9 +80,9 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         summary: '为 DSH 的任务和点击动作选择 UI 音效。',
         items: [
           { label: '音效库与范围选择', detail: '点击标题展开面板；调音台、音效库和播报台使用单开模式，展开一个会收起另外两个。面板内可横向选择全部开启、仅点击音效或仅任务音效；这只改变范围，总开关仍由顶部“音效库”控制。关闭再开启总开关会保留范围。' },
-          { label: '音效音量滑块', detail: '拖动或用键盘调整音效音量；完成操作时会试听当前音量。音效总开关关闭时滑块与试听禁用，范围仍可配置；重新开启后保留原来的音量和音效包。' },
+          { label: '音效音量滑块', detail: '拖动或用键盘调整音效音量；完成操作时会试听当前音量。音效总开关关闭时隐藏整个音效库；重新开启后保留原来的范围、音量和音效包。' },
           { label: '音效包按钮', detail: '点击一个音效包卡片选择它；再次点击当前卡片会播放一次点击提示音。也可用方向键、Home、End 在 12 个音效包之间移动。当前选项会显示选中状态。' },
-          { label: '音效试听按钮', detail: '点击“开始”“完成”“失败”“提醒”或“点击”试听对应声音。每次点击都会播放一次，即使音效库当前折叠也不影响已开始的播放；总开关关闭时这些按钮禁用。' },
+          { label: '音效试听按钮', detail: '点击“开始”“完成”“失败”“提醒”或“点击”试听对应声音。每次点击都会播放一次，即使音效库当前折叠也不影响已开始的播放；关闭总开关会隐藏整个音效库。' },
           { label: '任务音效 / 点击音效', detail: '顶部开关只控制音效总开关，面板内三个选项只选择范围；关闭总开关会保留选择。修改后保存生效。' },
         ],
       },
@@ -164,9 +164,9 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         title: '02 · Basic switches',
         summary: 'Three character cards control the plugin, autoplay, and sounds.',
         items: [
-          { label: 'Voice playback', detail: 'Click the Whale Maid card or its checkbox to toggle the main switch. Turning it off hides the mixer, turns autoplay off and stops the preview. The Broadcast Desk stays available for source settings, with its preview button disabled.' },
+          { label: 'Voice playback', detail: 'Click the Whale Maid card or its checkbox to toggle the main switch. Turning it off hides the mixer and Broadcast Desk, turns autoplay off and stops the preview. Turning it back on retains the voice and announcement source settings.' },
           { label: 'Automatic playback', detail: 'New installs start with this off. Click the second character card to toggle automatic reading; the browser may still reject autoplay. Enabling it also enables Voice playback; disabling it only turns off automatic reading.' },
-          { label: 'Sound effects', detail: 'New installs start with this off. Click the third character card to toggle the sound master switch. Turning it on synchronizes task and click sounds on; turning it off synchronizes both off. Detailed packs and previews are below.' },
+          { label: 'Sound effects', detail: 'New installs start with this off. Click the third character card to toggle the sound master switch. Turning it on shows Sound Effects below and plays the selected scope; turning it off hides the module and retains its settings.' },
         ],
       },
       {
@@ -184,7 +184,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         title: '04 · Mixing Console',
         summary: 'Control volume, speed, model, voice source, and local fallback.',
         items: [
-          { label: 'Console header and arrow', detail: 'Click Mixing Console to expand or collapse detailed settings. Its summary shows volume, speed, read scope, model, voice, and strategy.' },
+          { label: 'Console header', detail: 'Click Mixing Console to expand or collapse detailed settings. Its summary shows volume, speed, read scope, model, voice, and strategy.' },
           { label: 'Voice volume slider', detail: 'Drag or use arrow keys to change voice volume; releasing the pointer or finishing a keyboard interaction previews that level. Restore default returns this field to its base value, but still requires Save.' },
           { label: 'Playback speed slider', detail: 'Drag or use the keyboard to set 0.5×–2.0× speed. Doubao applies speed during cloud synthesis and plays the result at 1×. Xiaomi PCM adjusts speed locally, which also changes pitch.' },
           { label: 'Model buttons', detail: 'Xiaomi offers preset voices and Voice Design. Doubao offers Standard TTS (seed-tts-2.0) and Voice cloning (seed-icl-2.0). Voice controls change with the selected model.' },
@@ -201,9 +201,9 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         summary: 'Choose UI sounds for DSH tasks and clicks.',
         items: [
           { label: 'Sound Effects and scope', detail: 'The Mixer, Sound Effects, and Broadcast Desk share a single-open accordion. Choose All sounds, Click sounds only, or Task sounds only inside Sound Effects. These choices do not change the master switch at the top, and switching it off and on retains the selected scope.' },
-          { label: 'Sound volume slider', detail: 'Drag or use arrow keys to change sound volume; finishing the interaction previews the level. Volume, pack selection, and previews are disabled while the master switch is off. The scope can still be configured, and all selections are preserved.' },
+          { label: 'Sound volume slider', detail: 'Drag or use arrow keys to change sound volume; finishing the interaction previews the level. Turning the master switch off hides the entire Sound Effects module. Turning it back on retains the scope, volume, and pack.' },
           { label: 'Sound pack buttons', detail: 'Click a pack card to select it; clicking the current card again plays a click cue. Arrow keys, Home, and End move through all 12 packs. The selected card exposes its checked state.' },
-          { label: 'Sound preview buttons', detail: 'Click Start, Complete, Error, Notification, or Press to preview that cue once. The sound switch disables these buttons when off.' },
+          { label: 'Sound preview buttons', detail: 'Click Start, Complete, Error, Notification, or Press to preview that cue once. Turning the sound switch off hides the entire Sound Effects module.' },
           { label: 'Task / click sounds', detail: 'The top switch controls sound playback; the three options inside the panel select its scope. Save to apply the changes.' },
         ],
       },

@@ -11,7 +11,8 @@
 .xmimo-tts-switch-module .xmimo-tts-character-control {
   border-color: transparent;
   border-radius: 12px;
-  box-shadow: none
+  box-shadow: none;
+  justify-content: flex-start
 }
 
 .xmimo-tts-switch-module .xmimo-tts-character-toggle-on .xmimo-tts-character-control {
@@ -34,16 +35,6 @@
 .xmimo-ui-accordion-heading { margin: 0; font: inherit; }
 .xmimo-ui-accordion .xmimo-ui-module-toggle { align-items: center; gap: 12px; }
 .xmimo-ui-accordion .xmimo-ui-module-head { flex: 1; }
-.xmimo-ui-accordion-chevron {
-  width: 8px;
-  height: 8px;
-  margin-right: 4px;
-  flex: none;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(45deg);
-}
-.xmimo-ui-accordion [aria-expanded="true"] .xmimo-ui-accordion-chevron { transform: rotate(225deg); }
 .xmimo-ui-accordion-collapse {
   display: grid;
   grid-template-rows: 0fr;

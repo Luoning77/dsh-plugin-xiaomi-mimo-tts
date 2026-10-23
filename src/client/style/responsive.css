@@ -3,6 +3,7 @@
  */
 
 @media (max-width: 520px) {
+  .xmimo-tts-switch-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .xmimo-tts-history-page { padding: 8px; }
   .xmimo-tts-history-row { grid-template-columns: 32px minmax(0, 1fr); }
   .xmimo-tts-history-actions { grid-column: 2; justify-content: flex-end; }

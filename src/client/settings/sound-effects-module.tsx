@@ -1,6 +1,6 @@
 import { SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react'
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { resolveSoundEffectsMode, resolveSoundEffectsScope, SOUND_PACKS, SOUND_EFFECTS_SCOPES } from '../../shared.js'
 import type { SoundEffectsMode, SoundEffectsScope, SoundPack } from '../../shared.js'
 import type { Translate } from '../localization.js'
@@ -8,6 +8,7 @@ import { EnergyVolumeSlider } from './controls/energy-volume-slider.js'
 import type { SoundEffectsController, SoundCue } from '../sound-effects/types.js'
 import { CollapsibleModule } from './collapsible-module.js'
 import { SoundEffectIcon } from '../sound-effects/sound-effect-icon.js'
+import { SoundPackIcon } from '../sound-effects/sound-pack-icon.js'
 
 interface SoundEffectsPanelProps {
   t: Translate
@@ -55,16 +56,6 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
         ? t('settings.soundEffectsClickOnly')
         : t('settings.soundEffectsTaskOnly')
   const scope = resolveSoundEffectsScope(taskSounds, clickSounds)
-
-  useEffect(() => {
-    controller.update({
-      enabled,
-      volume,
-      pack,
-      taskSounds,
-      clickSounds,
-    })
-  }, [clickSounds, controller, enabled, pack, taskSounds, volume])
 
   const selectPack = (nextPack: typeof SOUND_PACKS[number]): void => {
     if (!writable || !enabled) return
@@ -151,10 +142,7 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
             onClick={() => { selectPack(option) }}
             onKeyDown={(event) => { handlePackKeyDown(event, index) }}
           >
-            <span className="xmimo-tts-sound-pack-gift" aria-hidden="true">
-              <span className="xmimo-tts-sound-pack-gift-lid" />
-              <span className="xmimo-tts-sound-pack-gift-ribbon" />
-            </span>
+            <SoundPackIcon pack={option} />
             <span className="xmimo-tts-sound-pack-name">{option}</span>
             <span className="xmimo-tts-sound-pack-wave" aria-hidden="true"><i /><i /><i /></span>
           </button>)}

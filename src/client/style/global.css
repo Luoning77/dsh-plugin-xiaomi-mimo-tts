@@ -209,7 +209,7 @@
 
 .xmimo-ui-module .xmimo-tts-sound-body {
   gap: var(--xmimo-ui-space-3);
-  padding: 0 var(--xmimo-ui-module-padding) var(--xmimo-ui-module-padding);
+  padding: 6px var(--xmimo-ui-module-padding) var(--xmimo-ui-module-padding);
 }
 
 @media (max-width: 480px) {

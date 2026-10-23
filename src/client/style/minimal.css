@@ -13,7 +13,6 @@
 }
 
 .xmimo-tts-card-minimal .xmimo-ui-module {
-  border-color: transparent;
   background: transparent;
 }
 
@@ -23,8 +22,8 @@
   border-radius: 0;
 }
 
-.xmimo-tts-card-minimal .xmimo-tts-api-key .xmimo-ui-module-header {
-  display: none;
+.xmimo-tts-card-minimal .xmimo-tts-api-key .xmimo-tts-field-heading {
+  padding-right: 0;
 }
 
 .xmimo-tts-card-minimal .xmimo-tts-switch-row {
@@ -106,15 +105,36 @@
   outline-offset: 2px;
 }
 
-.xmimo-tts-minimal-toggle {
+.xmimo-tts-switch-module-minimal .xmimo-tts-minimal-control {
+  box-sizing: border-box;
   display: flex;
   min-width: 0;
+  min-height: var(--xmimo-ui-control-height);
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   padding: 0 8px;
+  border: 1px solid var(--xmimo-ui-border);
+  border-radius: var(--xmimo-ui-control-radius);
   color: var(--xmimo-ui-text);
+  background: var(--xmimo-ui-surface);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
   cursor: pointer;
+}
+
+.xmimo-tts-switch-module-minimal .xmimo-tts-minimal-control:hover:not(:disabled):not(:has([disabled])) {
+  background: var(--xmimo-ui-hover);
+}
+
+.xmimo-tts-switch-module-minimal .xmimo-tts-minimal-control:is(:focus-visible, :has(>button:focus-visible)) {
+  outline: var(--xmimo-ui-focus);
+  outline-offset: 2px;
+}
+
+.xmimo-tts-minimal-toggle>button:focus-visible {
+  outline: none;
 }
 
 .xmimo-tts-minimal-toggle-label {
@@ -127,19 +147,24 @@
   white-space: nowrap;
 }
 
-.xmimo-tts-card-minimal .xmimo-tts-minimal-toggle:has([disabled]) {
-  cursor: not-allowed;
-  opacity: 0.5;
+.xmimo-tts-minimal-toggle>button {
+  flex: none;
 }
 
-.xmimo-tts-card-minimal .xmimo-ui-module-heading > strong {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+.xmimo-tts-provider-button>span {
+  min-width: 0;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  clip-path: inset(50%);
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.xmimo-tts-provider-button>svg {
+  flex: none;
+}
+
+.xmimo-tts-switch-module-minimal .xmimo-tts-minimal-control:is(:disabled, :has([disabled])) {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .xmimo-tts-card-minimal .xmimo-tts-field-badges {
@@ -159,11 +184,6 @@
 }
 
 
-.xmimo-tts-card-minimal .xmimo-tts-api-key-input {
-  align-items: center;
-  gap: 8px;
-}
-
 .xmimo-tts-card-minimal .xmimo-tts-api-key-input > input {
   border: 0;
   border-bottom: 1px solid var(--xmimo-ui-border);
@@ -181,30 +201,6 @@
   border-bottom-color: var(--xmimo-ui-brand);
   outline: none;
   box-shadow: 0 1px 0 var(--xmimo-ui-brand);
-}
-
-.xmimo-tts-card-minimal .xmimo-tts-api-key-inline-actions {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-}
-
-.xmimo-tts-card-minimal .xmimo-tts-api-key-inline-actions .xmimo-tts-reset {
-  font-size: 11px;
-}
-.xmimo-tts-card-minimal
-  .xmimo-tts-api-key-inline-actions
-  .xmimo-tts-api-key-link {
-  box-sizing: border-box;
-  display: inline-flex;
-  width: 88px;
-  min-width: 88px;
-  flex: 0 0 88px;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
 }
 
 .xmimo-tts-card-minimal .xmimo-tts-voice-picker-text-caret {
@@ -331,7 +327,7 @@
 
 .xmimo-tts-card-minimal .xmimo-tts-sound-body {
   gap: 8px;
-  padding: 0 10px 10px;
+  padding: 6px 10px 10px;
 }
 
 .xmimo-tts-card-minimal .xmimo-tts-sound-pack-grid {
@@ -375,35 +371,10 @@
   display: none;
 }
 
-.xmimo-tts-card-minimal .xmimo-tts-sound-pack-gift {
-  width: 15px;
-  height: 13px;
+.xmimo-tts-card-minimal .xmimo-tts-sound-pack-icon {
+  width: 16px;
+  height: 16px;
   margin-right: 5px;
-  border-radius: 2px 2px 3px 3px;
-}
-
-.xmimo-tts-card-minimal .xmimo-tts-sound-pack-gift::before {
-  left: 5px;
-  width: 2px;
-}
-
-.xmimo-tts-card-minimal .xmimo-tts-sound-pack-gift::after {
-  top: 3px;
-  height: 2px;
-}
-
-.xmimo-tts-card-minimal .xmimo-tts-sound-pack-gift-lid {
-  top: -3px;
-  left: -1px;
-  width: 17px;
-  height: 4px;
-}
-
-.xmimo-tts-card-minimal .xmimo-tts-sound-pack-gift-ribbon {
-  top: -6px;
-  left: 4px;
-  width: 4px;
-  height: 5px;
 }
 
 .xmimo-tts-card-minimal .xmimo-tts-sound-previews button {
@@ -441,5 +412,11 @@
 
   .xmimo-tts-card-minimal .xmimo-tts-character-copy strong {
     font-size: 12px;
+  }
+}
+
+@media (pointer: coarse) {
+  .xmimo-tts-switch-module-minimal .xmimo-tts-minimal-control {
+    min-height: 44px;
   }
 }

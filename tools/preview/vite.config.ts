@@ -23,6 +23,8 @@ const assetFiles = new Map([
   ['mimo.svg', path.join(repositoryRoot, 'assets', 'mimo.svg')],
   ['toggle-characters.webp', path.join(repositoryRoot, 'assets', 'ui', 'toggle-characters.webp')],
   ['sound-effects-toggle-characters.webp', path.join(repositoryRoot, 'assets', 'ui', 'sound-effects-toggle-characters.webp')],
+  ['provider-mimo.webp', path.join(repositoryRoot, 'assets', 'ui', 'provider-mimo.webp')],
+  ['provider-doubao.webp', path.join(repositoryRoot, 'assets', 'ui', 'provider-doubao.webp')],
   ['api-key-whale.webp', path.join(repositoryRoot, 'assets', 'ui', 'api-key-whale.webp')],
   ['history-empty-whale.webp', path.join(repositoryRoot, 'assets', 'ui', 'history-empty-whale.webp')],
 ])

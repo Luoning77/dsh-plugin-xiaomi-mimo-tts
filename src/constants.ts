@@ -2,7 +2,7 @@
 export const TTS_SETTINGS_NAMESPACE = 'xiaomi-mimo-tts'
 
 /** Keep the UI version visible without making the browser bundle load package.json. */
-export const TTS_VERSION = '4.2.0'
+export const TTS_VERSION = '4.2.1'
 
 /** Same-origin route used by the Web client to request synthesized audio. */
 export const TTS_ROUTE = '/plugins/xiaomi-mimo-tts/synthesize'
@@ -33,6 +33,12 @@ export const TTS_TOGGLE_CHARACTER_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/toggle
 
 /** Same-origin route used by the Web client to load the two-state sound-effects character sheet. */
 export const TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/sound-effects-toggle-characters.webp'
+
+/** Same-origin character assets for the two faces of the provider switch. */
+export const TTS_PROVIDER_CHARACTER_ASSET_ROUTES = {
+  xiaomi: '/plugins/xiaomi-mimo-tts/provider-mimo.webp',
+  doubao: '/plugins/xiaomi-mimo-tts/provider-doubao.webp',
+} as const
 
 /** Same-origin route used by the Web client to load the API-key whale mascot sheet. */
 export const TTS_API_KEY_WHALE_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/api-key-whale.webp'
