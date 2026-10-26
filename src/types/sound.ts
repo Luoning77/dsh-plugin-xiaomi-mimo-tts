@@ -34,7 +34,7 @@ export function getSoundEffectsModeFlags(mode: SoundEffectsMode): SoundEffectsMo
 
 export const DEFAULT_SOUND_SETTINGS = {
   soundEnabled: false,
-  soundVolume: 0.35,
+  soundVolume: 0.7,
   soundPack: 'zen' as SoundPack,
   taskSounds: false,
   clickSounds: false,

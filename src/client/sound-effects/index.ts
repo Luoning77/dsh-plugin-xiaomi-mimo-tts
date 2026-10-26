@@ -1,12 +1,13 @@
 import { createUISFX } from './runtime.js'
 import type { SoundEffectsController, SoundEffectsSettings, SoundCue } from './types.js'
 import { classifyClick } from './click-classifier.js'
+import { DEFAULT_SOUND_SETTINGS } from '../../types/sound.js'
 import type { Context } from '@deepseek-ai/cordis'
 
 const VALID_CUES = new Set<SoundCue>(['start', 'complete', 'success', 'error', 'notification', 'press', 'select', 'toggle-on', 'toggle-off', 'send', 'close', 'delete', 'open', 'stop', 'queued'])
 
 export function createSoundEffectsController(canPlay: () => boolean = () => true): SoundEffectsController {
-  let settings: SoundEffectsSettings = { enabled: true, volume: 0.35, pack: 'zen', taskSounds: true, clickSounds: true }
+  let settings: SoundEffectsSettings = { enabled: true, volume: DEFAULT_SOUND_SETTINGS.soundVolume, pack: DEFAULT_SOUND_SETTINGS.soundPack, taskSounds: true, clickSounds: true }
   let player: ReturnType<typeof createUISFX> | null = null
 
   const getPlayer = (): ReturnType<typeof createUISFX> => {
