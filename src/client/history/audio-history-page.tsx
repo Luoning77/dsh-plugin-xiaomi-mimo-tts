@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
+import { RiArrowLeftSLine } from 'react-icons/ri'
 import { Button, Input, IconRefreshOutlineMedium } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { AudioHistory, AudioHistoryEntry } from './audio-history.js'
 import type { Translate } from '../localization.js'
@@ -70,7 +71,14 @@ export function AudioHistoryPage({ history, t, volume, voiceRate, minimalMode, s
   }
   return <section className="xmimo-ui-scope xmimo-tts-history-page" aria-label={t('history.title')}>
     <header className="xmimo-tts-history-header">
-      <h2>{t('history.title')} <span className="xmimo-tts-history-count">{view.entries.length}</span></h2>
+      <h2 aria-label={t('history.title')}>
+        <button ref={backRef} type="button" className="xmimo-tts-history-title-back"
+          aria-label={t('history.backToSettings')} title={t('history.backToSettings')} onClick={onBack}>
+          <RiArrowLeftSLine size={18} aria-hidden="true" focusable="false" />
+          <span>{t('history.title')}</span>
+        </button>
+        <span className="xmimo-tts-history-count">{view.entries.length}</span>
+      </h2>
       {hasEntries ? <div className="xmimo-tts-history-toolbar">
         <Input ref={searchRef} type="search" className="xmimo-tts-history-search" aria-label={t('history.search')} placeholder={t('history.search')} value={query} onChange={(event) => { setQuery(event.target.value); setDeleting(null) }} />
         <label className="xmimo-tts-history-source">
@@ -139,7 +147,7 @@ export function AudioHistoryPage({ history, t, volume, voiceRate, minimalMode, s
         <span>{t(view.status === 'memory' ? 'history.temporary' : 'history.savedHere')} · {view.entries.length} · {historyFileSize(view.entries.reduce((sum, entry) => sum + entry.blob.size, 0))}</span>
         <span>{t('history.hint')}</span>
       </div> : null}
-      <Button ref={backRef} type="button" variant="outline" size="sm" className="xmimo-tts-action-button xmimo-tts-history-back" onClick={onBack}>{t('history.back')}</Button>
+      <Button type="button" variant="outline" size="sm" className="xmimo-tts-action-button xmimo-tts-history-back" onClick={onBack}>{t('history.back')}</Button>
     </footer>
   </section>
 }
