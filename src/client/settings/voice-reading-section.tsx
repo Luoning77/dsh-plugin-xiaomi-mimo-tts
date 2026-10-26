@@ -27,6 +27,7 @@ import {
 import type { VoiceReadingWriteOp } from './voice-reading-options.js'
 import { useSettingsSnapshot } from './scope.js'
 import { VoiceReadingWarning } from './voice-reading-warning.js'
+import { VoiceReadingProvider } from './voice-reading-provider.js'
 
 export interface VoiceReadingSectionInjected {
   scope: ConfigForm<TtsSettings>
@@ -175,6 +176,9 @@ function VoiceReadingPage({ scope, t, openPluginSettings }: VoiceReadingPageProp
         <span aria-hidden="true">↗</span>
       </button>
     </p>
+    <VoiceReadingProvider value={settings.provider} disabled={disabled} t={t} onChange={provider => {
+      write([{ op: 'set', path: ['provider'], value: provider }])
+    }} />
     {ready ? <VoiceReadingWarning settings={settings} revision={snapshot.revision} t={t} openPluginSettings={openPluginSettings} /> : null}
     {ready && !snapshot.writable && <p className="xmimo-voice-reading-notice" role="status">{t('settings.voiceReadingReadOnly')}</p>}
     <div className="xmimo-voice-reading-card">
@@ -196,7 +200,6 @@ function VoiceReadingPage({ scope, t, openPluginSettings }: VoiceReadingPageProp
       <div className="xmimo-voice-reading-row">
         <div className="xmimo-voice-reading-copy">
           <div className="xmimo-voice-reading-row-title">{t('settings.voiceReadingVolume')}</div>
-          <div className="xmimo-voice-reading-row-hint">{t('settings.voiceReadingVolumeHint')}</div>
         </div>
         <VoiceReadingSelect
           label={t('settings.voiceReadingVolume')}
@@ -212,7 +215,6 @@ function VoiceReadingPage({ scope, t, openPluginSettings }: VoiceReadingPageProp
       <div className="xmimo-voice-reading-row">
         <div className="xmimo-voice-reading-copy">
           <div className="xmimo-voice-reading-row-title">{t('settings.voiceReadingRate')}</div>
-          <div className="xmimo-voice-reading-row-hint">{t('settings.voiceReadingRateHint')}</div>
         </div>
         <VoiceReadingSelect
           label={t('settings.voiceReadingRate')}
@@ -243,7 +245,6 @@ function VoiceReadingPage({ scope, t, openPluginSettings }: VoiceReadingPageProp
       <div className="xmimo-voice-reading-row">
         <div className="xmimo-voice-reading-copy">
           <div className="xmimo-voice-reading-row-title">{t('settings.voiceReadingAutoPlay')}</div>
-          <div className="xmimo-voice-reading-row-hint">{t('settings.voiceReadingAutoPlayHint')}</div>
         </div>
         <Switch
           checked={settings.autoPlay}

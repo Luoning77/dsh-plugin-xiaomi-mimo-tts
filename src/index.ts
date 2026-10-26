@@ -14,6 +14,7 @@ import {
   TTS_TOGGLE_CHARACTER_ASSET_ROUTE,
   TTS_SOUND_EFFECTS_CHARACTER_ASSET_ROUTE,
   TTS_PROVIDER_CHARACTER_ASSET_ROUTES,
+  TTS_PROVIDER_LOGO_ASSET_ROUTES,
   TTS_API_KEY_WHALE_ASSET_ROUTE,
   TTS_HISTORY_EMPTY_ASSET_ROUTE,
   TTS_QQ_GROUP_ASSET_ROUTE,
@@ -147,6 +148,15 @@ export function apply(ctx: Context, config: Config): void {
   })
 
   // Register all static assets using helper functions
+  for (const [provider, path] of Object.entries(TTS_PROVIDER_LOGO_ASSET_ROUTES)) {
+    registerStaticAsset(ctx, {
+      path,
+      data: readFileSync(new URL(`../assets/ui/provider-${provider === 'xiaomi' ? 'mimo' : 'doubao'}-logo.png`, import.meta.url)),
+      contentType: 'image/png',
+      description: `${provider} provider logo`,
+    })
+  }
+
   for (const [provider, path] of Object.entries(TTS_PROVIDER_CHARACTER_ASSET_ROUTES)) {
     registerStaticAsset(ctx, {
       path,

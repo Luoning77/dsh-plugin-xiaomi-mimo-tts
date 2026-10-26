@@ -23,6 +23,7 @@
   height: 220px;
   transform: translate(-50%, -50%);
   background: var(--xmimo-voice-reading-background) center / contain no-repeat;
+  filter: blur(2px);
   opacity: 0.2;
   pointer-events: none;
 }
@@ -310,6 +311,97 @@
 
 .xmimo-voice-reading-row:last-child {
   border-bottom: 0;
+}
+
+.xmimo-voice-reading-provider {
+  min-width: 0;
+  margin: 4px 0 0;
+  border: 0;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2, #d7dbe2);
+  padding: 0 0 16px;
+}
+
+.xmimo-voice-reading-provider legend {
+  padding: 0;
+}
+
+.xmimo-voice-reading-provider-options {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.xmimo-voice-reading-provider-option {
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.xmimo-voice-reading-provider-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.xmimo-voice-reading-provider-face {
+  display: flex;
+  box-sizing: border-box;
+  min-height: 64px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--dsw-alias-border-l2, #d7dbe2);
+  border-radius: var(--dsw-radius-md, 12px);
+  padding: 12px;
+  color: var(--dsw-alias-label-primary, #1f2328);
+  background: var(--dsw-alias-bg-module-platform, #eef0f3);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.xmimo-voice-reading-provider-face img {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.xmimo-voice-reading-provider-option input:checked + .xmimo-voice-reading-provider-face {
+  border-color: var(--dsw-alias-brand-primary, #4f6ef7);
+}
+
+.xmimo-voice-reading-provider-option:hover input:not(:disabled) + .xmimo-voice-reading-provider-face {
+  background: var(--dsw-alias-interactive-bg-hover, #e4e7eb);
+}
+
+.xmimo-voice-reading-provider-option input:focus-visible + .xmimo-voice-reading-provider-face {
+  outline: 2px solid var(--dsw-focus-ring-color, var(--dsw-alias-brand-primary, #4f6ef7));
+  outline-offset: 2px;
+}
+
+.xmimo-voice-reading-provider-option:has(input:disabled) {
+  cursor: default;
+}
+
+.xmimo-voice-reading-provider-option input:disabled + .xmimo-voice-reading-provider-face {
+  opacity: 0.5;
+}
+
+@media (max-width: 460px) {
+  .xmimo-voice-reading-provider-face {
+    gap: 6px;
+    padding: 10px 6px;
+    font-size: 13px;
+  }
+
+  .xmimo-voice-reading-provider-face img {
+    width: 26px;
+    height: 26px;
+  }
 }
 
 .xmimo-voice-reading-copy {
