@@ -28,6 +28,7 @@ function mockPet(t, frames, configurations = [config([['main']])]) {
     if (String(url).includes('/config')) {
       lastConfig = configurations.length ? configurations.shift() : lastConfig
       if (lastConfig instanceof Error) throw lastConfig
+      if (typeof lastConfig === 'number') return new Response('', { status: lastConfig })
       return Response.json(lastConfig)
     }
     if (frames.length) {
@@ -87,9 +88,53 @@ test('config changes hide pets, failed config pauses collection, recovery and re
   assert.deepEqual(run.emitted.map(event => event.text), ['恢复后', '重启后'])
 })
 
-test('404 and malformed snapshots back off; legacy hosts use fixed polling; cancellation clears retries', async t => {
+for (const endpoint of ['state', 'config']) test(`missing pet ${endpoint} endpoint stops polling instead of retrying`, async t => {
   t.mock.timers.enable({ apis: ['setTimeout'] })
-  const run = mockPet(t, [404, { invalid: true }, snapshot(undefined, { main: [1, { text: '基线' }] }), snapshot(undefined, { main: [2, { text: '新消息' }] })])
+  const run = endpoint === 'state'
+    ? mockPet(t, [404])
+    : mockPet(t, [snapshot(1, { main: [1, { text: '旧消息' }] })], [404])
+  await settle()
+  const count = run.requests.length
+  assert.ok(run.requests.at(-1).url.includes(`/${endpoint}`))
+  t.mock.timers.tick(60000)
+  await settle()
+  assert.equal(run.requests.length, count)
+  assert.deepEqual(run.emitted, [])
+  await run.done
+})
+
+test('missing pet stays idle on settings updates and can recover after the source is re-enabled', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const frames = [404, snapshot(1, { main: [1, { text: '旧消息' }] }), snapshot(2, { main: [2, { text: '安装后新消息' }] })]
+  const events = [], requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    requests.push(String(url))
+    if (String(url).includes('/config')) return Response.json(config([['main']]))
+    if (frames.length) {
+      const frame = frames.shift()
+      return typeof frame === 'number' ? new Response('', { status: frame }) : Response.json(frame)
+    }
+    return new Promise((_, reject) => {
+      options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true })
+    })
+  })
+  const manager = new AnnouncementManager([new DshPetCollector()], event => events.push(event), () => {})
+  t.after(() => manager.dispose())
+  manager.update(['dsh-pet'], true)
+  await settle()
+  manager.update(['dsh-pet'], true)
+  t.mock.timers.tick(60000)
+  await settle()
+  assert.equal(requests.length, 1)
+  manager.update([], true)
+  manager.update(['dsh-pet'], true)
+  await settle()
+  assert.deepEqual(events.map(event => event.text), ['安装后新消息'])
+})
+
+test('server failures and malformed snapshots back off; legacy hosts use fixed polling; cancellation clears retries', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const run = mockPet(t, [503, { invalid: true }, snapshot(undefined, { main: [1, { text: '基线' }] }), snapshot(undefined, { main: [2, { text: '新消息' }] })])
   await settle()
   assert.equal(run.requests.length, 1)
   t.mock.timers.tick(4999)

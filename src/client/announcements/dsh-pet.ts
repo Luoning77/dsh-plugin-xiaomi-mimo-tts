@@ -52,9 +52,15 @@ function delay(ms: number, signal: AbortSignal): Promise<void> {
   })
 }
 
+class PetHttpError extends Error {
+  constructor(readonly status: number) {
+    super(`dsh-pet: HTTP ${status}`)
+  }
+}
+
 async function readJson(path: string, signal: AbortSignal): Promise<unknown> {
   const response = await fetch(hostRoute(path), { cache: 'no-store', signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]) })
-  if (!response.ok) throw new Error(`dsh-pet: HTTP ${response.status}`)
+  if (!response.ok) throw new PetHttpError(response.status)
   return response.json()
 }
 
@@ -95,8 +101,10 @@ export class DshPetCollector implements AnnouncementCollector {
           }
         }
         if (state.counter === undefined) await delay(1000, signal)
-      } catch {
+      } catch (error) {
         if (signal.aborted) return
+        // An absent plugin has no endpoint to poll. A new activation can probe again.
+        if (error instanceof PetHttpError && error.status === 404) return
         previous = null
         seen.clear()
         visible = null
