@@ -18,6 +18,7 @@ import './preview.css'
 import { AudioHistory } from '../../src/client/history/audio-history.js'
 import { ConversationPreview } from './conversation-preview.js'
 import { VoiceReadingPreview } from './voice-reading-preview.js'
+import { PreviewNotice } from './preview-notice.js'
 
 type PreviewLocale = 'zh' | 'en'
 type PreviewTheme = 'light' | 'dark'
@@ -37,6 +38,8 @@ const TOOLBAR_COPY: Record<PreviewLocale, {
   dark: string
   settingsTab: string
   filterTab: string
+  previewNotice: string
+  dismissPreviewNotice: string
 }> = {
   zh: {
     subtitle: '真实组件 · Vite 热更新 · 本地模拟数据',
@@ -53,6 +56,8 @@ const TOOLBAR_COPY: Record<PreviewLocale, {
     dark: '深色',
     settingsTab: '设置预览',
     filterTab: '文本过滤测试',
+    previewNotice: '当前为预览模式，所有修改（包括保存）均不会影响 DSH 设置。',
+    dismissPreviewNotice: '关闭预览提示',
   },
   en: {
     subtitle: 'Real components · Vite HMR · local mock data',
@@ -69,6 +74,8 @@ const TOOLBAR_COPY: Record<PreviewLocale, {
     dark: 'Dark',
     settingsTab: 'Settings preview',
     filterTab: 'Text filter lab',
+    previewNotice: 'You’re in preview mode. All changes, including saves, leave your DSH settings untouched.',
+    dismissPreviewNotice: 'Dismiss preview notice',
   },
 }
 
@@ -189,6 +196,7 @@ function PreviewApp() {
 
   return <div className="preview-shell">
     <PreviewBackground />
+    <PreviewNotice message={toolbar.previewNotice} dismissLabel={toolbar.dismissPreviewNotice} />
     <header ref={toolbarRef} className={`preview-toolbar${isToolbarCompact ? ' preview-toolbar-compact' : ''}`}>
       <div className="preview-brand">
         <strong>MiMo TTS UI Lab</strong>

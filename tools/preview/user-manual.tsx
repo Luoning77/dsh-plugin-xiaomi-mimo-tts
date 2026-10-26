@@ -138,7 +138,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
       },
     ],
     notes: [
-      { title: '保存边界', body: '右侧控件的即时反馈是为了方便预览；只有底部“保存”完成后，修改才会进入 DSH 设置。' },
+      { title: '保存边界', body: '此页面仅供预览，所有修改（包括点击“保存”）都只作用于本地模拟状态，不会影响 DSH 设置。' },
       { title: '声音权限', body: '浏览器可能阻止自动播放或本地语音。遇到这种情况，请直接点击播放按钮，并检查浏览器和系统音频权限。' },
     ],
   },
@@ -259,7 +259,7 @@ const COPY: Record<ManualLocale, ManualCopy> = {
       },
     ],
     notes: [
-      { title: 'Persistence boundary', body: 'The right-side controls provide immediate feedback for previewing; changes enter DSH only after the bottom Save action completes.' },
+      { title: 'Persistence boundary', body: 'This page is a preview. All changes, including clicking Save, apply only to local mock data and never affect your DSH settings.' },
       { title: 'Audio permissions', body: 'The browser may block autoplay or local speech. If that happens, click the play button directly and check browser and system audio permissions.' },
     ],
   },

@@ -97,6 +97,14 @@ button, input, select, textarea { font: inherit; }
 
 .preview-shell { position: relative; min-height: 100vh; isolation: isolate; overflow-x: clip; }
 
+.preview-notice { position: fixed; z-index: 80; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); display: flex; align-items: flex-start; gap: 10px; width: min(460px, calc(100% - 32px)); border-radius: 12px; padding: 14px; color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-layer-1); box-shadow: var(--dsw-elevation-prominent); }
+.preview-notice-icon { flex: 0 0 20px; width: 20px; height: 20px; margin-top: 2px; color: var(--dsw-alias-brand-primary); }
+.preview-notice p { flex: 1; min-width: 0; margin: 0; font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.preview-notice button { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 6px; padding: 4px; color: var(--dsw-alias-label-secondary); background: transparent; cursor: pointer; }
+.preview-notice button:hover { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-interactive-bg-hover); }
+.preview-notice button:focus-visible { outline: 2px solid var(--preview-focus-ring); outline-offset: 2px; }
+.preview-notice button svg { width: 16px; height: 16px; }
+
 .preview-filter-lab button:focus-visible, .preview-filter-lab select:focus-visible, .preview-filter-lab textarea:focus-visible { outline: 2px solid var(--preview-focus-ring); outline-offset: 2px; }
 
 .preview-filter-lab { display: grid; gap: 16px; color: var(--dsw-alias-label-primary); }
@@ -368,6 +376,7 @@ button, input, select, textarea { font: inherit; }
 }
 
 @media (forced-colors: active) {
+  .preview-notice { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
   .preview-background { display: none; }
   .preview-toolbar, .preview-manual-toc, .preview-note, .preview-manual-toggle, .preview-manual-close { border-color: CanvasText; background: Canvas; }
   .preview-manual { border-color: CanvasText; background: Canvas; }
