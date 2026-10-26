@@ -39,12 +39,12 @@ test('provider settings retain separate credentials, models and voices across sw
   assert.equal(scope.user.doubaoApiKey, 'new-doubao')
 })
 
-test('clearing one credential preserves the other and removes only the user override', async () => {
+test('replacing one credential preserves the other provider credential', async () => {
   const scope = form({ apiKey: 'sk-one', doubaoApiKey: 'two' })
-  await saveSettingsDraft(scope, resolveTtsSettings(scope.user), { doubaoApiKey: { kind: 'clear' } }, { xiaomi: '', doubao: '' })
-  assert.deepEqual(scope.writes, [[{ op: 'unset', path: ['doubaoApiKey'] }]])
+  await saveSettingsDraft(scope, resolveTtsSettings(scope.user), { doubaoApiKey: { kind: 'set' } }, { xiaomi: '', doubao: 'replacement' })
+  assert.deepEqual(scope.writes, [[{ op: 'set', path: ['doubaoApiKey'], value: 'replacement' }]])
   assert.equal(scope.user.apiKey, 'sk-one')
-  assert.equal(Object.hasOwn(scope.user, 'doubaoApiKey'), false)
+  assert.equal(scope.user.doubaoApiKey, 'replacement')
 })
 
 test('rejected writes preserve the selected provider and leave caller-owned drafts intact for retry', async () => {
@@ -96,7 +96,7 @@ test('instructions save independently, survive provider switches and reset by re
   assert.equal(scope.user.doubaoApiKey, 'saved-key')
 })
 
-test('erasing a key draft leaves the saved credential unchanged unless Clear was selected', async () => {
+test('erasing a key draft leaves the saved credentials unchanged', async () => {
   const scope = form({ apiKey: 'sk-saved', doubaoApiKey: 'saved-doubao' })
   await saveSettingsDraft(scope, resolveTtsSettings({ ...scope.user, provider: 'doubao' }), { apiKey: { kind: 'set' }, doubaoApiKey: { kind: 'set' }, provider: { kind: 'set' } }, { xiaomi: '  ', doubao: '' })
   assert.equal(scope.user.apiKey, 'sk-saved')

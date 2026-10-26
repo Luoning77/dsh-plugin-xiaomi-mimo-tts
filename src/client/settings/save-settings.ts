@@ -22,19 +22,21 @@ export async function saveSettingsDraft(scope: ConfigForm<TtsSettings>, draft: S
   const acceptedValues = resolveTtsSettings(snapshot.value)
   const overridden = (field: string) => snapshot.user !== null && typeof snapshot.user === 'object' && Object.hasOwn(snapshot.user, field)
   const ops: Parameters<ConfigForm<TtsSettings>['mutate']>[0][number][] = []
-  const write = (field: string, value: unknown): void => {
-    const change = changes[field as keyof DraftChanges]
+  const write = (field: EditableSettingField, value: unknown): void => {
+    const change = changes[field]
     if (!change) return
-    if (change.kind === 'set' && (field === 'apiKey' || field === 'doubaoApiKey') && !String(value).trim()) return
-    if (change.kind === 'set' && field !== 'apiKey' && field !== 'doubaoApiKey' && (field === 'announcementSources' ? JSON.stringify(acceptedValues.announcementSources) === JSON.stringify(value) : Object.is(acceptedValues[field as keyof typeof acceptedValues], value))) return
+    if (change.kind === 'set' && (field === 'announcementSources' ? JSON.stringify(acceptedValues.announcementSources) === JSON.stringify(value) : Object.is(acceptedValues[field], value))) return
     if (change.kind === 'clear' && !overridden(field)) return
     ops.push(change.kind === 'clear' ? { op: 'unset', path: [field] } : { op: 'set', path: [field], value })
   }
   for (const field of EDITABLE_SETTING_FIELDS) {
     if (field !== 'provider') write(field, draft[field])
   }
-  write('apiKey', keys.xiaomi.trim())
-  write('doubaoApiKey', keys.doubao.trim())
+  for (const [provider, field] of [['xiaomi', 'apiKey'], ['doubao', 'doubaoApiKey']] as const) {
+    if (changes[field]?.kind === 'set' && keys[provider].trim()) {
+      ops.push({ op: 'set', path: [field], value: keys[provider].trim() })
+    }
+  }
   write('provider', draft.provider)
   if (ops.length && !await scope.mutate(ops)) throw new Error('Host rejected a settings update')
 }

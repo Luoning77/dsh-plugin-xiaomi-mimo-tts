@@ -33,7 +33,7 @@ import { SoundEffectsPanel } from './sound-effects-module.js'
 import { SwitchModule } from './switch-module.js'
 import { readMinimalMode, writeMinimalMode } from './minimal-mode.js'
 import { hostRoute } from '../host-route.js'
-import type { DraftChange, DraftChanges, EditableSettingField, ResolvedSettings, SettingField, SettingsValues } from './types.js'
+import type { DraftChanges, EditableSettingField, ResolvedSettings, SettingField, SettingsValues } from './types.js'
 import type { AudioHistory } from '../history/audio-history.js'
 import { AudioHistoryPage } from '../history/audio-history-page.js'
 import { unrestrictedAudioFocus } from '../playback/tab-audio-focus.js'
@@ -156,7 +156,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
     if (change.kind === 'clear') return hasOverride(field)
     return field === 'announcementSources' ? JSON.stringify(draft[field]) !== JSON.stringify(acceptedValue(field)) : !Object.is(draft[field], acceptedValue(field))
   }
-  const apiKeyDirty = (['apiKey', 'doubaoApiKey'] as const).some(field => changes[field]?.kind === 'clear' ? hasOverride(field) : changes[field]?.kind === 'set' && apiKeys[field === 'apiKey' ? 'xiaomi' : 'doubao'].trim().length > 0)
+  const apiKeyDirty = (['apiKey', 'doubaoApiKey'] as const).some(field => changes[field]?.kind === 'set' && apiKeys[field === 'apiKey' ? 'xiaomi' : 'doubao'].trim().length > 0)
   const dirty = EDITABLE_SETTING_FIELDS.some(fieldDirty) || apiKeyDirty
   const validationError = validateSettingsDraft(draft)
   const apiKeyViewState = resolveApiKeyViewState(apiKey, isSupportedTtsApiKey(apiKey, provider), apiKeyStatus, changes[apiKeyField]?.kind)
@@ -172,11 +172,8 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
             ? 'settings.apiKeyUnavailable'
             : apiKeyViewState === 'pending-save'
               ? 'settings.apiKeyPendingSave'
-              : apiKeyViewState === 'pending-clear'
-                ? 'settings.apiKeyPendingClear'
-                : 'settings.apiKeyUnsupported')
+              : 'settings.apiKeyUnsupported')
   const apiKeyInvalid = apiKeyViewState === 'pending-invalid' || apiKeyViewState === 'unrecognized'
-  const apiKeyClearable = hasOverride(apiKeyField) && changes[apiKeyField]?.kind !== 'clear'
 
   useEffect(() => {
     if (snapshot.status === 'unavailable') return
@@ -246,14 +243,15 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
 
   if (snapshot.status === 'unavailable') return null
 
-  const markChange = (field: SettingField, kind: DraftChange['kind'] = 'set'): void => {
-    setChanges((current) => ({ ...current, [field]: { kind } }))
+  const markChange = (field: SettingField): void => {
+    setChanges((current) => ({ ...current, [field]: { kind: 'set' } }))
     setState('idle')
   }
 
   const resetField = (field: EditableSettingField): void => {
     previewPlayer.stop()
-    markChange(field, 'clear')
+    setChanges((current) => ({ ...current, [field]: { kind: 'clear' } }))
+    setState('idle')
     if (field === 'provider') setProvider(base.provider)
     if (field === 'doubaoModel') setDoubaoModel(base.doubaoModel)
     if (field === 'doubaoVoice') setDoubaoVoice(base.doubaoVoice)
@@ -277,11 +275,6 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
     if (field === 'soundPack') setSoundPack(base.soundPack)
     if (field === 'taskSounds') setTaskSounds(base.taskSounds)
     if (field === 'clickSounds') setClickSounds(base.clickSounds)
-  }
-
-  const clearApiKey = (): void => {
-    setApiKey('')
-    markChange(apiKeyField, 'clear')
   }
 
   const discard = (): void => {
@@ -450,11 +443,9 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
           value={apiKey}
           message={apiKeyMessage}
           invalid={apiKeyInvalid}
-          clearable={apiKeyClearable}
           writable={snapshot.writable}
           minimal={minimalMode}
           onChange={(next) => { setApiKey(next); markChange(apiKeyField) }}
-          onClear={clearApiKey}
         />
         {enabled ? <DetailsModule
           t={t}

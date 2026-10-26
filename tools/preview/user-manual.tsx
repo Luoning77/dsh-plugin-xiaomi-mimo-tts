@@ -54,8 +54,8 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         summary: '密钥只在点击“保存”时写入 DSH。',
         items: [
           { label: '服务商与获取 API Key', detail: '点击服务商名称可在小米 MiMo 与豆包语音之间切换。“获取 API Key”会打开当前服务商的密钥页面；豆包使用新版控制台的 API Key。两家的密钥、模型与音色分别保存，切换服务商不会覆盖另一家的配置。' },
-          { label: '密钥输入框', detail: '在密码框中输入当前服务商的新 API Key。输入内容会被隐藏；输入后不会立即保存。清空输入草稿不会删除已保存密钥，需要删除时使用“清除”并保存。' },
-          { label: '状态与清除', detail: '提示会区分读取中、未配置、格式已识别、格式异常、Host 状态不可用和待保存。格式识别不等于连接已验证；保存后请用播报台确认。已保存密钥时可点击“清除”；保存后会移除该密钥，若基础配置仍有密钥，会恢复继承。' },
+          { label: '密钥输入框', detail: '在密码框中输入当前服务商的新 API Key。输入内容会被隐藏；输入后不会立即保存。清空输入草稿不会修改已保存密钥。' },
+          { label: '密钥状态', detail: '提示会区分读取中、未配置、格式已识别、格式异常、Host 状态不可用和待保存。格式识别不等于连接已验证；保存后请用播报台确认。' },
         ],
       },
       {
@@ -175,8 +175,8 @@ const COPY: Record<ManualLocale, ManualCopy> = {
         summary: 'The key is written to DSH only when Save is clicked.',
         items: [
           { label: 'Provider and API key', detail: 'Click the provider name to switch between Xiaomi MiMo and Doubao. Get API Key opens the selected provider’s key page; Doubao uses an API key from the new console. Keys, models, and voices are saved separately for each provider.' },
-          { label: 'Key input', detail: 'Enter the selected provider’s new key in the password field. It stays hidden and is not saved immediately. Erasing the draft leaves the saved key intact; use Clear and Save to remove it.' },
-          { label: 'Status and clearing', detail: 'The status distinguishes loading, missing, recognized format, unrecognized format, unavailable Host state, and unsaved changes. A recognized prefix is not a connection check; use Broadcast Desk after saving. When a personal override exists, Clear removes it on Save and falls back to a base key if one exists.' },
+          { label: 'Key input', detail: 'Enter the selected provider’s new key in the password field. It stays hidden and is not saved immediately. Erasing the draft leaves the saved key intact.' },
+          { label: 'Key status', detail: 'The status distinguishes loading, missing, recognized format, unrecognized format, unavailable Host state, and unsaved changes. A recognized prefix is not a connection check; use Broadcast Desk after saving.' },
         ],
       },
       {

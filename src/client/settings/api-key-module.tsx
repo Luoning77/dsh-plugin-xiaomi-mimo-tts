@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactElement } from 'react'
 import { useId, useState } from 'react'
 import { RiKey2Line } from 'react-icons/ri'
-import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { TtsProvider } from '../../types/providers.js'
 import { TTS_API_KEY_WHALE_ASSET_ROUTE, TTS_MIMO_LOGO_ASSET_ROUTE } from '../../shared.js'
 import type { Translate } from '../localization.js'
@@ -38,14 +37,12 @@ export interface ApiKeyModuleProps {
   value: string
   message: string
   invalid: boolean
-  clearable: boolean
   writable: boolean
   minimal: boolean
   onChange: (value: string) => void
-  onClear: () => void
 }
 
-export function ApiKeyModule({ t, provider, value, message, invalid, clearable, writable, minimal, onChange, onClear }: ApiKeyModuleProps): ReactElement {
+export function ApiKeyModule({ t, provider, value, message, invalid, writable, minimal, onChange }: ApiKeyModuleProps): ReactElement {
   const [bubbleKey, setBubbleKey] = useState<ApiKeyBubbleKey>(() => randomCopyKey(API_KEY_IDLE_COPY_KEYS))
   const inputId = useId()
   const messageId = useId()
@@ -61,10 +58,7 @@ export function ApiKeyModule({ t, provider, value, message, invalid, clearable, 
           style={{ '--xmimo-tts-api-key-logo-image': `url(${hostRoute(TTS_MIMO_LOGO_ASSET_ROUTE)})` } as CSSProperties}
         />}
       </span>}
-      suffix={<>
-        <a className="xmimo-tts-api-key-link" href={keyUrl} target="_blank" rel="noopener noreferrer">{t('settings.getApiKey')}</a>
-        {clearable ? <Button type="button" variant="ghost" size="sm" className="xmimo-tts-reset" disabled={!writable} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onClear() }}>{t('settings.apiKeyClear')}</Button> : null}
-      </>}
+      suffix={<a className="xmimo-tts-api-key-link" href={keyUrl} target="_blank" rel="noopener noreferrer">{t('settings.getApiKey')}</a>}
       disabled={!writable}
       resettable={false}
     />} action={minimal ? undefined : <span className="xmimo-tts-api-key-decoration" aria-hidden="true" />}>
