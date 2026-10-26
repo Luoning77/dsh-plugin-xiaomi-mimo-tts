@@ -177,7 +177,7 @@ pnpm pack:check
 Windows 本地开发链接切换为 npm 包：先停止 DSH Web，再运行：
 
 ```powershell
-.\tools\start\dsh-plugin-reinstall.bat 4.2.2
+.\tools\start\dsh-plugin-reinstall.bat 4.2.3
 ```
 
 清理 Desktop 残留的本地链接：退出 Desktop 后运行：
