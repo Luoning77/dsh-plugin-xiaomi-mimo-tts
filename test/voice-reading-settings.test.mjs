@@ -11,6 +11,7 @@ import { loadClientModule } from './helpers/client-modules.mjs'
 
 const {
   buildVoiceReadingVoiceSource,
+  voiceReadingWarningKey,
   voiceChoiceWriteOps,
   autoPlayWriteOps,
   readScopeLabelKey,
@@ -25,6 +26,42 @@ const {
   VOICE_RATE_STEPS,
 } = await loadClientModule('src/client/settings/voice-reading-options.ts')
 const { zh, en } = await loadClientModule('src/client/localization.ts')
+
+test('credential warnings remain visible with local speech enabled for either provider', () => {
+  for (const provider of ['xiaomi', 'doubao']) {
+    for (const localSpeechMode of ['auto', 'local-first', 'disabled']) {
+      const settings = resolveTtsSettings({ provider, localSpeechMode })
+      assert.equal(voiceReadingWarningKey(settings, 'missing'), 'settings.voiceReadingWarningApiKeyMissing')
+      assert.equal(voiceReadingWarningKey(settings, 'unrecognized'), 'settings.voiceReadingWarningApiKeyInvalid')
+    }
+  }
+})
+
+test('credential checks distinguish pending, unavailable, and usable credentials', () => {
+  const settings = resolveTtsSettings({})
+  assert.equal(voiceReadingWarningKey(settings, 'loading'), null)
+  assert.equal(voiceReadingWarningKey(settings, 'unavailable'), 'settings.voiceReadingWarningApiKeyUnavailable')
+  assert.equal(voiceReadingWarningKey(settings, 'recognized'), null)
+})
+
+test('reading disabled and missing active voice settings produce actionable warnings', () => {
+  assert.equal(voiceReadingWarningKey(resolveTtsSettings({ enabled: false }), 'recognized'), 'settings.voiceReadingWarningDisabled')
+  for (const settings of [
+    { provider: 'xiaomi', voice: ' ' },
+    { provider: 'doubao', doubaoModel: 'seed-tts-2.0', doubaoVoice: '' },
+    { provider: 'doubao', doubaoModel: 'seed-icl-2.0', doubaoClonedVoice: ' ' },
+  ]) {
+    assert.equal(voiceReadingWarningKey(resolveTtsSettings(settings), 'recognized'), 'settings.voiceReadingWarningVoiceRequired')
+  }
+})
+
+test('only the active model needs a voice and fixing its configuration clears the warning', () => {
+  const standard = resolveTtsSettings({ provider: 'doubao', doubaoClonedVoice: '' })
+  assert.equal(voiceReadingWarningKey(standard, 'recognized'), null)
+  const cloned = resolveTtsSettings({ provider: 'doubao', doubaoModel: 'seed-icl-2.0', doubaoVoice: '' })
+  assert.equal(voiceReadingWarningKey(cloned, 'recognized'), 'settings.voiceReadingWarningVoiceRequired')
+  assert.equal(voiceReadingWarningKey({ ...cloned, doubaoClonedVoice: 'saved-voice-id' }, 'recognized'), null)
+})
 
 /** Index write operations by their dotted path so order is not incidental. */
 function operationsByPath(ops) {

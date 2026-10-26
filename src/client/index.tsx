@@ -41,6 +41,7 @@ export const inject = [
   'locale',
   'remote',
   'configForms',
+  'pluginNavigation',
   'sessions',
 ]
 
@@ -239,6 +240,10 @@ export function apply(ctx: Context): void {
     id: 'voice-reading',
     order: 20,
     label: () => t('settings.voiceReadingNav'),
-    inject: (): VoiceReadingSectionInjected => ({ scope, t }),
+    inject: (): VoiceReadingSectionInjected => ({
+      scope,
+      t,
+      openPluginSettings: () => ctx.pluginNavigation.openBundle('dsh-xiaomi-tts'),
+    }),
   }, VoiceReadingSection))
 }

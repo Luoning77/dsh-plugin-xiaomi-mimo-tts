@@ -1,12 +1,14 @@
-import type { ReactElement } from 'react'
+import type { CSSProperties, ReactElement } from 'react'
 import { useMemo, useRef, useState } from 'react'
 import { IconChevronDownOutlineRegular, Menu, Switch } from '@deepseek-ai/dsh-client-ui-primitives'
-import { resolveTtsSettings, TTS_READ_SCOPES } from '../../shared.js'
+import { resolveTtsSettings, TTS_HISTORY_EMPTY_ASSET_ROUTE, TTS_READ_SCOPES } from '../../shared.js'
 import type { TtsReadScope, TtsSettings } from '../../shared.js'
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { Translate } from '../localization.js'
+import { hostRoute } from '../host-route.js'
 import { readVoiceIdHistory } from './voice-id-history.js'
+import { VoiceReadingHeaderActions } from './voice-reading-links.js'
 import {
   autoPlayWriteOps,
   buildVoiceReadingVoiceSource,
@@ -24,23 +26,29 @@ import {
 } from './voice-reading-options.js'
 import type { VoiceReadingWriteOp } from './voice-reading-options.js'
 import { useSettingsSnapshot } from './scope.js'
+import { VoiceReadingWarning } from './voice-reading-warning.js'
 
 export interface VoiceReadingSectionInjected {
   scope: ConfigForm<TtsSettings>
   t: Translate
+  openPluginSettings: () => void
 }
 
 export type VoiceReadingSectionProps = PropsRuntime<'settings.section'> & Partial<InjectFace<VoiceReadingSectionInjected>>
 
 export function VoiceReadingSection(props: VoiceReadingSectionProps): ReactElement | null {
-  const { scope, t } = props
-  if (scope === undefined || t === undefined) return null
-  return <VoiceReadingPage scope={scope} t={t} />
+  const { scope, t, openPluginSettings } = props
+  if (scope === undefined || t === undefined || openPluginSettings === undefined) return null
+  return <VoiceReadingPage scope={scope} t={t} openPluginSettings={() => {
+    props.close()
+    openPluginSettings()
+  }} />
 }
 
 interface VoiceReadingPageProps {
   scope: ConfigForm<TtsSettings>
   t: Translate
+  openPluginSettings: () => void
 }
 
 interface VoiceReadingSelectProps {
@@ -107,7 +115,7 @@ function VoiceReadingSelect({ label, value, fallbackLabel, options, disabled, on
   />
 }
 
-function VoiceReadingPage({ scope, t }: VoiceReadingPageProps): ReactElement | null {
+function VoiceReadingPage({ scope, t, openPluginSettings }: VoiceReadingPageProps): ReactElement | null {
   const snapshot = useSettingsSnapshot(scope)
   const [clonedHistory] = useState(() => readVoiceIdHistory('cloned'))
   const [busy, setBusy] = useState(false)
@@ -153,9 +161,21 @@ function VoiceReadingPage({ scope, t }: VoiceReadingPageProps): ReactElement | n
   ]
   const readScopeOptions = TTS_READ_SCOPES.map((option) => ({ id: option, label: t(readScopeLabelKey(option)) }))
 
-  return <div className="xmimo-voice-reading">
-    <h2 className="xmimo-voice-reading-title">{t('settings.voiceReadingTitle')}</h2>
-    <p className="xmimo-voice-reading-intro">{t('settings.voiceReadingIntro')}</p>
+  return <div className="xmimo-voice-reading" style={{
+    '--xmimo-voice-reading-background': `url(${hostRoute(TTS_HISTORY_EMPTY_ASSET_ROUTE)})`,
+  } as CSSProperties}>
+    <div className="xmimo-voice-reading-header">
+      <h2 className="xmimo-voice-reading-title">{t('settings.voiceReadingTitle')}</h2>
+      <VoiceReadingHeaderActions t={t} openPluginSettings={openPluginSettings} />
+    </div>
+    <p className="xmimo-voice-reading-intro">
+      <span>{t('settings.voiceReadingIntro')}</span>
+      <button type="button" className="xmimo-voice-reading-link" onClick={openPluginSettings}>
+        <span className="xmimo-voice-reading-link-label">{t('settings.voiceReadingPluginSettings')}</span>
+        <span aria-hidden="true">↗</span>
+      </button>
+    </p>
+    {ready ? <VoiceReadingWarning settings={settings} revision={snapshot.revision} t={t} openPluginSettings={openPluginSettings} /> : null}
     {ready && !snapshot.writable && <p className="xmimo-voice-reading-notice" role="status">{t('settings.voiceReadingReadOnly')}</p>}
     <div className="xmimo-voice-reading-card">
       <div className="xmimo-voice-reading-row">

@@ -5,20 +5,192 @@
  */
 
 .xmimo-voice-reading {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   gap: 12px;
   color: var(--dsw-alias-label-primary, #1f2328);
 }
 
+.xmimo-voice-reading::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: min(220px, 60%);
+  height: 220px;
+  transform: translate(-50%, -50%);
+  background: var(--xmimo-voice-reading-background) center / contain no-repeat;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+/**
+ * Title row. The heading takes the free space; the 32px shortcut sits on its
+ * right, vertically centered on the 26px title line so the 18px label and the
+ * 16px glyph share one optical row.
+ */
+.xmimo-voice-reading-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .xmimo-voice-reading-title {
   margin: 0;
+  min-width: 0;
   font-size: 18px;
   line-height: 26px;
   font-weight: 600;
 }
 
+.xmimo-voice-reading-actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+/** Anchor the QQ capsule to its trigger without adding layout to the row. */
+.xmimo-voice-reading-qq {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+/**
+ * Icon-only shortcut. A real anchor or button so keyboard and open-in-new-tab
+ * semantics stay native; the 32px box is the click target, the 16px glyph the
+ * visual. The glyph stays in the neutral secondary label color — the accent is
+ * reserved for primary actions, and hover only deepens the neutral plus the
+ * module hover surface.
+ */
+.xmimo-voice-reading-action {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm, 8px);
+  background: transparent;
+  cursor: pointer;
+}
+
+/**
+ * Keep these shortcuts neutral even when a skin forces an accent on links
+ * with !important. Scope the override to the shortcuts and their SVGs so
+ * ordinary text links can still use the skin's accent.
+ */
+.xmimo-voice-reading-actions .xmimo-voice-reading-action {
+  color: var(--dsw-alias-label-secondary, #5f6875) !important;
+}
+
+.xmimo-voice-reading-actions .xmimo-voice-reading-action:hover {
+  background: var(--dsw-alias-interactive-bg-hover, #e4e7eb);
+  color: var(--dsw-alias-label-primary, #1f2328) !important;
+}
+
+.xmimo-voice-reading-actions .xmimo-voice-reading-action > svg {
+  color: inherit !important;
+}
+
+.xmimo-voice-reading-action:focus-visible {
+  outline: var(--dsw-focus-ring-width, 2px) solid var(--dsw-focus-ring-color, var(--dsw-alias-brand-primary, #4f6ef7));
+  outline-offset: 1px;
+}
+
+/**
+ * QQ invite capsule. Clicking the icon opens this floating surface with the
+ * QR code and group number, keeping it out of the settings rows. It
+ * anchors to the right edge of the trigger so it never runs past the panel.
+ */
+.xmimo-voice-reading-qq-panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  width: 222px;
+  padding: 12px;
+  border: 1px solid var(--dsw-alias-border-l2, #d7dbe2);
+  border-radius: var(--dsw-radius-md, 12px);
+  background: var(--dsw-alias-bg-layer-1, #fff);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 14%);
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+.xmimo-voice-reading-qq-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary, #66707d);
+  cursor: pointer;
+}
+
+.xmimo-voice-reading-qq-close:hover {
+  background: var(--dsw-alias-interactive-bg-hover, #e4e7eb);
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+.xmimo-voice-reading-qq-close:focus-visible,
+.xmimo-voice-reading-qq-panel:focus-visible {
+  outline: var(--dsw-focus-ring-width, 2px) solid var(--dsw-focus-ring-color, var(--dsw-alias-brand-primary, #4f6ef7));
+  outline-offset: 1px;
+}
+
+/** The shipped asset already carries its quiet zone and 22px rounded corners. */
+.xmimo-voice-reading-qq-code {
+  display: block;
+  width: 190px;
+  height: 190px;
+  margin-top: 8px;
+  border-radius: var(--dsw-radius-md, 12px);
+}
+
+.xmimo-voice-reading-qq-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.xmimo-voice-reading-qq-group {
+  color: var(--dsw-alias-label-primary, #1f2328);
+  font-weight: 600;
+}
+
+.xmimo-voice-reading-qq-number {
+  color: var(--dsw-alias-label-secondary, #5f6875);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
 .xmimo-voice-reading-intro {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   margin: 0;
   font-size: 14px;
   line-height: 22px;
@@ -30,6 +202,83 @@
   font-size: 12px;
   line-height: 18px;
   color: var(--dsw-alias-label-tertiary, #66707d);
+}
+
+.xmimo-voice-reading-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--dsw-alias-brand-primary, #4f6ef7);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.xmimo-voice-reading-link-label {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.xmimo-voice-reading-link:hover .xmimo-voice-reading-link-label {
+  text-decoration-thickness: 2px;
+}
+
+.xmimo-voice-reading-link:focus-visible {
+  outline: 2px solid var(--dsw-focus-ring-color, var(--dsw-alias-brand-primary, #4f6ef7));
+  outline-offset: 2px;
+}
+
+.xmimo-voice-reading-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 36px;
+  padding: 4px 8px 4px 12px;
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-state-warning-primary, #c58a00) 40%, transparent);
+  border-radius: var(--dsw-radius-sm, 8px);
+  background: color-mix(in srgb, var(--dsw-alias-state-warning-primary, #c58a00) 12%, var(--dsw-alias-bg-layer-1, #fff));
+  color: var(--dsw-alias-label-primary, #1f2328);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.xmimo-voice-reading-warning-message {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xmimo-voice-reading-warning-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm, 8px);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.xmimo-voice-reading-warning-close:hover {
+  background: var(--dsw-alias-interactive-bg-hover, #e4e7eb);
+}
+
+.xmimo-voice-reading-warning-close:focus-visible {
+  outline: var(--dsw-focus-ring-width, 2px) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary, #4f6ef7));
+  outline-offset: 1px;
 }
 
 .xmimo-voice-reading-failure {
@@ -141,7 +390,7 @@
   flex: none;
 }
 
-@media (max-width: 460px) {
+@media (max-width: 375px) {
   .xmimo-voice-reading-row {
     flex-direction: column;
     align-items: stretch;
@@ -151,6 +400,21 @@
   .xmimo-voice-reading-selector {
     align-self: flex-start;
     max-width: 100%;
+  }
+
+  /**
+   * On narrow screens the capsule would start past the left edge when anchored
+   * to the trigger's right edge; pin it to the page instead.
+   */
+  .xmimo-voice-reading-qq-panel {
+    position: fixed;
+    top: auto;
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+    width: auto;
+    max-width: 320px;
+    margin-inline: auto;
   }
 }
 

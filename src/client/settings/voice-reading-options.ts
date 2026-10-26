@@ -6,9 +6,20 @@
  * unit tests, so it only depends on shared preset data and the locale key type.
  */
 
-import { DOUBAO_VOICE_PRESETS, TTS_VOICE_DESIGN_PRESETS, TTS_VOICE_PRESETS } from '../../shared.js'
+import { DOUBAO_VOICE_PRESETS, TTS_VOICE_DESIGN_PRESETS, TTS_VOICE_PRESETS, ttsSelection } from '../../shared.js'
 import type { ResolvedTtsSettings, TtsReadScope } from '../../shared.js'
 import type { LocaleKey } from '../localization.js'
+import type { ApiKeyStatus } from './api-key-state.js'
+
+/** Report the first incomplete setting, including cloud credentials when local speech works. */
+export function voiceReadingWarningKey(settings: ResolvedTtsSettings, apiKeyStatus: ApiKeyStatus): LocaleKey | null {
+  if (!settings.enabled) return 'settings.voiceReadingWarningDisabled'
+  if (apiKeyStatus === 'missing') return 'settings.voiceReadingWarningApiKeyMissing'
+  if (apiKeyStatus === 'unrecognized') return 'settings.voiceReadingWarningApiKeyInvalid'
+  if (apiKeyStatus === 'unavailable') return 'settings.voiceReadingWarningApiKeyUnavailable'
+  if (!ttsSelection(settings).voice.trim()) return 'settings.voiceReadingWarningVoiceRequired'
+  return null
+}
 
 export type VoiceReadingField = 'voice' | 'voiceDesignPrompt' | 'doubaoVoice' | 'doubaoClonedVoice'
 

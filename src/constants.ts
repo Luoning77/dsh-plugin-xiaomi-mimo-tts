@@ -46,6 +46,12 @@ export const TTS_API_KEY_WHALE_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/api-key-w
 /** Same-origin illustration for an empty audio history. */
 export const TTS_HISTORY_EMPTY_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/history-empty-whale.webp'
 
+/** Same-origin QR code for the plugin's QQ discussion group. */
+export const TTS_QQ_GROUP_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/qq-group.webp'
+
+/** Public QQ discussion group the plugin links to. */
+export const TTS_QQ_GROUP_NUMBER = '1104616387'
+
 /** Same-origin prefix used by the Web client to load switch feedback sounds. */
 export const TTS_TOGGLE_AUDIO_ASSET_ROUTE = '/plugins/xiaomi-mimo-tts/audio'
 

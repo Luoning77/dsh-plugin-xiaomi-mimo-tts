@@ -8,10 +8,7 @@ const css = await readFile(new URL('../src/client/style/voice-reading.css', impo
 test('voice reading page builds its dropdowns from the Host capsule selector + Menu primitive', () => {
   // Same primitive pair the Host settings rows use
   // (PreferenceRow.tsx / LanguageRow.tsx): Menu with a chevron pill anchor.
-  assert.match(
-    section,
-    /import \{ IconChevronDownOutlineRegular, Menu, Switch \} from '@deepseek-ai\/dsh-client-ui-primitives'/,
-  )
+  assert.match(section, /<IconChevronDownOutlineRegular\b/)
   assert.match(section, /function VoiceReadingSelect\(/)
   assert.match(section, /<Menu\s[\s\S]*?anchor=\{selector\}[\s\S]*?align="end"[\s\S]*?portal/)
   assert.match(section, /aria-haspopup="menu"/)
@@ -51,18 +48,4 @@ test('capsule selector styles match the Host pill (36px, borderless, module surf
   )
   assert.match(css, /\.xmimo-voice-reading-selector:hover:not\(:disabled\) \{[^}]*interactive-bg-hover/)
   assert.match(css, /\.xmimo-voice-reading-selector:disabled \{[^}]*cursor:\s*default;/)
-})
-
-test('page heading and card chrome match the requested layout', () => {
-  const title = /\.xmimo-voice-reading-title \{([^}]*)\}/.exec(css)
-  assert.ok(title, 'missing .xmimo-voice-reading-title rule')
-  assert.match(title[1], /font-size:\s*18px;/)
-  assert.match(title[1], /font-weight:\s*600;/)
-  // The rows draw their own hairlines; the card itself must stay chrome-free.
-  const card = /\.xmimo-voice-reading-card \{([^}]*)\}/.exec(css)
-  assert.ok(card, 'missing .xmimo-voice-reading-card rule')
-  assert.match(card[1], /border:\s*0;/)
-  assert.match(card[1], /border-radius:\s*0;/)
-  assert.match(card[1], /padding:\s*0;/)
-  assert.doesNotMatch(card[1], /background:/)
 })

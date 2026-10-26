@@ -27,6 +27,7 @@ const assetFiles = new Map([
   ['provider-doubao.webp', path.join(repositoryRoot, 'assets', 'ui', 'provider-doubao.webp')],
   ['api-key-whale.webp', path.join(repositoryRoot, 'assets', 'ui', 'api-key-whale.webp')],
   ['history-empty-whale.webp', path.join(repositoryRoot, 'assets', 'plugin-icons', 'avatar.webp')],
+  ['qq-group.webp', path.join(repositoryRoot, 'assets', 'ui', 'qq-group.webp')],
 ])
 
 function resolvePreviewAsset(url: string | undefined): string | undefined {

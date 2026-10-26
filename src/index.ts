@@ -16,6 +16,7 @@ import {
   TTS_PROVIDER_CHARACTER_ASSET_ROUTES,
   TTS_API_KEY_WHALE_ASSET_ROUTE,
   TTS_HISTORY_EMPTY_ASSET_ROUTE,
+  TTS_QQ_GROUP_ASSET_ROUTE,
   TTS_TOGGLE_AUDIO_ASSET_ROUTE,
   TTS_TOGGLE_SOUND_FILES,
   TTS_VOLUME_PREVIEW_FILES,
@@ -139,6 +140,7 @@ export function apply(ctx: Context, config: Config): void {
   const soundEffectsCharacterAsset = readFileSync(new URL('../assets/ui/sound-effects-toggle-characters.webp', import.meta.url))
   const apiKeyWhaleAsset = readFileSync(new URL('../assets/ui/api-key-whale.webp', import.meta.url))
   const historyEmptyAsset = readFileSync(new URL('../assets/plugin-icons/avatar.webp', import.meta.url))
+  const qqGroupAsset = readFileSync(new URL('../assets/ui/qq-group.webp', import.meta.url))
 
   ctx.inject(['settings'], (child) => {
     child.effect(() => child.settings.configure({ auto: false }, ctx.fiber), 'xiaomi-mimo-tts: custom settings page')
@@ -159,6 +161,13 @@ export function apply(ctx: Context, config: Config): void {
     data: historyEmptyAsset,
     contentType: 'image/webp',
     description: 'history empty illustration',
+  })
+
+  registerStaticAsset(ctx, {
+    path: TTS_QQ_GROUP_ASSET_ROUTE,
+    data: qqGroupAsset,
+    contentType: 'image/webp',
+    description: 'QQ discussion group QR code',
   })
 
   registerStaticAsset(ctx, {
