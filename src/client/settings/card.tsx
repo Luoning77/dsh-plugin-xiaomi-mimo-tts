@@ -573,10 +573,10 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
               </Button>
             </div>
             {!snapshot.writable ? <span>{t('settings.readOnly')}</span> : null}
-            {state === 'saved' && !dirty ? <span role="status">{t('settings.saved')}</span> : null}
             {validationError !== null ? <span role="alert" className="xmimo-tts-failed">{t('settings.doubaoVoiceRequired')}</span> : null}
             {state === 'failed' ? <span className="xmimo-tts-failed" role="status">{t('settings.failed')}</span> : null}
             <div className="xmimo-tts-card-action-buttons">
+              {state === 'saved' && !dirty ? <span role="status">{t('settings.saved')}</span> : null}
               <Button type="button" variant="outline" size="sm" className="xmimo-tts-discard" disabled={!snapshot.writable || !dirty || state === 'saving'} onClick={discard}>
                 {t('settings.discard')}
               </Button>
