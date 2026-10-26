@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react'
+import { RiRadio2Line } from 'react-icons/ri'
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PreviewError, PreviewSource, PreviewStatus } from '../playback/preview-player.js'
 import { CollapsibleModule } from './collapsible-module.js'
@@ -51,12 +52,27 @@ export function PreviewModule({ t, enabled, status, source, error, text, onToggl
             : 'settings.previewHint'
 
   return <CollapsibleModule className="xmimo-tts-settings-module xmimo-tts-broadcast"
-    title={t('settings.previewTitle')}
-    open={open} onToggle={onToggleOpen}
-    summary={<span className="xmimo-ui-summary">
+    title={<span className="xmimo-ui-module-title"><RiRadio2Line size={14} aria-hidden="true" focusable="false" />{t('settings.previewTitle')}</span>}
+    ariaLabel={t('settings.previewTitle')}
+    open={open} onToggle={onToggleOpen} interactiveSummary
+    summary={<><span className="xmimo-ui-summary">
+      <button
+        type="button"
+        className="xmimo-tts-preview-tag"
+        title={t(busy ? 'settings.previewStop' : 'settings.previewPlay')}
+        aria-label={t(busy ? 'settings.previewStop' : 'settings.previewPlay')}
+        aria-pressed={busy}
+        disabled={!enabled || (!busy && text.trim().length === 0)}
+        onClick={onToggle}
+      >
+        <PlaybackIcon state={busy ? 'stop' : 'play'} />
+        <span>{t(busy ? 'settings.previewStopShort' : 'settings.previewListen')}</span>
+      </button>
       {ANNOUNCEMENT_SOURCE_OPTIONS.filter(option => settings.sources.includes(option.id)).map(option => <span key={option.id}>{t(option.label)}</span>)}
       {settings.sources.length === 0 ? <span>{t('settings.announcementsNone')}</span> : null}
-    </span>}>
+    </span>
+      {!open && status === 'error' ? <small className="xmimo-tts-preview-summary-status xmimo-tts-failed" role="status">{t(messageKey)}</small> : null}
+    </>}>
     <div className="xmimo-tts-broadcast-body">
       <div className="xmimo-tts-format">
         <div className="xmimo-tts-preview-input">

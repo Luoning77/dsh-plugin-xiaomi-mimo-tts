@@ -14,6 +14,31 @@
 .xmimo-tts-broadcast + .xmimo-tts-card-actions { border-top: 0; }
 .xmimo-tts-broadcast { padding: 0 !important; }
 
+.xmimo-tts-broadcast .xmimo-tts-preview-tag {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  border: 0;
+  border-radius: 999px;
+  padding: 1px 7px;
+  color: var(--xmimo-ui-brand);
+  background: var(--xmimo-ui-chip-surface);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.xmimo-tts-preview-tag svg { width: 12px; height: 12px; }
+.xmimo-tts-preview-tag:hover:not(:disabled) { background: var(--xmimo-ui-hover); }
+.xmimo-tts-preview-tag:focus-visible { outline: var(--xmimo-ui-focus); outline-offset: 2px; }
+.xmimo-tts-preview-tag:disabled { color: var(--xmimo-ui-text-muted); cursor: not-allowed; opacity: .5; }
+.xmimo-tts-preview-summary-status { font-size: 12px; font-weight: 400; line-height: 18px; }
+
 
 .xmimo-tts-broadcast-body {
   display: flex;

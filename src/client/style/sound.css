@@ -95,33 +95,6 @@
   white-space: nowrap
 }
 
-.xmimo-tts-sound-pack-wave {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: 2px;
-  margin-left: 7px;
-  opacity: .6;
-  transition: opacity 140ms ease, transform 140ms ease
-}
-
-.xmimo-tts-sound-pack-wave i {
-  display: block;
-  width: 2px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--xmimo-sound-pack-accent);
-  transition: height 140ms ease, background 140ms ease
-}
-
-.xmimo-tts-sound-pack-wave i:nth-child(2) {
-  height: 13px
-}
-
-.xmimo-tts-sound-pack-wave i:nth-child(3) {
-  height: 10px
-}
-
 .xmimo-tts-sound-pack-option:hover:not(:disabled) {
   border-color: var(--xmimo-sound-pack-accent);
   color: var(--dsw-alias-label-primary, #1f2328);
@@ -147,11 +120,6 @@
   content: "✓";
   opacity: 1;
   transform: translateY(-50%) scale(1)
-}
-
-.xmimo-tts-sound-pack-option-selected .xmimo-tts-sound-pack-wave {
-  opacity: .3;
-  transform: scale(.82)
 }
 
 .xmimo-tts-sound-pack-option-pending {

@@ -2,10 +2,11 @@ import type { ReactElement, RefObject } from 'react'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
 import { AiFillGithub, AiOutlineGift } from 'react-icons/ai'
+import { GoHistory } from 'react-icons/go'
+import { RiSwitchFill } from 'react-icons/ri'
 import {
   TTS_API_KEY_STATUS_ROUTE,
   TTS_MIMO_LOGO_ASSET_ROUTE,
-  TTS_UPDATE_ROUTE,
   getSoundEffectsModeFlags,
   isSupportedTtsApiKey,
   resolveSoundEffectsScope,
@@ -19,6 +20,8 @@ import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { PreviewPlayer } from '../playback/preview-player.js'
 import type { PreviewView } from '../playback/preview-player.js'
 import { isRecord, useSettingsSnapshot } from './scope.js'
+import { RELEASES_URL, SOURCE_URL } from './plugin-links.js'
+import { useAvailableUpdate } from './update-status.js'
 import { ToggleSoundPlayer } from '../sound-effects/toggle-sound-player.js'
 import type { SoundEffectsController } from '../sound-effects/types.js'
 import { ApiKeyModule } from './api-key-module.js'
@@ -51,7 +54,6 @@ interface SettingsCardProps {
 
 type DraftSettings = SettingsValues
 
-const RELEASES_URL = 'https://github.com/ppy-web/dsh-plugin-xiaomi-mimo-tts/releases'
 const PREVIEW_TEXT_KEYS = [
   'settings.previewDefaultText',
   'settings.previewDefaultTextPoetry',
@@ -71,7 +73,8 @@ function hasLayerField(value: unknown, field: string): boolean {
 function HistoryLink({ history, t, onOpen, buttonRef }: { history: AudioHistory; t: Translate; onOpen: () => void; buttonRef: RefObject<HTMLButtonElement | null> }): ReactElement {
   const view = useSyncExternalStore(history.subscribe, history.getSnapshot)
   return <Button ref={buttonRef} type="button" className="xmimo-tts-history-link" variant="toolbar" size="sm" onClick={onOpen}>
-    {t('history.title')} · {view.entries.length}
+    <GoHistory size={14} aria-hidden="true" focusable="false" />
+    <span className="xmimo-tts-action-label">{t('history.title')} · {view.entries.length}</span>
   </Button>
 }
 
@@ -127,7 +130,7 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
     toggleSoundPlayer.dispose()
   }), [audioFocus, previewPlayer, toggleSoundPlayer])
   const [apiKeyStatus, setApiKeyStatus] = useState<ApiKeyStatus>('loading')
-  const [latestVersion, setLatestVersion] = useState<string | null>(null)
+  const latestVersion = useAvailableUpdate()
   const [minimalMode, setMinimalMode] = useState(readMinimalMode)
   const [historyOpen, setHistoryOpen] = useState(false)
   const historyLinkRef = useRef<HTMLButtonElement>(null)
@@ -193,21 +196,6 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
       })
     return () => { active = false }
   }, [provider, snapshot.status, value])
-
-  useEffect(() => {
-    let active = true
-    void fetch(hostRoute(TTS_UPDATE_ROUTE), { cache: 'no-store', headers: { accept: 'application/json' } })
-      .then(async (response) => {
-        if (!response.ok) throw new Error('version-check-failed')
-        return await response.json() as { latestVersion?: unknown; updateAvailable?: unknown }
-      })
-      .then((result) => {
-        if (!active) return
-        setLatestVersion(result.updateAvailable === true && typeof result.latestVersion === 'string' ? result.latestVersion : null)
-      })
-      .catch(() => { if (active) setLatestVersion(null) })
-    return () => { active = false }
-  }, [])
 
   useEffect(() => {
     if (dirty) return
@@ -548,50 +536,55 @@ function SettingsPage({ scope, t, controller, history, beforeHistoryPlayback, sp
           onReset={() => resetField('announcementSources')}
           onChange={next => { setAnnouncementSources(next); markChange('announcementSources') }}
         /> : null}
-        <div className="xmimo-tts-card-actions">
-          {latestVersion !== null
-            ? <a className="xmimo-tts-update" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">
-              <AiOutlineGift size={14} aria-hidden="true" focusable="false" />
-              {t('settings.updateAvailable')}
-            </a>
-            : null}
-          <div className="xmimo-tts-card-action-links">
-            <a
-              className="xmimo-tts-star"
-              href="https://github.com/ppy-web/dsh-plugin-xiaomi-mimo-tts"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <AiFillGithub size={14} aria-hidden="true" focusable="false" />
-              {t('settings.source')}
-            </a>
-            {history ? <HistoryLink history={history} t={t} buttonRef={historyLinkRef} onOpen={() => {
-              previewPlayer.stop()
-              toggleSoundPlayer.dispose()
-              setHistoryOpen(true)
-            }} /> : null}
+        <div className="xmimo-tts-card-footer">
+          <div className="xmimo-tts-card-actions">
+            <div className="xmimo-tts-card-action-links">
+              {latestVersion !== null
+                ? <a className="xmimo-tts-update" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">
+                  <AiOutlineGift size={14} aria-hidden="true" focusable="false" />
+                  <span className="xmimo-tts-action-label">{t('settings.updateAvailable')}</span>
+                </a>
+                : null}
+              <a
+                className="xmimo-tts-star"
+                href={SOURCE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <AiFillGithub size={14} aria-hidden="true" focusable="false" />
+                <span className="xmimo-tts-action-label">{t('settings.source')}</span>
+              </a>
+              {history ? <HistoryLink history={history} t={t} buttonRef={historyLinkRef} onOpen={() => {
+                previewPlayer.stop()
+                toggleSoundPlayer.dispose()
+                setHistoryOpen(true)
+              }} /> : null}
+              <Button
+                type="button"
+                variant="toolbar"
+                size="sm"
+                className="xmimo-tts-mode-toggle"
+                aria-pressed={minimalMode}
+                aria-label={`${t('settings.minimalMode')}: ${t(minimalMode ? 'settings.minimalModeOn' : 'settings.minimalModeOff')}`}
+                onClick={toggleMinimalMode}
+              >
+                <RiSwitchFill size={14} aria-hidden="true" focusable="false" />
+                <span className="xmimo-tts-action-label">{t(minimalMode ? 'settings.defaultModeShort' : 'settings.minimalModeShort')}</span>
+              </Button>
+            </div>
+            {!snapshot.writable ? <span>{t('settings.readOnly')}</span> : null}
+            {state === 'saved' && !dirty ? <span role="status">{t('settings.saved')}</span> : null}
+            {validationError !== null ? <span role="alert" className="xmimo-tts-failed">{t('settings.doubaoVoiceRequired')}</span> : null}
+            {state === 'failed' ? <span className="xmimo-tts-failed" role="status">{t('settings.failed')}</span> : null}
+            <div className="xmimo-tts-card-action-buttons">
+              <Button type="button" variant="outline" size="sm" className="xmimo-tts-discard" disabled={!snapshot.writable || !dirty || state === 'saving'} onClick={discard}>
+                {t('settings.discard')}
+              </Button>
+              <Button type="button" variant="primary" size="sm" className="xmimo-tts-save" disabled={!snapshot.writable || !dirty || state === 'saving' || validationError !== null} onClick={() => { void save() }}>
+                {state === 'saving' ? t('settings.saving') : t('settings.save')}
+              </Button>
+            </div>
           </div>
-          {!snapshot.writable ? <span>{t('settings.readOnly')}</span> : null}
-          {state === 'saved' && !dirty ? <span role="status">{t('settings.saved')}</span> : null}
-          {validationError !== null ? <span role="alert" className="xmimo-tts-failed">{t('settings.doubaoVoiceRequired')}</span> : null}
-          {state === 'failed' ? <span className="xmimo-tts-failed" role="status">{t('settings.failed')}</span> : null}
-          <Button
-            type="button"
-            variant="toolbar"
-            size="sm"
-            className="xmimo-tts-mode-toggle"
-            aria-pressed={minimalMode}
-            aria-label={`${t('settings.minimalMode')}: ${t(minimalMode ? 'settings.minimalModeOn' : 'settings.minimalModeOff')}`}
-            onClick={toggleMinimalMode}
-          >
-            {t(minimalMode ? 'settings.defaultModeShort' : 'settings.minimalModeShort')}
-          </Button>
-          <Button type="button" variant="outline" size="sm" className="xmimo-tts-discard" disabled={!snapshot.writable || !dirty || state === 'saving'} onClick={discard}>
-            {t('settings.discard')}
-          </Button>
-          <Button type="button" variant="primary" size="sm" className="xmimo-tts-save" disabled={!snapshot.writable || !dirty || state === 'saving' || validationError !== null} onClick={() => { void save() }}>
-            {state === 'saving' ? t('settings.saving') : t('settings.save')}
-          </Button>
         </div>
       </div>
     </div>

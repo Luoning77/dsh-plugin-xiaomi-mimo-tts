@@ -1,5 +1,5 @@
 .xmimo-tts-switch-module-minimal {
-  padding: var(--xmimo-ui-space-3);
+  padding: var(--xmimo-ui-space-3) 0 0;
 }
 
 .xmimo-tts-card-minimal {
@@ -9,7 +9,7 @@
   --xmimo-ui-mascot-size: 0px;
   border: 1px solid var(--xmimo-ui-border);
   background: var(--xmimo-ui-surface, #fff);
-  padding: 5px;
+  padding: 0 var(--xmimo-ui-space-3);
 }
 
 .xmimo-tts-card-minimal .xmimo-ui-module {
@@ -111,7 +111,7 @@
   min-width: 0;
   min-height: var(--xmimo-ui-control-height);
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 6px;
   padding: 0 8px;
   border: 1px solid var(--xmimo-ui-border);
@@ -367,10 +367,6 @@
   box-shadow: none;
 }
 
-.xmimo-tts-card-minimal .xmimo-tts-sound-pack-wave {
-  display: none;
-}
-
 .xmimo-tts-card-minimal .xmimo-tts-sound-pack-icon {
   width: 16px;
   height: 16px;
@@ -400,9 +396,8 @@
 }
 
 .xmimo-tts-card-minimal .xmimo-tts-card-actions {
-  flex-wrap: wrap;
   gap: 6px;
-  padding: 0 var(--xmimo-ui-space-3) var(--xmimo-ui-space-3);
+  padding: 0 0 var(--xmimo-ui-space-3);
 }
 
 @media (max-width: 520px) {

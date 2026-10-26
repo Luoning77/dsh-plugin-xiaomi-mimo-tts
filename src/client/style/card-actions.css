@@ -2,11 +2,15 @@
  * Settings card action bar: update, star, discard, and save.
  */
 
+.xmimo-tts-card-footer {
+  min-width: 0;
+  container: xmimo-actions / inline-size
+}
+
 .xmimo-tts-card-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: flex-end;
   gap: 10px;
   font-size: 12px;
   color: var(--xmimo-ui-text-subtle)
@@ -14,10 +18,24 @@
 
 .xmimo-tts-card-action-links {
   display: flex;
+  min-width: 0;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-inline-end: auto
+  gap: inherit
+}
+
+/* Reserve one column for both actions, even inside a narrow host panel. */
+.xmimo-tts-card-action-buttons {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: inherit
+}
+
+.xmimo-tts-card-actions > span {
+  grid-column: 1 / -1;
+  order: -1;
+  text-align: end
 }
 
 .xmimo-tts-card-actions :is(button, a),
@@ -57,7 +75,7 @@
   outline-offset: 3px
 }
 
-.xmimo-tts-card-actions > button:disabled,
+.xmimo-tts-card-actions button:disabled,
 .xmimo-ui-scope .xmimo-tts-action-button:disabled {
   border-color: var(--xmimo-ui-border);
   color: var(--xmimo-ui-text-muted);
@@ -140,8 +158,36 @@
   65%, 100% { transform: translateX(110%) }
 }
 
+@container xmimo-actions (max-width: 520px) {
+  .xmimo-tts-card-actions :is(.xmimo-tts-update, .xmimo-tts-star, .xmimo-tts-history-link, .xmimo-tts-mode-toggle) {
+    position: relative;
+    padding-inline: 8px
+  }
+
+  .xmimo-tts-card-actions .xmimo-tts-action-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0
+  }
+}
+
+@container xmimo-actions (max-width: 360px) {
+  .xmimo-tts-card-actions {
+    gap: 6px
+  }
+
+  .xmimo-tts-card-actions :is(.xmimo-tts-update, .xmimo-tts-star, .xmimo-tts-history-link, .xmimo-tts-mode-toggle) {
+    padding-inline: 6px
+  }
+}
+
 @media (pointer: coarse) {
-  .xmimo-tts-card-actions > :is(button, a),
   .xmimo-ui-scope .xmimo-tts-action-button {
     min-height: 44px
   }

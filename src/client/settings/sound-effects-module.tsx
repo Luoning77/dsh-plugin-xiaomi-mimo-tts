@@ -1,6 +1,7 @@
 import { SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react'
 import { useRef } from 'react'
+import { RiDiscLine } from 'react-icons/ri'
 import { resolveSoundEffectsMode, resolveSoundEffectsScope, SOUND_PACKS, SOUND_EFFECTS_SCOPES } from '../../shared.js'
 import type { SoundEffectsMode, SoundEffectsScope, SoundPack } from '../../shared.js'
 import type { Translate } from '../localization.js'
@@ -92,7 +93,8 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
   const previewLabel = (cue: SoundCue): string => t(`settings.soundEffectsPreview.${cue}` as Parameters<Translate>[0])
   return <CollapsibleModule
     className="xmimo-tts-settings-module xmimo-tts-sound-effects xmimo-ui-module"
-    title={t('settings.soundEffectsTitle')}
+    title={<span className="xmimo-ui-module-title"><RiDiscLine size={14} aria-hidden="true" focusable="false" />{t('settings.soundEffectsTitle')}</span>}
+    ariaLabel={t('settings.soundEffectsTitle')}
     summary={<span className="xmimo-tts-sound-summary xmimo-ui-summary">
       <span>{modeLabel}</span>
       <span>{t('settings.soundEffectsVolume')} {Math.round(volume * 100)}%</span>
@@ -144,7 +146,6 @@ export function SoundEffectsPanel({ t, controller, enabled, volume, pack, taskSo
           >
             <SoundPackIcon pack={option} />
             <span className="xmimo-tts-sound-pack-name">{option}</span>
-            <span className="xmimo-tts-sound-pack-wave" aria-hidden="true"><i /><i /><i /></span>
           </button>)}
         </div>
       </div>

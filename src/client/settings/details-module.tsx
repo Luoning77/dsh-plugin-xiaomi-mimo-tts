@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react'
 import { useCallback, useEffect, useState } from 'react'
+import { RiEqualizerLine } from 'react-icons/ri'
 import { SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives'
 import {
   TTS_LOCAL_SPEECH_MODES,
@@ -132,7 +133,8 @@ export function DetailsModule({ t, provider, doubaoModel, doubaoVoice, doubaoClo
   const instructionField = provider === 'doubao' ? 'doubaoInstruction' : 'instruction'
   return <CollapsibleModule
     className="xmimo-tts-settings-module xmimo-tts-details xmimo-ui-module"
-    title={t('settings.detailedVoiceConfig')}
+    title={<span className="xmimo-ui-module-title"><RiEqualizerLine size={14} aria-hidden="true" focusable="false" />{t('settings.detailedVoiceConfig')}</span>}
+    ariaLabel={t('settings.detailedVoiceConfig')}
     summary={<span className="xmimo-tts-details-summary xmimo-ui-summary">
       <span>{summaryVoiceVolume}</span><span>{summaryVoiceRate}</span><span>{summaryReadScope}</span><span>{summaryModel}</span><span>{summaryVoice}</span>{minimal ? null : <span>{summaryStrategy}</span>}
     </span>}

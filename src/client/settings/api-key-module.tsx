@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactElement } from 'react'
 import { useId, useState } from 'react'
+import { RiKey2Line } from 'react-icons/ri'
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { TtsProvider } from '../../types/providers.js'
 import { TTS_API_KEY_WHALE_ASSET_ROUTE, TTS_MIMO_LOGO_ASSET_ROUTE } from '../../shared.js'
@@ -51,12 +52,15 @@ export function ApiKeyModule({ t, provider, value, message, invalid, clearable, 
   const keyUrl = provider === 'doubao' ? 'https://console.volcengine.com/speech/new/setting/apikeys?projectName=default' : 'https://platform.xiaomimimo.com/console/api-keys'
 
   return <ModuleShell className="xmimo-tts-settings-module xmimo-tts-api-key xmimo-ui-module-padded" title={<SettingFieldHeading
-      label={provider === 'doubao' ? t('settings.providerDoubao') : <span
-        className="xmimo-tts-api-key-logo"
-        role="img"
-        aria-label={t('settings.apiKey')}
-        style={{ '--xmimo-tts-api-key-logo-image': `url(${hostRoute(TTS_MIMO_LOGO_ASSET_ROUTE)})` } as CSSProperties}
-      />}
+      label={<span className="xmimo-ui-module-title">
+        <RiKey2Line size={14} aria-hidden="true" focusable="false" />
+        {provider === 'doubao' ? t('settings.providerDoubao') : <span
+          className="xmimo-tts-api-key-logo"
+          role="img"
+          aria-label={t('settings.apiKey')}
+          style={{ '--xmimo-tts-api-key-logo-image': `url(${hostRoute(TTS_MIMO_LOGO_ASSET_ROUTE)})` } as CSSProperties}
+        />}
+      </span>}
       suffix={<>
         <a className="xmimo-tts-api-key-link" href={keyUrl} target="_blank" rel="noopener noreferrer">{t('settings.getApiKey')}</a>
         {clearable ? <Button type="button" variant="ghost" size="sm" className="xmimo-tts-reset" disabled={!writable} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onClear() }}>{t('settings.apiKeyClear')}</Button> : null}
@@ -64,7 +68,7 @@ export function ApiKeyModule({ t, provider, value, message, invalid, clearable, 
       disabled={!writable}
       resettable={false}
     />} action={minimal ? undefined : <span className="xmimo-tts-api-key-decoration" aria-hidden="true" />}>
-    <div className="xmimo-tts-api-key-content">
+    <form className="xmimo-tts-api-key-content" onSubmit={event => { event.preventDefault(); event.stopPropagation() }}>
       <div className="xmimo-tts-api-key-input">
       {!minimal ? <span className="xmimo-tts-character-bubble xmimo-tts-api-key-bubble" aria-hidden="true">{t(bubbleKey)}</span> : null}
       {!minimal ? <span
@@ -102,6 +106,6 @@ export function ApiKeyModule({ t, provider, value, message, invalid, clearable, 
       >
         {message}
       </small>
-    </div>
+    </form>
   </ModuleShell>
 }

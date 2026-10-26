@@ -14,21 +14,31 @@ export interface AnnouncementSettingsProps {
   onReset: () => void
 }
 
-export const ANNOUNCEMENT_SOURCE_OPTIONS = [
-  { id: 'dsh-pet', label: 'settings.announcementsPet', hint: 'settings.announcementsPetHint', href: 'https://github.com/PC2005-cloud/dsh-pet' },
-  { id: 'dsh-whale-musume', label: 'settings.announcementsWhale', hint: 'settings.announcementsWhaleHint', href: 'https://github.com/Sutera-Diffusus/dsh-whale-musume' },
+const HOST_SOURCE_OPTIONS = [
   { id: 'question-titles', label: 'settings.announcementsQuestions', hint: 'settings.announcementsQuestionsHint', href: null },
   { id: 'approvals', label: 'settings.announcementsApprovals', hint: 'settings.announcementsApprovalsHint', href: null },
   { id: 'job-results', label: 'settings.announcementsJobs', hint: 'settings.announcementsJobsHint', href: null },
 ] as const
 
+const PLUGIN_SOURCE_OPTIONS = [
+  { id: 'dsh-pet', label: 'settings.announcementsPet', hint: 'settings.announcementsPetHint', href: 'https://github.com/PC2005-cloud/dsh-pet' },
+  { id: 'dsh-whale-musume', label: 'settings.announcementsWhale', hint: 'settings.announcementsWhaleHint', href: 'https://github.com/Sutera-Diffusus/dsh-whale-musume' },
+] as const
+
+export const ANNOUNCEMENT_SOURCE_OPTIONS = [...HOST_SOURCE_OPTIONS, ...PLUGIN_SOURCE_OPTIONS]
+
+const SOURCE_GROUPS = [
+  { label: 'settings.announcementsTitle', hint: 'settings.announcementsHint', options: HOST_SOURCE_OPTIONS },
+  { label: 'settings.announcementsPlugins', hint: 'settings.announcementsPluginsHint', options: PLUGIN_SOURCE_OPTIONS },
+] as const
+
 export function AnnouncementSettings({ t, sources, writable, overridden, onChange, onReset }: AnnouncementSettingsProps): ReactElement {
-  return <section className="xmimo-tts-format">
-    <SettingFieldHeading label={t('settings.announcementsTitle')}
-      suffix={<FieldInfo label={t('settings.announcementsTitle')} text={t('settings.announcementsHint')} />}
+  return <>{SOURCE_GROUPS.map((group, index) => <section key={group.label} className="xmimo-tts-format" aria-label={t(group.label)}>
+    <SettingFieldHeading label={t(group.label)}
+      suffix={<FieldInfo label={t(group.label)} text={t(group.hint)} />}
       overriddenLabel={t('settings.overridden')}
-      resetLabel={t('settings.reset')} overridden={overridden} resettable disabled={!writable} onReset={onReset} />
-    {ANNOUNCEMENT_SOURCE_OPTIONS.map(option => <div key={option.id} className="xmimo-tts-announcement-source">
+      resetLabel={t('settings.reset')} overridden={index === 0 && overridden} resettable disabled={!writable} onReset={onReset} />
+    {group.options.map(option => <div key={option.id} className="xmimo-tts-announcement-source">
       <div>
         {option.href ? <a href={option.href} target="_blank" rel="noopener noreferrer">{t(option.label)} ↗</a> : <span>{t(option.label)}</span>}
         <small>{t(option.hint)}</small>
@@ -36,5 +46,5 @@ export function AnnouncementSettings({ t, sources, writable, overridden, onChang
       <Switch checked={sources.includes(option.id)} disabled={!writable} label={t(option.label)}
         onChange={checked => onChange(ANNOUNCEMENT_SOURCES.filter(id => id === option.id ? checked : sources.includes(id)))} />
     </div>)}
-  </section>
+  </section>)}</>
 }

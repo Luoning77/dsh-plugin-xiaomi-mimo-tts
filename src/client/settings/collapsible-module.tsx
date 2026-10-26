@@ -6,13 +6,14 @@ export interface CollapsibleModuleProps {
   className: string
   title: ReactNode
   summary?: ReactNode
+  interactiveSummary?: boolean
   open: boolean
   onToggle: () => void
   ariaLabel?: string
   children: ReactNode
 }
 
-export function CollapsibleModule({ className, title, summary, open, onToggle, ariaLabel, children }: CollapsibleModuleProps): ReactElement {
+export function CollapsibleModule({ className, title, summary, interactiveSummary = false, open, onToggle, ariaLabel, children }: CollapsibleModuleProps): ReactElement {
   const id = useId()
   const { panel, toggle } = useAccordionViewport(open, onToggle)
 
@@ -20,6 +21,7 @@ export function CollapsibleModule({ className, title, summary, open, onToggle, a
     className={`xmimo-ui-accordion ${className}`}
     title={title}
     summary={summary}
+    interactiveSummary={interactiveSummary}
     collapsible
     open={open}
     onToggle={toggle}

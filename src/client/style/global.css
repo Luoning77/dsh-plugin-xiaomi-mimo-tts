@@ -96,6 +96,8 @@
 
 .xmimo-ui-module-heading,
 .xmimo-ui-module-heading > strong,
+.xmimo-ui-module-heading .xmimo-ui-module-title-toggle,
+.xmimo-ui-module-heading .xmimo-ui-module-title-toggle > strong,
 .xmimo-ui-module > .xmimo-tts-field-heading .xmimo-tts-field-label > span:first-child {
   color: var(--xmimo-ui-text);
   font-size: 14px;
@@ -104,6 +106,20 @@
 }
 
 /* ---------- Collapsible module header ---------- */
+.xmimo-ui-module-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.xmimo-ui-module-title > svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--xmimo-ui-brand);
+}
+
 .xmimo-ui-module-toggle {
   box-sizing: border-box;
   display: flex;
@@ -125,6 +141,33 @@
 }
 
 .xmimo-ui-module-toggle:focus-visible {
+  outline: var(--xmimo-ui-focus);
+  outline-offset: -2px;
+}
+
+/* Interactive summaries sit beside a trigger whose hit area fills the header. */
+.xmimo-ui-module-title-toggle {
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.xmimo-ui-module-title-toggle::after {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--xmimo-ui-module-radius) - 1px);
+  content: '';
+}
+
+.xmimo-ui-module-title-toggle:focus-visible {
+  outline: none;
+}
+
+.xmimo-ui-module-title-toggle:focus-visible::after {
   outline: var(--xmimo-ui-focus);
   outline-offset: -2px;
 }
