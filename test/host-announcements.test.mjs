@@ -163,3 +163,58 @@ test('optional service collectors wait without polling and dispose observers on 
   assert.equal(cleanups.length, 2)
   removeAgain()
 })
+
+test('optional service collectors settle after synchronous or asynchronous disposal', async () => {
+  for (const asynchronous of [false, true]) {
+    const run = options()
+    let disposals = 0, settled = false, finish
+    const ctx = { inject() {
+      return { dispose() {
+        disposals++
+        if (asynchronous) return new Promise(resolve => { finish = resolve })
+      } }
+    } }
+    const collector = hostCollector(ctx, 'job-results', 'jobs', () => () => {})
+    const done = collector.start(run).then(() => { settled = true })
+    run.controller.abort()
+    await settle()
+    assert.equal(disposals, 1)
+    assert.equal(settled, !asynchronous)
+    finish?.()
+    await done
+    run.controller.abort()
+    assert.equal(disposals, 1)
+  }
+})
+
+test('optional service collectors can stop after their parent has already disposed the fiber', async () => {
+  const ctx = new Context(), run = options(), cleanups = []
+  ctx.provide('sessions', sessions())
+  ctx.provide('jobs', jobs())
+  const collector = hostCollector(ctx, 'job-results', 'jobs', (_child, options) => {
+    return () => { assert.equal(options.signal.aborted, true); cleanups.push(true) }
+  })
+  const done = collector.start(run)
+  await settle()
+  await ctx.fiber.dispose()
+  assert.equal(cleanups.length, 1)
+  run.controller.abort()
+  await done
+  assert.equal(cleanups.length, 1)
+})
+
+test('optional service collectors report disposal failures through their start promise', async () => {
+  for (const asynchronous of [false, true]) {
+    const run = options(), failure = new Error('cleanup failed')
+    const ctx = { inject() {
+      return { dispose() {
+        if (asynchronous) return Promise.reject(failure)
+        throw failure
+      } }
+    } }
+    const collector = hostCollector(ctx, 'job-results', 'jobs', () => () => {})
+    const rejected = assert.rejects(collector.start(run), error => error === failure)
+    run.controller.abort()
+    await rejected
+  }
+})

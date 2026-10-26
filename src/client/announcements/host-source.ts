@@ -18,8 +18,16 @@ export function hostCollector(ctx: Context, id: AnnouncementCollector['id'], ser
         return () => { controller.abort(); off() }
       }, `xiaomi-mimo-tts: ${id}`)
     })
-    await new Promise<void>(resolve => {
-      const stop = () => { options.signal.removeEventListener('abort', stop); void fiber.dispose().then(resolve) }
+    await new Promise<void>((resolve, reject) => {
+      const stop = () => {
+        options.signal.removeEventListener('abort', stop)
+        try {
+          // Synchronous cleanup and an already disposed fiber can return void.
+          void Promise.resolve(fiber.dispose()).then(resolve, reject)
+        } catch (error) {
+          reject(error)
+        }
+      }
       options.signal.addEventListener('abort', stop, { once: true })
       if (options.signal.aborted) stop()
     })
