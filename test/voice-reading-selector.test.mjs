@@ -3,18 +3,19 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 const section = await readFile(new URL('../src/client/settings/voice-reading-section.tsx', import.meta.url), 'utf8')
+const selector = await readFile(new URL('../src/client/settings/voice-reading-select.tsx', import.meta.url), 'utf8')
 const css = await readFile(new URL('../src/client/style/voice-reading.css', import.meta.url), 'utf8')
 
 test('voice reading page builds its dropdowns from the Host capsule selector + Menu primitive', () => {
   // Same primitive pair the Host settings rows use
   // (PreferenceRow.tsx / LanguageRow.tsx): Menu with a chevron pill anchor.
-  assert.match(section, /<IconChevronDownOutlineRegular\b/)
-  assert.match(section, /function VoiceReadingSelect\(/)
-  assert.match(section, /<Menu\s[\s\S]*?anchor=\{selector\}[\s\S]*?align="end"[\s\S]*?portal/)
-  assert.match(section, /aria-haspopup="menu"/)
-  assert.match(section, /aria-expanded=\{open\}/)
+  assert.match(selector, /<IconChevronDownOutlineRegular\b/)
+  assert.match(selector, /function VoiceReadingSelect\(/)
+  assert.match(selector, /<Menu\s[\s\S]*?anchor=\{selector\}[\s\S]*?align="end"[\s\S]*?portal/)
+  assert.match(selector, /aria-haspopup="menu"/)
+  assert.match(selector, /aria-expanded=\{open\}/)
   // Choosing returns focus to the pill before publishing, like the Host rows.
-  assert.match(section, /selectorRef\.current\?\.focus\(\{ preventScroll: true \}\)/)
+  assert.match(selector, /selectorRef\.current\?\.focus\(\{ preventScroll: true \}\)/)
 })
 
 test('both voice and read scope rows use the shared capsule selector', () => {

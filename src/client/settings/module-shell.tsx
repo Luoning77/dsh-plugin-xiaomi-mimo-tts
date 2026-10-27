@@ -37,7 +37,7 @@ export function ModuleShell({ className, title, summary, interactiveSummary = fa
       {collapsible && interactiveSummary
         ? <div className={`xmimo-ui-module-toggle ${toggleClassName}`.trim()}>
           <div className={`xmimo-ui-module-head xmimo-ui-module-heading ${headingClassName}`.trim()}>
-            <h3 className="xmimo-ui-accordion-heading">
+            <h3 className="xmimo-ui-accordion-heading xmimo-ui-interactive-heading">
               <button {...toggleProps} className="xmimo-ui-module-title-toggle"><strong>{title}</strong></button>
             </h3>
             {summary}

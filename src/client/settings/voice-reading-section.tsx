@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactElement } from 'react'
-import { useMemo, useRef, useState } from 'react'
-import { IconChevronDownOutlineRegular, Menu, Switch } from '@deepseek-ai/dsh-client-ui-primitives'
+import { useMemo, useState, useSyncExternalStore } from 'react'
+import { Switch } from '@deepseek-ai/dsh-client-ui-primitives'
 import { resolveTtsSettings, TTS_HISTORY_EMPTY_ASSET_ROUTE, TTS_READ_SCOPES } from '../../shared.js'
 import type { TtsReadScope, TtsSettings } from '../../shared.js'
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
@@ -28,6 +28,8 @@ import type { VoiceReadingWriteOp } from './voice-reading-options.js'
 import { useSettingsSnapshot } from './scope.js'
 import { VoiceReadingWarning } from './voice-reading-warning.js'
 import { VoiceReadingProvider } from './voice-reading-provider.js'
+import { VoiceReadingSelect } from './voice-reading-select.js'
+import { readMinimalMode, subscribeMinimalMode } from './minimal-mode.js'
 
 export interface VoiceReadingSectionInjected {
   scope: ConfigForm<TtsSettings>
@@ -52,71 +54,9 @@ interface VoiceReadingPageProps {
   openPluginSettings: () => void
 }
 
-interface VoiceReadingSelectProps {
-  /** Accessible name of the control (the row title). */
-  label: string
-  /** Currently selected option id. */
-  value: string
-  /** Shown when the value matches no option (a stored custom id). */
-  fallbackLabel?: string
-  options: readonly { id: string; label: string }[]
-  disabled: boolean
-  onSelect: (id: string) => void
-}
-
-/**
- * Capsule selector pill plus anchored menu, mirroring the Host settings rows
- * (`packages/client/ui-chat/src/client/settings/PreferenceRow.tsx` and
- * `packages/client/locale/src/client/LanguageRow.tsx` in the harness source): a
- * borderless 36px pill on the module surface that opens the shared `Menu` with
- * a check on the selected row. Choosing returns focus to the pill before the
- * value is published, exactly like the Host rows.
- */
-function VoiceReadingSelect({ label, value, fallbackLabel, options, disabled, onSelect }: VoiceReadingSelectProps): ReactElement {
-  const [open, setOpen] = useState(false)
-  const selectorRef = useRef<HTMLButtonElement>(null)
-  const closeMenu = (): void => {
-    setOpen(false)
-  }
-  const choose = (id: string): void => {
-    selectorRef.current?.focus({ preventScroll: true })
-    closeMenu()
-    onSelect(id)
-  }
-  const selectedLabel = options.find((option) => option.id === value)?.label ?? fallbackLabel ?? value
-  const selector = <button
-    ref={selectorRef}
-    type="button"
-    className="xmimo-voice-reading-selector"
-    aria-label={label}
-    aria-haspopup="menu"
-    aria-expanded={open}
-    disabled={disabled}
-    onClick={() => {
-      setOpen((current) => !current)
-    }}
-  >
-    <span className="xmimo-voice-reading-selector-label">{selectedLabel}</span>
-    <IconChevronDownOutlineRegular className="xmimo-voice-reading-chevron" />
-  </button>
-
-  return <Menu
-    open={open && !disabled}
-    anchor={selector}
-    items={options}
-    selectedId={value}
-    onSelect={choose}
-    onClose={closeMenu}
-    align="end"
-    portal
-    // The list is portaled to document.body, outside our subtree, so this class
-    // is the only style hook that reaches the dropdown card (Menu.tsx
-    // `listClassName`). voice-reading.css caps its height at 300px there.
-    listClassName="xmimo-voice-reading-menu"
-  />
-}
 
 function VoiceReadingPage({ scope, t, openPluginSettings }: VoiceReadingPageProps): ReactElement | null {
+  const minimalMode = useSyncExternalStore(subscribeMinimalMode, readMinimalMode, () => false)
   const snapshot = useSettingsSnapshot(scope)
   const [clonedHistory] = useState(() => readVoiceIdHistory('cloned'))
   const [busy, setBusy] = useState(false)
@@ -162,7 +102,7 @@ function VoiceReadingPage({ scope, t, openPluginSettings }: VoiceReadingPageProp
   ]
   const readScopeOptions = TTS_READ_SCOPES.map((option) => ({ id: option, label: t(readScopeLabelKey(option)) }))
 
-  return <div className="xmimo-voice-reading" style={{
+  return <div className="xmimo-voice-reading" style={minimalMode ? undefined : {
     '--xmimo-voice-reading-background': `url(${hostRoute(TTS_HISTORY_EMPTY_ASSET_ROUTE)})`,
   } as CSSProperties}>
     <div className="xmimo-voice-reading-header">
