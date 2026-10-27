@@ -93,7 +93,7 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify('development'),
   },
   server: {
-    host: '127.0.0.1',
+    host: true,
     open: true,
   },
   build: {
