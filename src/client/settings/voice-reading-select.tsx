@@ -65,4 +65,3 @@ export function VoiceReadingSelect({ label, value, fallbackLabel, options, disab
     listClassName="xmimo-voice-reading-menu"
   />
 }
-

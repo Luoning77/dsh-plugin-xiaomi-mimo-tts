@@ -41,7 +41,7 @@
 
 ## 📋 环境要求
 
-- DSH `0.1.7-x` 至 `0.2.x`，当前目标版本为 `0.2.1-rc.2`；Node.js 22.13+。
+- DSH `0.1.7-x` 至 `0.2.x`，当前目标版本为 `0.2.1-rc.3`；Node.js 22.13+。
 - 云端语音需要对应 API Key；豆包还需开通所选语音资源。
 - 豆包持续文本输入要求 DSH Host 支持 WebSocket upgrade 注册；桌面端使用 DSH 提供的 Host 流连接地址，Web 端使用页面部署地址，反向代理需转发 Upgrade。
 
@@ -85,6 +85,8 @@ dsh plugin --profile web remove dsh-xiaomi-tts
 | 豆包声音复刻（`seed-icl-2.0`） | [创建音色](https://console.volcengine.com/speech/new/experience/clone?projectName=default)后填写音色 ID，不能为空。 |
 
 语音指令支持情绪、风格和方言，可选标签或自行编辑；效果因模型、音色和文本而异。本地语音与豆包复刻不应用指令。
+
+豆包按密钥自动选择线路：`ark-` 开头的火山方舟 Ark API Key 直接连接 [Agent Plan 个人版语音](https://docs.volcengine.com/docs/6561/2532486?lang=zh)线路；其他格式先连接标准线路，握手返回 401 或 403 时再尝试 Agent Plan。使用 Agent Plan 时填写套餐专属 API Key，个人版文档列出的语音合成模型为 `seed-tts-2.0`。Coding Plan 不包含语音模型。
 
 豆包自定义和复刻音色 ID 各保留最近 10 条历史，失焦或按 Enter 记住，点击标签回填。
 
@@ -163,6 +165,8 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
+预览服务会监听局域网接口，可在同一网络的其他设备上访问终端输出的 Network 地址。
+
 常用检查：
 
 ```bash
@@ -177,7 +181,7 @@ pnpm pack:check
 Windows 本地开发链接切换为 npm 包：先停止 DSH Web，再运行：
 
 ```powershell
-.\tools\start\dsh-plugin-reinstall.bat 4.2.3
+.\tools\start\dsh-plugin-reinstall.bat 4.2.4
 ```
 
 清理 Desktop 残留的本地链接：退出 Desktop 后运行：
