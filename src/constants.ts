@@ -12,6 +12,7 @@ export const TTS_STREAM_ROUTE = '/plugins/xiaomi-mimo-tts/synthesize-stream'
 
 export const TTS_DUPLEX_ROUTE = '/plugins/xiaomi-mimo-tts/synthesize-duplex'
 export const DOUBAO_TTS_ENDPOINT = 'wss://openspeech.bytedance.com/api/v3/tts/bidirection'
+export const DOUBAO_AGENT_PLAN_TTS_ENDPOINT = 'wss://openspeech.bytedance.com/api/v3/plan/tts/bidirection'
 
 /** Same-origin route that checks the published npm version. */
 export const TTS_UPDATE_ROUTE = '/plugins/xiaomi-mimo-tts/update'

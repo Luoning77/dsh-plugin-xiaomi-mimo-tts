@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import WebSocket from 'ws'
-import { DOUBAO_TTS_ENDPOINT } from '../constants.js'
+import { DOUBAO_AGENT_PLAN_TTS_ENDPOINT, DOUBAO_TTS_ENDPOINT } from '../constants.js'
 import { ttsSelection, ttsApiKey } from '../types/providers.js'
 import { normalizeVoiceRate } from '../utils/encoding.js'
 import type { ResolvedTtsSettings } from '../types/settings.js'
@@ -15,7 +15,7 @@ export interface DoubaoSessionOptions {
   format?: 'pcm' | 'mp3'
   onAudio: (bytes: Buffer) => void
   /** Inject a socket factory for local protocol integration tests. Never accepted from HTTP. */
-  connect?: (headers: Record<string, string>) => WebSocket
+  connect?: (headers: Record<string, string>, endpoint: string) => WebSocket
 }
 
 export class DoubaoSession {
@@ -26,7 +26,7 @@ export class DoubaoSession {
   private resolveDone!: () => void
   private rejectDone!: (error: Error) => void
   private state: State = 'connecting'
-  private readonly socket: WebSocket
+  private socket: WebSocket
   private readonly sessionId = randomUUID()
   private readonly connectId = randomUUID()
   private timer: ReturnType<typeof setTimeout> | undefined
@@ -50,16 +50,29 @@ export class DoubaoSession {
       'X-Api-Resource-Id': settings.doubaoModel,
       'X-Api-Connect-Id': this.connectId,
     }
-    this.socket = options.connect?.(headers) ?? new WebSocket(DOUBAO_TTS_ENDPOINT, { headers, maxPayload: 16 * 1024 * 1024, handshakeTimeout: Math.min(10000, settings.requestTimeoutMs), followRedirects: false })
-    this.socket.on('open', this.onOpen)
-    this.socket.on('message', this.onMessage)
-    this.socket.on('error', this.onError)
-    this.socket.on('unexpected-response', (_request, response) => {
-      response.resume()
-      const status = response.statusCode ?? 502
-      this.fail(new TtsProviderError(status === 401 || status === 403 ? 'api-key-rejected' : status === 429 ? 'rate-limited' : 'doubao-handshake-failed', `Doubao handshake failed (HTTP ${status}).`, status, String(status), this.connectId))
-    })
-    this.socket.on('close', this.onClose)
+    const connect = (endpoint: string): WebSocket => {
+      const socket = options.connect?.(headers, endpoint) ?? new WebSocket(endpoint, { headers, maxPayload: 16 * 1024 * 1024, handshakeTimeout: Math.min(10000, settings.requestTimeoutMs), followRedirects: false })
+      socket.on('open', this.onOpen)
+      socket.on('message', this.onMessage)
+      socket.on('error', this.onError)
+      socket.on('unexpected-response', (_request, response) => {
+        response.resume()
+        const status = response.statusCode ?? 502
+        // Only retry a rejected handshake: no text or audio has been sent yet.
+        if (endpoint === DOUBAO_TTS_ENDPOINT && (status === 401 || status === 403) && this.state === 'connecting') {
+          socket.removeAllListeners()
+          socket.on('error', () => {})
+          socket.terminate()
+          this.socket = connect(DOUBAO_AGENT_PLAN_TTS_ENDPOINT)
+          this.arm(Math.min(10000, settings.requestTimeoutMs))
+          return
+        }
+        this.fail(new TtsProviderError(status === 401 || status === 403 ? 'api-key-rejected' : status === 429 ? 'rate-limited' : 'doubao-handshake-failed', `Doubao handshake failed (HTTP ${status}).`, status, String(status), this.connectId))
+      })
+      socket.on('close', this.onClose)
+      return socket
+    }
+    this.socket = connect(headers['X-Api-Key'].startsWith('ark-') ? DOUBAO_AGENT_PLAN_TTS_ENDPOINT : DOUBAO_TTS_ENDPOINT)
     options.signal.addEventListener('abort', this.onAbort, { once: true })
     this.arm(Math.min(10000, settings.requestTimeoutMs))
     if (options.signal.aborted) this.onAbort()

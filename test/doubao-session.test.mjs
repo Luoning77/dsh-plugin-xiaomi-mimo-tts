@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { once } from 'node:events'
+import WebSocket from 'ws'
 import { resolveTtsSettings, ttsSelection, isSupportedTtsApiKey } from '../lib/shared.js'
 import { loadClientModule } from './helpers/client-modules.mjs'
 import { withDoubaoServer, serverFrame } from './helpers/doubao-server.mjs'
@@ -34,6 +35,93 @@ test('Doubao sends multiple text inputs in one session and delivers audio before
     assert.deepEqual(start.audio_params, { format: 'pcm', sample_rate: 24000, speech_rate: 0 })
     assert.throws(() => session.append('too late'), /not accepting/)
   })
+})
+
+test('Ark keys connect directly to Agent Plan with the trimmed key and synthesis resource', async () => {
+  const key = 'ark-00000000-0000-4000-8000-000000000000'
+  const attempts = []
+  await withDoubaoServer(async ({ url, frames, headers }) => {
+    const chunks = []
+    const connect = (values, endpoint) => {
+      attempts.push(new URL(endpoint).pathname)
+      return new WebSocket(`${url}${new URL(endpoint).pathname}`, { headers: values })
+    }
+    await synthesizeDoubao('方舟语音', { settings: settings({ doubaoApiKey: `  ${key}\n` }), connect, signal: new AbortController().signal, onAudio: bytes => chunks.push(bytes) })
+    assert.deepEqual(attempts, ['/api/v3/plan/tts/bidirection'])
+    assert.equal(headers[0]['x-api-key'], key)
+    assert.equal(headers[0]['x-api-resource-id'], 'seed-tts-2.0')
+    assert.deepEqual(frames.filter(frame => frame.event === 200).map(frame => frame.payload.req_params.text), ['方舟语音'])
+    assert.ok(Buffer.concat(chunks).length > 0)
+  }, undefined, (info, done) => done(info.req.url === '/api/v3/plan/tts/bidirection', 401))
+})
+
+test('a rejected Ark key fails on Agent Plan without trying the standard endpoint', async () => {
+  const attempts = []
+  await withDoubaoServer(async ({ url }) => {
+    const connect = (headers, endpoint) => {
+      attempts.push(new URL(endpoint).pathname)
+      return new WebSocket(`${url}${new URL(endpoint).pathname}`, { headers })
+    }
+    await assert.rejects(synthesizeDoubao('测试', { settings: settings({ doubaoApiKey: 'ark-00000000-0000-4000-8000-000000000000' }), connect, signal: new AbortController().signal, onAudio() {} }), error => error.code === 'api-key-rejected')
+    assert.deepEqual(attempts, ['/api/v3/plan/tts/bidirection'])
+  }, undefined, (_info, done) => done(false, 401))
+})
+
+for (const status of [401, 403]) test(`Doubao retries Agent Plan after a standard HTTP ${status} handshake rejection`, async () => {
+  const attempts = []
+  await withDoubaoServer(async ({ url, frames, headers }) => {
+    const connect = (values, endpoint) => {
+      attempts.push(endpoint)
+      return new WebSocket(`${url}${new URL(endpoint).pathname}`, { headers: values })
+    }
+    await synthesizeDoubao('自动识别', { settings: settings(), connect, signal: new AbortController().signal, onAudio() {} })
+    assert.deepEqual(attempts.map(endpoint => new URL(endpoint).pathname), ['/api/v3/tts/bidirection', '/api/v3/plan/tts/bidirection'])
+    assert.equal(headers.length, 1)
+    assert.equal(headers[0]['x-api-key'], 'test-key')
+    assert.equal(headers[0]['x-api-resource-id'], 'seed-tts-2.0')
+    assert.equal(frames.filter(frame => frame.event === 200).length, 1)
+  }, undefined, (info, done) => done(info.req.url.includes('/plan/'), status))
+})
+
+test('Doubao does not retry other handshake failures or a rejected Agent Plan handshake', async () => {
+  for (const status of [429, 500, 401]) {
+    const attempts = []
+    await withDoubaoServer(async ({ url }) => {
+      const connect = (headers, endpoint) => {
+        attempts.push(new URL(endpoint).pathname)
+        return new WebSocket(`${url}${new URL(endpoint).pathname}`, { headers })
+      }
+      await assert.rejects(synthesizeDoubao('测试', { settings: settings(), connect, signal: new AbortController().signal, onAudio() {} }), error => error.code === (status === 429 ? 'rate-limited' : status === 401 ? 'api-key-rejected' : 'doubao-handshake-failed'))
+      assert.deepEqual(attempts, status === 401 ? ['/api/v3/tts/bidirection', '/api/v3/plan/tts/bidirection'] : ['/api/v3/tts/bidirection'])
+    }, undefined, (_info, done) => done(false, status))
+  }
+})
+
+test('Doubao uses the standard endpoint when its handshake succeeds', async () => {
+  const attempts = []
+  await withDoubaoServer(async ({ connect }) => {
+    await synthesizeDoubao('测试', { settings: settings(), connect: (headers, endpoint) => { attempts.push(new URL(endpoint).pathname); return connect(headers) }, signal: new AbortController().signal, onAudio() {} })
+    assert.deepEqual(attempts, ['/api/v3/tts/bidirection'])
+  })
+})
+
+for (const failure of ['abort', 'timeout']) test(`Agent Plan fallback releases its connection on ${failure}`, async () => {
+  await withDoubaoServer(async ({ url }) => {
+    const controller = new AbortController()
+    const sockets = []
+    const connect = (headers, endpoint) => {
+      const socket = new WebSocket(`${url}${new URL(endpoint).pathname}`, { headers })
+      sockets.push(socket)
+      if (failure === 'abort' && sockets.length === 2) socket.once('open', () => queueMicrotask(() => controller.abort()))
+      return socket
+    }
+    const session = new DoubaoSession({ settings: settings({ requestTimeoutMs: 200 }), connect, signal: controller.signal, onAudio() { assert.fail('canceled synthesis must not deliver audio') } })
+    const code = failure === 'abort' ? 'tts-canceled' : 'tts-timeout'
+    await assert.rejects(session.ready, error => error.code === code)
+    await assert.rejects(session.done, error => error.code === code)
+    assert.equal(sockets.length, 2)
+    await Promise.all(sockets.map(socket => socket.readyState === WebSocket.CLOSED ? undefined : once(socket, 'close')))
+  }, () => true, (info, done) => done(info.req.url.includes('/plan/'), 401))
 })
 
 test('cloned voice uses its own resource and explicit inference model without context_texts', async () => {

@@ -31,8 +31,8 @@ export function clientFrame(bytes) {
   return { event, sessionId, payload: JSON.parse(bytes.toString('utf8', offset, offset + size)) }
 }
 
-export async function withDoubaoServer(run, handle) {
-  const server = new WebSocketServer({ port: 0, host: '127.0.0.1' })
+export async function withDoubaoServer(run, handle, verifyClient) {
+  const server = new WebSocketServer({ port: 0, host: '127.0.0.1', ...(verifyClient ? { verifyClient } : {}) })
   await once(server, 'listening')
   const frames = []
   const headers = []
